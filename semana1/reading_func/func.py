@@ -42,4 +42,4 @@ def apply_calibration_offset(r: Reading, offset: float) -> Reading: # Calibracio
     )
 
 def format_alert_message(r: Reading, reason: str) -> str: # Notificaciones
-    return f"[ALERT] Sensor {r.sensor_id} ({r.sensor_type.name})reported unexpected value: {r.value:.2f}. Reason: {reason}"
+    return f"Alerta: El {r.sensor_id} ({r.sensor_type.name}) reporto un valor inesperado: {r.value:.2f}. Razon: {reason}"
