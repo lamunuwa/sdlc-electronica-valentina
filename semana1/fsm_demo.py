@@ -1,13 +1,16 @@
 from enum import Enum, auto
 
-class TrafficLightState(Enum): 
-    RED = auto() 
+
+class TrafficLightState(Enum):
+    RED = auto()
     YELLOW = auto()
     GREEN = auto()
 
-# El codigo en la guia de estudios presentaba un warning, usaba ; para dividir las instancias RED, 
-# YELLOW y GREEN, lo cual es inneficiente y no es una buena practica. Lo he modificado para que sea 
+
+# El codigo en la guia de estudios presentaba un warning, usaba ; para dividir las instancias RED,
+# YELLOW y GREEN, lo cual es inneficiente y no es una buena practica. Lo he modificado para que sea
 # mas legible y correcto.
+
 
 class TrafficLightFSM:
     # El estado vive dentro del objeto, no en una variable global.
