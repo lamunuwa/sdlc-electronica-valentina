@@ -1,35 +1,73 @@
 # Registro de Uso de IA (AI Log)
 
-Este documento registra las interacciones con Inteligencia Artificial generativa utilizadas como asistencia para el desarrollo de las
-actividades durante el curso.
+Este documento registra las interacciones con Inteligencia Artificial generativa utilizadas como asistencia para el desarrollo de las actividades durante el curso.
 
-## Semana 1 - Entrada 1
-### Objetivo:
-Establecer el rol de la IA como experto para el chat usando CO-RE-CON (Contexto-Restricciones-Consigna) para escribir el prompt. 
-Obtener una explicación profunda línea por línea de la sintaxis de Type Hints, omitiendo la lógica de programación y los principios 
-SOLID por el momento. También solicitar la estructura base para el desarrollo de las 5 funciones puras asignadas. 
+## Semana 1
+
+## Entrada 2
+
+### Objetivo
+
+Generar configuraciones (archivos) para automatizar el proceso de verificación de calidad con Mypy, Ruff y Pytest, pidiéndole que verifique el correcto funcionamiento de dichos archivos usando una secuencia previamente establecida para reducir los errores al mínimo. Al ser dentro del mismo chat, a partir de este mensaje no se le establecerá un rol a menos que sea estrictamente necesario.
+
 ### Prompt
-> "Actua como un profesor egresado de ingeniería en software o similares, experto en Python orientado a objetos y 
-> plataformas de servidores API y contenedores. Actualmente estoy en un curso para orientar mis conocimientos de firmware 
-> embebido hacia la creación de software profesional. 
+
+> En este repositorio requiero mantener un estándar de calidad extremadamente alto (Mypy, Ruff, Pytest con coverage cercano al 90%-100%). Investigando encontré que se puede automatizar la tarea de ejecutar los linters y test con "pre-commit".
 >
-> Se divide en 6 semanas, en este momento me encuentro en la primera de ellas. Esta etapa se centra en los siguientes objetivos: 
-> - Mapear conceptos de hardware/firmware a sus equivalentes de software de alto nivel. 
-> - Escribir Python idiomático: type hints, dataclasses, enums, protocolos — no “C con otra sintaxis”. 
-> - Aplicar los 5 principios SOLID con ejemplos del dominio de sensores. 
+> Necesito que me generes la configuración necesaria para automatizar este flujo de verificación de forma rápida y local antes de subir mi código.
 >
-> Como primera actividad se me pide realizar 5 funciones puras de reading (conversión de unidades, detección de umbral, serializacion) con type 
-> hints y verificarlo con ruffs y mypy. Me dieron este codigo de ejemplo: 
+> Genera la siguiente solucion:
 >
-> *[Aqui pegue el codigo dado en la guia de estudios]*
+> 1. Configuración de Git Hooks con la herramienta "pre-commit":
 >
-> No seas vago o impreciso con tu explicación, alargate, me gustan las explicaciones completas, basate puramente en la documentacion oficial de 
-> python, por el momento no me expliques SOLID enfocate únicamente en type hints, no expliques la logica de programacion.  
+> - Genera el archivo de configuración `.pre-commit-config.yaml`.
+> - Incluye los hooks para Ruff (tanto linter como formatter), Mypy y la ejecución de Pytest con el reporte de coverage.
 >
-> Explicame la sintaxis linea por linea, especialmente los type hints, que significa, donde se usa, por que me deberia importar para POO 
-> (Programacion orientada a objetos), API, IA. Por ultimo y siguiendo con el ejercicio, generame el "esqueleto" (los def con los argumentos vacíos) 
-> para que yo los rellene con la logica y los type hints."
-### Resultado:
-La IA asumió el rol solicitado y proporcionó un desglose técnico enfocado en las Type Hints de Python asi como su relevancia en las areas
-mencionadas. En el codigo entregó la estructura inicial para las 5 funciones puras orientadas al procesamiento de lecturas de sensores, dejo un breve
-contexto como comentario.
+> Al terminar, ejecuta el siguiente flujo en mi terminal para verificar que funcionen las configuraciones:
+>
+> 1. Crear un archivo temporal de prueba en Python (ej. 'test_sandbox.py').
+> 2. Añadirlo al Staging Area ('git add test_sandbox.py').
+> 3. Intentar realizar un commit local ('git commit -m "test: sandbox validation"') para forzar la ejecución de los hooks de pre-commit que validan el código (validar que funciona el .yaml).
+> 4. Deshacer el commit inmediatamente después usando 'git reset HEAD~1' (o el comando adecuado) para mantener el historial de Git completamente limpio y revertir el archivo temporal.
+> 5. Eliminar físicamente el archivo temporal 'test_sandbox.py'.
+> 6. Genera en el chat un resumen claro que me diga explícitamente si el flujo fue EXITOSO o si FALLÓ (detallando qué linter o test detuvo el proceso).
+>
+> Restricciones:
+>
+> - Las herramientas deben leer sus configuraciones de los archivos estándar del proyecto (como pyproject.toml), no metas flags excesivas en el script si pueden ir en el archivo de configuración.
+> - El comando de Pytest debe incluir los argumentos para fallar si el coverage baja de un umbral específico (por ejemplo, --cov-fail-under=90).
+> - El script DEBE ser 100% local. Bajo ninguna circunstancia debe ejecutar 'git push'.
+> - Debe manejar correctamente los códigos de salida (exit codes) para que, si el pre-commit falla en el paso 3, el script no se detenga abruptamente y pueda ejecutar correctamente los pasos de limpieza (reset y borrado del archivo temporal).
+> - Dame las instrucciones claras de cómo instalar las herramientas y cómo ejecutar este flujo con un solo comando corto desde mi terminal.
+
+### Resultados
+
+Generó los archivos `.pre-commit-config.yaml` y `pyproject.toml`. En un principio generó una configuración extraña en el `.yaml` donde no respetaba su propio archivo `.toml`; tuve que rechazar varias veces los cambios, ya que en un punto quería modificar los archivos `.py` de las prácticas. Al final generó una configuración bastante profesional: Ruff es muy estricto y en Pytest debo superar el 90% en el coverage para que permita realizar un commit.
+
+## Entrada 1
+
+### Objetivo
+
+Establecer el rol de la IA como experto para el chat usando CO-RE-CON (Contexto-Restricciones-Consigna) para escribir el prompt. Obtener una explicación profunda línea por línea de la sintaxis de Type Hints, omitiendo la lógica de programación y los principios SOLID por el momento. También solicitar la estructura base para el desarrollo de las 5 funciones puras asignadas.
+
+### Prompt
+
+> "Actua como un profesor egresado de ingeniería en software o similares, experto en Python orientado a objetos y plataformas de servidores API y contenedores. Actualmente estoy en un curso para orientar mis conocimientos de firmware embebido hacia la creación de software profesional.
+>
+> Se divide en 6 semanas, en este momento me encuentro en la primera de ellas. Esta etapa se centra en los siguientes objetivos:
+>
+> - Mapear conceptos de hardware/firmware a sus equivalentes de software de alto nivel.
+> - Escribir Python idiomático: type hints, dataclasses, enums, protocolos — no “C con otra sintaxis”.
+> - Aplicar los 5 principios SOLID con ejemplos del dominio de sensores.
+>
+> Como primera actividad se me pide realizar 5 funciones puras de reading (conversión de unidades, detección de umbral, serializacion) con type hints y verificarlo con ruffs y mypy. Me dieron este codigo de ejemplo:
+>
+> `[Aqui pegue el codigo dado en la guia de estudios]`
+>
+> No seas vago o impreciso con tu explicación, alargate, me gustan las explicaciones completas, basate puramente en la documentacion oficial de python, por el momento no me expliques SOLID enfocate únicamente en type hints, no expliques la logica de programacion.  
+>
+> Explicame la sintaxis linea por linea, especialmente los type hints, que significa, donde se usa, por que me deberia importar para POO (Programacion orientada a objetos), API, IA. Por ultimo y siguiendo con el ejercicio, generame el "esqueleto" (los def con los argumentos vacíos) para que yo los rellene con la logica y los type hints."
+
+### Resultado
+
+La IA asumió el rol solicitado y proporcionó un desglose técnico enfocado en las Type Hints de Python, así como su relevancia en las áreas mencionadas. En el código, entregó la estructura inicial para las 5 funciones puras orientadas al procesamiento de lecturas de sensores, dejando un breve contexto como comentario.
