@@ -4,23 +4,45 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 ## Semana 1
 
-## Entrada 3
+## Entrada 3, 4 y 5
+
+**Nota:** Anteriormente actualice AI_LOG con este prompt unicamente como "Entrada 3", en ese momento solo tenia programado los 2 codigos de ejemplo de SRP y mande el prompt enfocado solo en SRP. Conforme fui generando los demas ejemplos le solicite a la IA hacer exactamente lo mismo copiando y pegando el prompt, cambiando SRP por OCP y LSP y los parametros que tiene que evaluar para que no se confundiera, por esto englobo este prompt como "Entrada 3, 4 y 5", asi mismo para identificar donde fueron los cambios entre Prompts, acomodare las diferencias en listas.
 
 ### Objetivo
 
-Validar la implementacion del principio SRP (Single Responsibility Principle) en la practica.
+Validar la implementacion de los principios SOLID (SRP, OCP, LSP) en la practica.
 
 ### Prompt
 
-> Desarrolle un ejemplo del principio SRP (Single Responsibility Principle) en los archivos `solid_srp_ocp_lsp.py` (código fuente) y `test_srp_ocp_lsp.py` (pruebas con Pytest). Actualmente el código funciona y los tests pasan (Green), pero quiero revisar si el principio esta bien implementado.
+> Desarrolle un ejemplo del principio
 >
-> Realiza una revisión de codigo y verifica si cumple, en caos contrario, refactoriza ambos archivos enfocandote en el cumplimiento estricto de SRP: Evalua si cada clase y función tiene una única razón para cambiar. Si detectas responsabilidades acopladas, separalas. Tambien revisa la calidad de las Pruebas (Pytest), verifica que los tests sean limpios.
+> 1. SRP (Single Responsability Principle)
+> 2. OCP (Open-Closed Principle)
+> 3. LSP (Liskov Substitution Principle)
+>
+> en los archivos `solid_srp_ocp_lsp.py` (codigo fuente) y `test_srp_ocp_lsp.py` (pruebas con Pytest). Actualmente el codigo funciona y los tests pasan (Green), pero quiero revisar si el principio esta bien implementado.
+>
+> Realiza una revision de codigo y verifica si cumple, en caso contrario, refactoriza ambos archivos enfocandote en el cumplimiento estricto de
+>
+> 1. SRP:
+> 2. OCP:
+> 3. LSP:
+>
+> Evalua si cada clase y funcion
+>
+> 1. tiene una unica razon para cambiar. Si detectas responsabilidades acopladas, separalas.
+> 2. esta cerrada a la modificacion pero el codigo si es expandible. Si no cumple divide las clases y funciones.
+> 3. no modifica el comportamiento de la clase madre.
+>
+> <br>
+>
+> Tambien revisa la calidad de las Pruebas (Pytest), verifica que los tests sean limpios.
 >
 > Al final realiza un pytest -v para revisar que todo funcione correctamente y entregame un resumen de que estuvo bien, que estuvo mal, que cambiaste y por que.
 
 ### Resultados
 
-Esta entrada fue peculiar, en un principio alucino mucho, hizo cambios que rompieron con el codigo (principalmente culpa de que no lei que estaba haciendo), incluso en un momento se quedo estatico pensando aproximadamente 5 minutos, tuve que pararlo, me dejo un codigo con errores y warnings, hice CTRL + Z y volvi a intentarlo, esta vez poniendo atencion a que hacia y si cumplio con lo que le pedi, recibi mi resumen correctamente e hizo ligeros cambios en los 2 codigos; antes, al correr la prueba se creaba en la carpeta madre un documento llamado log.txt, la correccion que hizo elimino este archivo temporal.
+La primera vez que genere esta entrada no tuve cuidado en ver que estaba haciendo Copilot, y me genero un codigo lleno de errores y warnings, al final se freezeo y tuve que repetir la instruccion. En la segunda (SRP), tercera (OCP), cuarta (LSP) iteracion estuve al pendiente de que hacia y no cometio errores (salvo algunos comandos en la terminal sin sentido que queria hacer y no le permiti). El codigo estaba bien estructurado, citando *"En conclusión, el código original ya era muy bueno y funcional. La refactorización se centró en llevar la implementación y, sobre todo, las pruebas a un nivel de cumplimiento más estricto y expresivo de los principios SOLID, eliminando cualquier posible ambigüedad conceptual"*. Corrigio un par de impresiciones que tenia el codigo de test de LSP que hacia que no cumpliera con el 100% de coverage y cambios menores para no confundir clases.
 
 ## Entrada 2
 
