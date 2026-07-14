@@ -4,6 +4,24 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 ## Semana 1
 
+## Entrada 3
+
+### Objetivo
+
+Validar la implementacion del principio SRP (Single Responsibility Principle) en la practica.
+
+### Prompt
+
+> Desarrolle un ejemplo del principio SRP (Single Responsibility Principle) en los archivos `solid_srp_ocp_lsp.py` (código fuente) y `test_srp_ocp_lsp.py` (pruebas con Pytest). Actualmente el código funciona y los tests pasan (Green), pero quiero revisar si el principio esta bien implementado.
+>
+> Realiza una revisión de codigo y verifica si cumple, en caos contrario, refactoriza ambos archivos enfocandote en el cumplimiento estricto de SRP: Evalua si cada clase y función tiene una única razón para cambiar. Si detectas responsabilidades acopladas, separalas. Tambien revisa la calidad de las Pruebas (Pytest), verifica que los tests sean limpios.
+>
+> Al final realiza un pytest -v para revisar que todo funcione correctamente y entregame un resumen de que estuvo bien, que estuvo mal, que cambiaste y por que.
+
+### Resultados
+
+Esta entrada fue peculiar, en un principio alucino mucho, hizo cambios que rompieron con el codigo (principalmente culpa de que no lei que estaba haciendo), incluso en un momento se quedo estatico pensando aproximadamente 5 minutos, tuve que pararlo, me dejo un codigo con errores y warnings, hice CTRL + Z y volvi a intentarlo, esta vez poniendo atencion a que hacia y si cumplio con lo que le pedi, recibi mi resumen correctamente e hizo ligeros cambios en los 2 codigos; antes, al correr la prueba se creaba en la carpeta madre un documento llamado log.txt, la correccion que hizo elimino este archivo temporal.
+
 ## Entrada 2
 
 ### Objetivo
