@@ -6,11 +6,11 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 ## Entrada 3, 4 y 5
 
-**Nota:** Anteriormente actualice AI_LOG con este prompt unicamente como "Entrada 3", en ese momento solo tenia programado los 2 codigos de ejemplo de SRP y mande el prompt enfocado solo en SRP. Conforme fui generando los demas ejemplos le solicite a la IA hacer exactamente lo mismo copiando y pegando el prompt, cambiando SRP por OCP y LSP y los parametros que tiene que evaluar para que no se confundiera, por esto englobo este prompt como "Entrada 3, 4 y 5", asi mismo para identificar donde fueron los cambios entre Prompts, acomodare las diferencias en listas.
+**Nota:** Anteriormente actualicé AI_LOG con este prompt únicamente como "Entrada 3", en ese momento solo tenía programados los 2 códigos de ejemplo de SRP y mandé el prompt enfocado solo en SRP. Conforme fui generando los demás ejemplos le solicité a la IA hacer exactamente lo mismo copiando y pegando el prompt, cambiando SRP por OCP, LSP y los parámetros que tiene que evaluar para que no se confundiera, por esto englobo este prompt como "Entrada 3, 4 y 5", asimismo para identificar dónde fueron los cambios entre Prompts, acomodaré las diferencias en listas.
 
 ### Objetivo
 
-Validar la implementacion de los principios SOLID (SRP, OCP, LSP) en la practica.
+Validar la implementación de los principios SOLID (SRP, OCP, LSP) en la práctica.
 
 ### Prompt
 
@@ -34,15 +34,13 @@ Validar la implementacion de los principios SOLID (SRP, OCP, LSP) en la practica
 > 2. esta cerrada a la modificacion pero el codigo si es expandible. Si no cumple divide las clases y funciones.
 > 3. no modifica el comportamiento de la clase madre.
 >
-> <br>
->
 > Tambien revisa la calidad de las Pruebas (Pytest), verifica que los tests sean limpios.
 >
 > Al final realiza un pytest -v para revisar que todo funcione correctamente y entregame un resumen de que estuvo bien, que estuvo mal, que cambiaste y por que.
 
 ### Resultados
 
-La primera vez que genere esta entrada no tuve cuidado en ver que estaba haciendo Copilot, y me genero un codigo lleno de errores y warnings, al final se freezeo y tuve que repetir la instruccion. En la segunda (SRP), tercera (OCP), cuarta (LSP) iteracion estuve al pendiente de que hacia y no cometio errores (salvo algunos comandos en la terminal sin sentido que queria hacer y no le permiti). El codigo estaba bien estructurado, citando *"En conclusión, el código original ya era muy bueno y funcional. La refactorización se centró en llevar la implementación y, sobre todo, las pruebas a un nivel de cumplimiento más estricto y expresivo de los principios SOLID, eliminando cualquier posible ambigüedad conceptual"*. Corrigio un par de impresiciones que tenia el codigo de test de LSP que hacia que no cumpliera con el 100% de coverage y cambios menores para no confundir clases.
+La primera vez que generé esta entrada no tuve cuidado en ver qué estaba haciendo Copilot, y me generó un código lleno de errores y warnings, al final se freezeó y tuve que repetir la instrucción. En la segunda (SRP), tercera (OCP), cuarta (LSP) iteración estuve al pendiente de qué hacía y no cometió errores (salvo algunos comandos en la terminal sin sentido que quería hacer y no le permití). El código estaba bien estructurado, citando *"En conclusión, el código original ya era muy bueno y funcional. La refactorización se centró en llevar la implementación y, sobre todo, las pruebas a un nivel de cumplimiento más estricto y expresivo de los principios SOLID, eliminando cualquier posible ambigüedad conceptual"*. Corrigió un par de imprecisiones que tenía el código de test de LSP que hacía que no cumpliera con el 100% de coverage y cambios menores para no confundir clases.
 
 ## Entrada 2
 
@@ -82,7 +80,7 @@ Generar configuraciones (archivos) para automatizar el proceso de verificación 
 
 ### Resultados
 
-Generó los archivos `.pre-commit-config.yaml` y `pyproject.toml`. En un principio generó una configuración extraña en el `.yaml` donde no respetaba su propio archivo `.toml`; tuve que rechazar varias veces los cambios, ya que en un punto quería modificar los archivos `.py` de las prácticas. Al final generó una configuración bastante profesional: Ruff es muy estricto y en Pytest debo superar el 90% en el coverage para que permita realizar un commit.
+Generó los archivos `.pre-commit-config.yaml` y `pyproject.toml.` En un principio generó una configuración extraña en el .yaml donde no respetaba su propio archivo .toml; tuve que rechazar varias veces los cambios, ya que en un punto quería modificar los archivos .py de las prácticas. Al final generó una configuración bastante profesional: Ruff es muy estricto y en Pytest debo superar el 90% en el coverage para que permita realizar un commit.
 
 ## Entrada 1
 
@@ -108,6 +106,6 @@ Establecer el rol de la IA como experto para el chat usando CO-RE-CON (Contexto-
 >
 > Explicame la sintaxis linea por linea, especialmente los type hints, que significa, donde se usa, por que me deberia importar para POO (Programacion orientada a objetos), API, IA. Por ultimo y siguiendo con el ejercicio, generame el "esqueleto" (los def con los argumentos vacíos) para que yo los rellene con la logica y los type hints."
 
-### Resultado
+### Resultados
 
 La IA asumió el rol solicitado y proporcionó un desglose técnico enfocado en las Type Hints de Python, así como su relevancia en las áreas mencionadas. En el código, entregó la estructura inicial para las 5 funciones puras orientadas al procesamiento de lecturas de sensores, dejando un breve contexto como comentario.
