@@ -4,6 +4,60 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 ## Semana 1
 
+## Entrada 7
+
+### Objetivo
+
+Aclarar dudas sobre que hizo en las correcciones del prompt anterior.
+
+### Prompt
+
+> "Lo que no termino de entender es:
+> Si protocol es un intermediario entre el proceso a bajo nivel como el guardado o lectura y el de alto nivel que es toda la logica de como se mueven las cosas, por que en estos codigos tanto PostgreSQLRepository e InMemoryRepository no llaman nunca a la funcion de protocol."
+
+### Resultados
+
+Me explico el concepto de "Duck Typing" y como basicamente no hay necesidad de llamar a las clases protocol a los modulos de bajo nivel si estos tiene los argumentos establecidos en la clase protocol, me dio el siguiente ejemplo:
+<br>
+*"- El protocolo `DataRepository` dice que un almacén de datos debe tener los métodos save() y get_latest().*
+<br>
+*- La clase `PostgreSQLRepository` tiene los métodos save() y get_latest().*
+<br>
+*Como la clase tiene exactamente los mismos métodos que pide el protocolo, Python y tu validador estático (Mypy) dicen de forma automática: "Perfecto, esta clase es un DataRepository válido". No hace falta que la clase lo declare o lo llame explícitamente"*
+<br>
+Incluso al final me dio una analogia de hardware y de firmware, lo cual me sorprendio por que dedujo que lo entenderia mejor asi teniendo muy breve contexto de mi.
+
+## Entrada 6
+
+### Objetivo
+
+Validar la implementacion de los principios SOLID (ISP, DIP) en la practica y probar DeepSeek (web) para medir su desempeño y confirmar si deberia pasarme a una IA local (Ollama con DeepSeek, que investigando es uno de los combos mas potentes) o seguir en Github Copilot.
+
+### Prompt
+
+> "Comportate como un ingeniero en software senior, experto en Python, especificamente en Programacion Orientada a Objetos (POO), plataformas de servidores API y contenedores. Estoy llevando un curso para orientar mis conocimientos de firmware embebido hacia la creación de software profesional.
+>
+> Se divide en 6 semanas, en este momento me encuentro en la primera de ellas. Esta etapa se centra en los siguientes objetivos:
+>
+> - Mapear conceptos de hardware/firmware a sus equivalentes de software de alto nivel.
+> - Escribir Python idiomático: type hints, dataclasses, enums, protocolos — no “C con otra sintaxis”.
+> - Aplicar los 5 principios SOLID con ejemplos del dominio de sensores.
+>
+> Actualmente me encuentro terminando la ultima practica de los fundamentos SOLID, especificamente practicas para ejecutar los principios ISP y DIP, me dieron el siguiente codigo de ejemplo:
+>
+> `[Adjunte el breve codigo de ejemplo de la guia]`
+>
+> Mi código funciona y los tests pasan (casi todos Green) con pytest, pero quiero revisar si los principio esta bien implementado y los test prueban todo, la practica solicita un codigo de el principio mal ejecutado y un codigo del principio bien ejectuado + 2 test por principio (yo lo voy llevando como test del incorrecto y test del correcto). Revisa los siguientes codigos:
+>
+> `[Aqui le adjunte el codigo de los 2 archivos, primero el fuente y luego el test]`
+>
+> Verifica si cumple.
+
+### Resultados
+
+Al ser la version web del modelo no pude aceptar ni rechazar algo, sin embargo me dio una buena retroalimentacion.
+La seccion ISP era correcta y completa, no hizo cambios alli, por otro lado la seccion DIP tuvo fuertes cambios: Primero parece ser que no logre entender del todo las clases InMemoryRepository y PostgreSQLRepository por lo que refactorizo las clases, no entendi del todo que hizo y eso conllevo a la entrada 7 (esto fue un error mio en el prompt, se me olvido por completo agregarle que hiciera un resumen explicando los cambios, quizas esta IA es mas estricta con lo que se le pide y lo que entrega). Tambien hizo las debidas correcciones en el test y habia un test que corria al 96% y no logre leer el error en la terminal (por que no le entendia) y lo soluciono, de mi parte elimine la seccion en la que probaba PostgreSQLRepository y puse como comentario la clase debido a que en la guia pide explicitamente que se pruebe unicamente con InMemoryRepository.
+
 ## Entrada 3, 4 y 5
 
 **Nota:** Anteriormente actualicé AI_LOG con este prompt únicamente como "Entrada 3", en ese momento solo tenía programados los 2 códigos de ejemplo de SRP y mandé el prompt enfocado solo en SRP. Conforme fui generando los demás ejemplos le solicité a la IA hacer exactamente lo mismo copiando y pegando el prompt, cambiando SRP por OCP, LSP y los parámetros que tiene que evaluar para que no se confundiera, por esto englobo este prompt como "Entrada 3, 4 y 5", asimismo para identificar dónde fueron los cambios entre Prompts, acomodaré las diferencias en listas.
