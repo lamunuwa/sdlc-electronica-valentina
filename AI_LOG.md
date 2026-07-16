@@ -4,6 +4,31 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 ## Semana 1
 
+## Entrada 8
+
+### Objetivo
+
+Explicar que es NMEA, como funciona, que parametros pide y completar parsers.py
+
+### Prompt
+
+> La ultima practica de la semana 1 de mi curso me pide implementar un driver UART modernizado usando 4 archivos: config, device, parsers y recorder. De estos cuento con config que es el siguiente codigo:
+>
+> `[Adjunte el codigo de config.py]`
+>
+> Y tengo iniciado el codigo de parsers, que es el siguiente:
+>
+> `[Adjunte el codigo de parsers.py]`
+>
+> Para parsers.py se me pide hacer MessageParser (ABC con parse() y can_parse())+ ModbusParser (frames RTU) + NMEAParser (sentencias $GPGGA) implementando SOLID como pilar fundamental de la estructura del codigo. El problema es que no se que es NMEA, hasta el momento hice 2 drivers UART, uno en LL y otro en Verilog, pero nunca en HAL, se comunicaban por ASCII.
+> Explicame que es NMEA, como funciona por dentro (que parametros se necesitan, como se setean, cuales valores son incorrectos, hay reglas claras para NMEA?), evita usar terminos de bajo nivel, los entiendo muy bien pero quiero empezar a llevar mis conceptos a alto nivel.
+>
+> Al final entregame mi codigo de parsers.py con la implementacion de NMEA, no implementes MessageParser de ser posible (aunque es muy sencillo).
+
+### Resultados
+
+Use este mismo prompt en Gemini y en Deepseek, para comparar respuestas, como no se que es NMEA pense que no podria fiarme de una sola respuesta. Los 2 me dieron respuestas practicamente iguales, me explicaron todo lo solicitado, Gemini incluso me dejo fuentes NMEA 0183 (no sabia que era una especie de estandar) y generaron el codigo, elegi el de Deepseek ya que nunca me gusto Gemini para programacion, pero a Gemini le escribi otro mensaje explicandole lo que entendi y un poco del codigo que genero para que validara si comprendi lo que me trato de decir (lo tengo configurado para que no siempre me de la razon), teniendo exito en un 70% de mi explicacion y me volvio a explicar lo que tenia erroneo. Por el lado de Deepseek me entrego el codigo fuente con NMEA y 6 tests de los cuales elegi los 4 que me parecieron mas compatibles con mi forma de escribir los test, de hecho 3 de ellos son muy similares a los que escribi para la primera version del codigo.
+
 ## Entrada 7
 
 ### Objetivo
