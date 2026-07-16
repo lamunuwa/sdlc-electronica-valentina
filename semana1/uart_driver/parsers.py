@@ -1,4 +1,13 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
+
+
+class MessageParser(ABC):
+    @abstractmethod
+    def can_parse(self, data: bytes) -> bool: ...
+
+    @abstractmethod
+    def parse(self, data: bytes): ...
 
 
 @dataclass(frozen=True)
@@ -27,7 +36,31 @@ class ModbusFrame:
         }
 
 
-class ModBusParser:
+@dataclass(frozen=True)
+class NMEASentence:
+    talker_id: str
+    sentence_type: str
+    fields: list
+    checksum_valid: bool
+    raw_sentence: str
+
+    @property
+    def valid(self) -> bool:
+        """Una sentencia NMEA es válida si pasó el checksum y es del tipo esperado (GGA)"""
+
+        return self.checksum_valid and self.sentence_type == "GGA"
+
+    def to_dict(self) -> dict:
+        return {
+            "talker_id": self.talker_id,
+            "sentence_type": self.sentence_type,
+            "fields": self.fields,
+            "checksum_valid": self.valid,
+            "raw": self.raw_sentence,
+        }
+
+
+class ModBusParser(MessageParser):
     min_length = 4
     max_address = 247
 
@@ -85,3 +118,37 @@ class ModBusParser:
             crc=received_crc,
             crc_valid=(crc == received_crc),
         )
+
+
+class NMEAParser(MessageParser):
+    """Clase para enviar datos en serie y geolocalización NMEA"""
+
+    def can_parse(self, data: bytes) -> bool:
+        return data.startswith(b"$") and b"GGA" in data and b"*" in data
+
+    def parse(self, data: bytes) -> NMEASentence | None:
+        if not self.can_parse(data):
+            return None
+        try:
+            sentence = data.decode("ascii", errors="ignore").strip()
+            content, checksum_str = sentence.rsplit("*", 1)
+
+            calculated_checksum = 0
+            for char in content[1:]:
+                calculated_checksum ^= ord(char)
+
+            received_checksum = int(checksum_str[:2], 16)
+            checksum_valid = calculated_checksum == received_checksum
+
+            fields = content[1:].split(",")
+            header = fields[0]
+
+            return NMEASentence(
+                talker_id=header[:2],
+                sentence_type=header[2:],
+                fields=fields[1:],
+                checksum_valid=checksum_valid,
+                raw_sentence=sentence,
+            )
+        except Exception:
+            return None
