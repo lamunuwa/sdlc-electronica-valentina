@@ -19,20 +19,16 @@ class SensorReading:
 
 class BadSensorInterface(ABC):
     @abstractmethod
-    def read(self) -> SensorReading:
-        pass
+    def read(self) -> SensorReading: ...
 
     @abstractmethod
-    def write(self, value: float) -> None:
-        pass
+    def write(self, value: float) -> None: ...
 
     @abstractmethod
-    def calibrate(self) -> None:
-        pass
+    def calibrate(self) -> None: ...
 
     @abstractmethod
-    def reset(self) -> None:
-        pass
+    def reset(self) -> None: ...
 
 
 class BadSensorUse(BadSensorInterface):
@@ -59,13 +55,11 @@ class BadSensorUse(BadSensorInterface):
 
 
 class Readable(Protocol):
-    def read(self) -> SensorReading:
-        pass
+    def read(self) -> SensorReading: ...
 
 
 class Writable(Protocol):
-    def write(self, value: float) -> None:
-        pass
+    def write(self, value: float) -> None: ...
 
 
 # Las demas interfaces solicitadas (Calibratable y Resetable no las voy a agregar ya que son

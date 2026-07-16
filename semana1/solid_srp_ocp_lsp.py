@@ -74,8 +74,7 @@ class BadAnomalyDetector:
 
 class AlertStrategy(ABC):
     @abstractmethod
-    def send(self, message: str) -> None:
-        pass
+    def send(self, message: str) -> None: ...
 
 
 class ConsoleAlert(AlertStrategy):
@@ -139,8 +138,7 @@ def bad_process_sensor(sensor: BadBaseSensor) -> SensorReading:
 
 class GoodBaseSensor(ABC):
     @abstractmethod
-    def get_reading(self) -> SensorReading:
-        pass
+    def get_reading(self) -> SensorReading: ...
 
 
 class GoodTemperatureSensor(GoodBaseSensor):
