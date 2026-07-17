@@ -1,35 +1,206 @@
 # Registro de Uso de IA (AI Log)
 
-Este documento registra las interacciones con Inteligencia Artificial generativa utilizadas como asistencia para el desarrollo de las
-actividades durante el curso.
+Este documento registra las interacciones con Inteligencia Artificial generativa utilizadas como asistencia para el desarrollo de las actividades durante el curso.
 
-## Semana 1 - Entrada 1
-### Objetivo:
-Establecer el rol de la IA como experto para el chat usando CO-RE-CON (Contexto-Restricciones-Consigna) para escribir el prompt. 
-Obtener una explicación profunda línea por línea de la sintaxis de Type Hints, omitiendo la lógica de programación y los principios 
-SOLID por el momento. También solicitar la estructura base para el desarrollo de las 5 funciones puras asignadas. 
+**Nota:** En casi todas las entradas la IA comete errores menores que no explico, por ejemplo poner Dict en vez de dict, o usar Optional en vez de "|".
+
+## Semana 1
+
+## Entrada 9
+
+### Objetivo
+
+Mi archivo test_device.py, a pesar de tener una función de test para cada función de la clase UartDevice, marcaba error al commitear, en la prueba de cobertura exactamente. La IA debía solucionar eso dándome un banco de pruebas para device.py.
+
 ### Prompt
-> "Actua como un profesor egresado de ingeniería en software o similares, experto en Python orientado a objetos y 
-> plataformas de servidores API y contenedores. Actualmente estoy en un curso para orientar mis conocimientos de firmware 
-> embebido hacia la creación de software profesional. 
+
+> Revisa el archivo `recorder.py` y `test_recorder.py`, me esta dando error en pytest-cov no se a que se debe si tengo una prueba para cada funcion de device. Realiza un pytest y pytest-cov para que verifiques que el coverage es bajo. Al final entregame en el archivo `test_recorder.py` un banco de test que cumpla con +90% de coverage y verificalo con los mismos comandos de pytest y pytest-cov.
+
+### Resultados
+
+Error mío, estaba probando las funciones de device, funciones que tienen herencias de config y parsers, sin importar al código las clases, por eso me tiraba error. Solo importó las funciones de config y parsers, creando @pytest.fixture (entornos de pruebas) y reinterpreto los test que tenía agregándole los entornos importados y dependencias necesarias.
+
+## Entrada 8
+
+### Objetivo
+
+Explicar qué es NMEA, cómo funciona, qué parámetros pide y completar parsers.py.
+
+### Prompt
+
+> La ultima practica de la semana 1 de mi curso me pide implementar un driver UART modernizado usando 4 archivos: config, device, parsers y recorder. De estos cuento con config que es el siguiente codigo:
 >
-> Se divide en 6 semanas, en este momento me encuentro en la primera de ellas. Esta etapa se centra en los siguientes objetivos: 
-> - Mapear conceptos de hardware/firmware a sus equivalentes de software de alto nivel. 
-> - Escribir Python idiomático: type hints, dataclasses, enums, protocolos — no “C con otra sintaxis”. 
-> - Aplicar los 5 principios SOLID con ejemplos del dominio de sensores. 
+> `[Adjunte el codigo de config.py]`
 >
-> Como primera actividad se me pide realizar 5 funciones puras de reading (conversión de unidades, detección de umbral, serializacion) con type 
-> hints y verificarlo con ruffs y mypy. Me dieron este codigo de ejemplo: 
+> Y tengo iniciado el codigo de parsers, que es el siguiente:
 >
-> *[Aqui pegue el codigo dado en la guia de estudios]*
+> `[Adjunte el codigo de parsers.py]`
 >
-> No seas vago o impreciso con tu explicación, alargate, me gustan las explicaciones completas, basate puramente en la documentacion oficial de 
-> python, por el momento no me expliques SOLID enfocate únicamente en type hints, no expliques la logica de programacion.  
+> Para parsers.py se me pide hacer MessageParser (ABC con parse() y can_parse())+ ModbusParser (frames RTU) + NMEAParser (sentencias $GPGGA) implementando SOLID como pilar fundamental de la estructura del codigo. El problema es que no se que es NMEA, hasta el momento hice 2 drivers UART, uno en LL y otro en Verilog, pero nunca en HAL, se comunicaban por ASCII.
+> Explicame que es NMEA, como funciona por dentro (que parametros se necesitan, como se setean, cuales valores son incorrectos, hay reglas claras para NMEA?), evita usar terminos de bajo nivel, los entiendo muy bien pero quiero empezar a llevar mis conceptos a alto nivel.
 >
-> Explicame la sintaxis linea por linea, especialmente los type hints, que significa, donde se usa, por que me deberia importar para POO 
-> (Programacion orientada a objetos), API, IA. Por ultimo y siguiendo con el ejercicio, generame el "esqueleto" (los def con los argumentos vacíos) 
-> para que yo los rellene con la logica y los type hints."
-### Resultado:
-La IA asumió el rol solicitado y proporcionó un desglose técnico enfocado en las Type Hints de Python asi como su relevancia en las areas
-mencionadas. En el codigo entregó la estructura inicial para las 5 funciones puras orientadas al procesamiento de lecturas de sensores, dejo un breve
-contexto como comentario.
+> Al final entregame mi codigo de parsers.py con la implementacion de NMEA, no implementes MessageParser de ser posible (aunque es muy sencillo).
+
+### Resultados
+
+Usé este mismo prompt en Gemini y en DeepSeek, para comparar respuestas; como no sé qué es NMEA pensé que no podría fiarme de una sola respuesta. Los 2 me dieron respuestas prácticamente iguales, me explicaron todo lo solicitado, Gemini incluso me dejó fuentes NMEA 0183 (no sabía que era una especie de estándar) y generaron el código. Elegí el de DeepSeek ya que nunca me gustó Gemini para programación, pero a Gemini le escribí otro mensaje explicándole lo que entendí y un poco del código que generó para que validara si comprendí lo que me trató de decir (lo tengo configurado para que no siempre me dé la razón), teniendo éxito en un 70% de mi explicación y me volvió a explicar lo que tenía erróneo. Por el lado de DeepSeek, me entregó el código fuente con NMEA y 6 tests de los cuales elegí los 4 que me parecieron más compatibles con mi forma de escribir los test, de hecho 3 de ellos son muy similares a los que escribí para la primera versión del código.
+
+## Entrada 7
+
+### Objetivo
+
+Aclarar dudas sobre qué hizo en las correcciones del prompt anterior.
+
+### Prompt
+
+> "Lo que no termino de entender es:
+> Si protocol es un intermediario entre el proceso a bajo nivel como el guardado o lectura y el de alto nivel que es toda la logica de como se mueven las cosas, por que en estos codigos tanto PostgreSQLRepository e InMemoryRepository no llaman nunca a la funcion de protocol."
+
+### Resultados
+
+Me explicó el concepto de "Duck Typing" y cómo básicamente no hay necesidad de llamar a las clases protocol en los módulos de bajo nivel si estos tienen los argumentos establecidos en la clase protocol, me dio el siguiente ejemplo:
+<br>
+*"- El protocolo `DataRepository` dice que un almacén de datos debe tener los métodos save() y get_latest().*
+<br>
+*- La clase `PostgreSQLRepository` tiene los métodos save() y get_latest().*
+<br>
+*Como la clase tiene exactamente los mismos métodos que pide el protocolo, Python y tu validador estático (Mypy) dicen de forma automática: "Perfecto, esta clase es un DataRepository válido". No hace falta que la clase lo declare o lo llame explícitamente"*
+<br>
+Incluso al final me dio una analogía de hardware y de firmware, lo cual me sorprendió porque dedujo que lo entendería mejor así teniendo un muy breve contexto de mí.
+
+## Entrada 6
+
+### Objetivo
+
+Validar la implementación de los principios SOLID (ISP, DIP) en la práctica y probar DeepSeek (web) para medir su desempeño y confirmar si debería pasarme a una IA local (Ollama con DeepSeek, que investigando es uno de los combos más potentes) o seguir en GitHub Copilot.
+
+### Prompt
+
+> "Comportate como un ingeniero en software senior, experto en Python, especificamente en Programacion Orientada a Objetos (POO), plataformas de servidores API y contenedores. Estoy llevando un curso para orientar mis conocimientos de firmware embebido hacia la creación de software profesional.
+>
+> Se divide en 6 semanas, en este momento me encuentro en la primera de ellas. Esta etapa se centra en los siguientes objetivos:
+>
+> - Mapear conceptos de hardware/firmware a sus equivalentes de software de alto nivel.
+> - Escribir Python idiomático: type hints, dataclasses, enums, protocolos — no “C con otra sintaxis”.
+> - Aplicar los 5 principios SOLID con ejemplos del dominio de sensores.
+>
+> Actualmente me encuentro terminando la ultima practica de los fundamentos SOLID, especificamente practicas para ejecutar los principios ISP y DIP, me dieron el siguiente codigo de ejemplo:
+>
+> `[Adjunte el breve codigo de ejemplo de la guia]`
+>
+> Mi código funciona y los tests pasan (casi todos Green) con pytest, pero quiero revisar si los principio esta bien implementado y los test prueban todo, la practica solicita un codigo de el principio mal ejecutado y un codigo del principio bien ejectuado + 2 test por principio (yo lo voy llevando como test del incorrecto y test del correcto). Revisa los siguientes codigos:
+>
+> `[Aqui le adjunte el codigo de los 2 archivos, primero el fuente y luego el test]`
+>
+> Verifica si cumple.
+
+### Resultados
+
+Al ser la versión web del modelo no pude aceptar ni rechazar algo, sin embargo me dio una buena retroalimentación.
+La sección ISP era correcta y completa, no hizo cambios allí; por otro lado, la sección DIP tuvo fuertes cambios: Primero parece ser que no logré entender del todo las clases InMemoryRepository y PostgreSQLRepository por lo que refactorizó las clases, no entendí del todo qué hizo y eso conllevó a la entrada 7 (esto fue un error mío en el prompt, se me olvidó por completo agregarle que hiciera un resumen explicando los cambios, quizás esta IA es más estricta con lo que se le pide y lo que entrega). También hizo las debidas correcciones en el test y había un test que corría al 96% y no logré leer el error en la terminal (porque no le entendía) y lo solucionó; de mi parte eliminé la sección en la que probaba PostgreSQLRepository y puse como comentario la clase debido a que en la guía pide explícitamente que se pruebe únicamente con InMemoryRepository.
+
+## Entrada 3, 4 y 5
+
+**Nota:** Anteriormente actualicé AI_LOG con este prompt únicamente como "Entrada 3", en ese momento solo tenía programados los 2 códigos de ejemplo de SRP y mandé el prompt enfocado solo en SRP. Conforme fui generando los demás ejemplos le solicité a la IA hacer exactamente lo mismo copiando y pegando el prompt, cambiando SRP por OCP, LSP y los parámetros que tiene que evaluar para que no se confundiera, por esto englobo este prompt como "Entrada 3, 4 y 5", asimismo para identificar dónde fueron los cambios entre Prompts, acomodaré las diferencias en listas.
+
+### Objetivo
+
+Validar la implementación de los principios SOLID (SRP, OCP, LSP) en la práctica.
+
+### Prompt
+
+> Desarrolle un ejemplo del principio
+>
+> 1. SRP (Single Responsability Principle)
+> 2. OCP (Open-Closed Principle)
+> 3. LSP (Liskov Substitution Principle)
+>
+> en los archivos `solid_srp_ocp_lsp.py` (codigo fuente) y `test_srp_ocp_lsp.py` (pruebas con Pytest). Actualmente el codigo funciona y los tests pasan (Green), pero quiero revisar si el principio esta bien implementado.
+>
+> Realiza una revision de codigo y verifica si cumple, en caso contrario, refactoriza ambos archivos enfocandote en el cumplimiento estricto de
+>
+> 1. SRP:
+> 2. OCP:
+> 3. LSP:
+>
+> Evalua si cada clase y funcion
+>
+> 1. tiene una unica razon para cambiar. Si detectas responsabilidades acopladas, separalas.
+> 2. esta cerrada a la modificacion pero el codigo si es expandible. Si no cumple divide las clases y funciones.
+> 3. no modifica el comportamiento de la clase madre.
+>
+> Tambien revisa la calidad de las Pruebas (Pytest), verifica que los tests sean limpios.
+>
+> Al final realiza un pytest -v para revisar que todo funcione correctamente y entregame un resumen de que estuvo bien, que estuvo mal, que cambiaste y por que.
+
+### Resultados
+
+La primera vez que generé esta entrada no tuve cuidado en ver qué estaba haciendo Copilot, y me generó un código lleno de errores y warnings, al final se freezeó y tuve que repetir la instrucción. En la segunda (SRP), tercera (OCP), cuarta (LSP) iteración estuve al pendiente de qué hacía y no cometió errores (salvo algunos comandos en la terminal sin sentido que quería hacer y no le permití). El código estaba bien estructurado, citando *"En conclusión, el código original ya era muy bueno y funcional. La refactorización se centró en llevar la implementación y, sobre todo, las pruebas a un nivel de cumplimiento más estricto y expresivo de los principios SOLID, eliminando cualquier posible ambigüedad conceptual"*. Corrigió un par de imprecisiones que tenía el código de test de LSP que hacía que no cumpliera con el 100% de coverage y cambios menores para no confundir clases.
+
+## Entrada 2
+
+### Objetivo
+
+Generar configuraciones (archivos) para automatizar el proceso de verificación de calidad con Mypy, Ruff y Pytest, pidiéndole que verifique el correcto funcionamiento de dichos archivos usando una secuencia previamente establecida para reducir los errores al mínimo. Al ser dentro del mismo chat, a partir de este mensaje no se le establecerá un rol a menos que sea estrictamente necesario.
+
+### Prompt
+
+> En este repositorio requiero mantener un estándar de calidad extremadamente alto (Mypy, Ruff, Pytest con coverage cercano al 90%-100%). Investigando encontré que se puede automatizar la tarea de ejecutar los linters y test con "pre-commit".
+>
+> Necesito que me generes la configuración necesaria para automatizar este flujo de verificación de forma rápida y local antes de subir mi código.
+>
+> Genera la siguiente solucion:
+>
+> 1. Configuración de Git Hooks con la herramienta "pre-commit":
+>
+> - Genera el archivo de configuración `.pre-commit-config.yaml`.
+> - Incluye los hooks para Ruff (tanto linter como formatter), Mypy y la ejecución de Pytest con el reporte de coverage.
+>
+> Al terminar, ejecuta el siguiente flujo en mi terminal para verificar que funcionen las configuraciones:
+>
+> 1. Crear un archivo temporal de prueba en Python (ej. 'test_sandbox.py').
+> 2. Añadirlo al Staging Area ('git add test_sandbox.py').
+> 3. Intentar realizar un commit local ('git commit -m "test: sandbox validation"') para forzar la ejecución de los hooks de pre-commit que validan el código (validar que funciona el .yaml).
+> 4. Deshacer el commit inmediatamente después usando 'git reset HEAD~1' (o el comando adecuado) para mantener el historial de Git completamente limpio y revertir el archivo temporal.
+> 5. Eliminar físicamente el archivo temporal 'test_sandbox.py'.
+> 6. Genera en el chat un resumen claro que me diga explícitamente si el flujo fue EXITOSO o si FALLÓ (detallando qué linter o test detuvo el proceso).
+>
+> Restricciones:
+>
+> - Las herramientas deben leer sus configuraciones de los archivos estándar del proyecto (como pyproject.toml), no metas flags excesivas en el script si pueden ir en el archivo de configuración.
+> - El comando de Pytest debe incluir los argumentos para fallar si el coverage baja de un umbral específico (por ejemplo, --cov-fail-under=90).
+> - El script DEBE ser 100% local. Bajo ninguna circunstancia debe ejecutar 'git push'.
+> - Debe manejar correctamente los códigos de salida (exit codes) para que, si el pre-commit falla en el paso 3, el script no se detenga abruptamente y pueda ejecutar correctamente los pasos de limpieza (reset y borrado del archivo temporal).
+> - Dame las instrucciones claras de cómo instalar las herramientas y cómo ejecutar este flujo con un solo comando corto desde mi terminal.
+
+### Resultados
+
+Generó los archivos `.pre-commit-config.yaml` y `pyproject.toml.` En un principio generó una configuración extraña en el .yaml donde no respetaba su propio archivo .toml; tuve que rechazar varias veces los cambios, ya que en un punto quería modificar los archivos .py de las prácticas. Al final generó una configuración bastante profesional: Ruff es muy estricto y en Pytest debo superar el 90% en el coverage para que permita realizar un commit.
+
+## Entrada 1
+
+### Objetivo
+
+Establecer el rol de la IA como experto para el chat usando CO-RE-CON (Contexto-Restricciones-Consigna) para escribir el prompt. Obtener una explicación profunda línea por línea de la sintaxis de Type Hints, omitiendo la lógica de programación y los principios SOLID por el momento. También solicitar la estructura base para el desarrollo de las 5 funciones puras asignadas.
+
+### Prompt
+
+> "Actua como un profesor egresado de ingeniería en software o similares, experto en Python orientado a objetos y plataformas de servidores API y contenedores. Actualmente estoy en un curso para orientar mis conocimientos de firmware embebido hacia la creación de software profesional.
+>
+> Se divide en 6 semanas, en este momento me encuentro en la primera de ellas. Esta etapa se centra en los siguientes objetivos:
+>
+> - Mapear conceptos de hardware/firmware a sus equivalentes de software de alto nivel.
+> - Escribir Python idiomático: type hints, dataclasses, enums, protocolos — no “C con otra sintaxis”.
+> - Aplicar los 5 principios SOLID con ejemplos del dominio de sensores.
+>
+> Como primera actividad se me pide realizar 5 funciones puras de reading (conversión de unidades, detección de umbral, serializacion) con type hints y verificarlo con ruffs y mypy. Me dieron este codigo de ejemplo:
+>
+> `[Aqui pegue el codigo dado en la guia de estudios]`
+>
+> No seas vago o impreciso con tu explicación, alargate, me gustan las explicaciones completas, basate puramente en la documentacion oficial de python, por el momento no me expliques SOLID enfocate únicamente en type hints, no expliques la logica de programacion.  
+>
+> Explicame la sintaxis linea por linea, especialmente los type hints, que significa, donde se usa, por que me deberia importar para POO (Programacion orientada a objetos), API, IA. Por ultimo y siguiendo con el ejercicio, generame el "esqueleto" (los def con los argumentos vacíos) para que yo los rellene con la logica y los type hints."
+
+### Resultados
+
+La IA asumió el rol solicitado y proporcionó un desglose técnico enfocado en las Type Hints de Python, así como su relevancia en las áreas mencionadas. En el código, entregó la estructura inicial para las 5 funciones puras orientadas al procesamiento de lecturas de sensores, dejando un breve contexto como comentario.
