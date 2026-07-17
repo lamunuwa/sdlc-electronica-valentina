@@ -2,7 +2,7 @@
 
 Este documento registra las interacciones con Inteligencia Artificial generativa utilizadas como asistencia para el desarrollo de las actividades durante el curso.
 
-**Nota:** En casi todos las entradas la IA comete errores menores que no explico, por ejemplo poner Dict en vez de dict, o usar Optional en vez de "|".
+**Nota:** En casi todas las entradas la IA comete errores menores que no explico, por ejemplo poner Dict en vez de dict, o usar Optional en vez de "|".
 
 ## Semana 1
 
@@ -10,7 +10,7 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 ### Objetivo
 
-Mi archivo test_device.py a pesar de tener una funcion de test para cada funcion de la clase UartDevice marcaba error al commitear, en la prueba de covertura exactamente. La IA debia solucionar eso dandome un banco de pruebas para device.py
+Mi archivo test_device.py, a pesar de tener una función de test para cada función de la clase UartDevice, marcaba error al commitear, en la prueba de cobertura exactamente. La IA debía solucionar eso dándome un banco de pruebas para device.py.
 
 ### Prompt
 
@@ -18,13 +18,13 @@ Mi archivo test_device.py a pesar de tener una funcion de test para cada funcion
 
 ### Resultados
 
-Error mio, estaba probando las funciones de device, funciones que tienen herencias de config y parsers, sin importar al codigo las clases, por eso me tiraba error. Solo importo las funciones de config y parsers, creando @pytest.fixure (entornos de pruebas) y reinterpreto los test que tenia agregandole los entornos importados y dependencias necesarias.
+Error mío, estaba probando las funciones de device, funciones que tienen herencias de config y parsers, sin importar al código las clases, por eso me tiraba error. Solo importó las funciones de config y parsers, creando @pytest.fixture (entornos de pruebas) y reinterpreto los test que tenía agregándole los entornos importados y dependencias necesarias.
 
 ## Entrada 8
 
 ### Objetivo
 
-Explicar que es NMEA, como funciona, que parametros pide y completar parsers.py
+Explicar qué es NMEA, cómo funciona, qué parámetros pide y completar parsers.py.
 
 ### Prompt
 
@@ -43,13 +43,13 @@ Explicar que es NMEA, como funciona, que parametros pide y completar parsers.py
 
 ### Resultados
 
-Use este mismo prompt en Gemini y en Deepseek, para comparar respuestas, como no se que es NMEA pense que no podria fiarme de una sola respuesta. Los 2 me dieron respuestas practicamente iguales, me explicaron todo lo solicitado, Gemini incluso me dejo fuentes NMEA 0183 (no sabia que era una especie de estandar) y generaron el codigo, elegi el de Deepseek ya que nunca me gusto Gemini para programacion, pero a Gemini le escribi otro mensaje explicandole lo que entendi y un poco del codigo que genero para que validara si comprendi lo que me trato de decir (lo tengo configurado para que no siempre me de la razon), teniendo exito en un 70% de mi explicacion y me volvio a explicar lo que tenia erroneo. Por el lado de Deepseek me entrego el codigo fuente con NMEA y 6 tests de los cuales elegi los 4 que me parecieron mas compatibles con mi forma de escribir los test, de hecho 3 de ellos son muy similares a los que escribi para la primera version del codigo.
+Usé este mismo prompt en Gemini y en DeepSeek, para comparar respuestas; como no sé qué es NMEA pensé que no podría fiarme de una sola respuesta. Los 2 me dieron respuestas prácticamente iguales, me explicaron todo lo solicitado, Gemini incluso me dejó fuentes NMEA 0183 (no sabía que era una especie de estándar) y generaron el código. Elegí el de DeepSeek ya que nunca me gustó Gemini para programación, pero a Gemini le escribí otro mensaje explicándole lo que entendí y un poco del código que generó para que validara si comprendí lo que me trató de decir (lo tengo configurado para que no siempre me dé la razón), teniendo éxito en un 70% de mi explicación y me volvió a explicar lo que tenía erróneo. Por el lado de DeepSeek, me entregó el código fuente con NMEA y 6 tests de los cuales elegí los 4 que me parecieron más compatibles con mi forma de escribir los test, de hecho 3 de ellos son muy similares a los que escribí para la primera versión del código.
 
 ## Entrada 7
 
 ### Objetivo
 
-Aclarar dudas sobre que hizo en las correcciones del prompt anterior.
+Aclarar dudas sobre qué hizo en las correcciones del prompt anterior.
 
 ### Prompt
 
@@ -58,7 +58,7 @@ Aclarar dudas sobre que hizo en las correcciones del prompt anterior.
 
 ### Resultados
 
-Me explico el concepto de "Duck Typing" y como basicamente no hay necesidad de llamar a las clases protocol a los modulos de bajo nivel si estos tiene los argumentos establecidos en la clase protocol, me dio el siguiente ejemplo:
+Me explicó el concepto de "Duck Typing" y cómo básicamente no hay necesidad de llamar a las clases protocol en los módulos de bajo nivel si estos tienen los argumentos establecidos en la clase protocol, me dio el siguiente ejemplo:
 <br>
 *"- El protocolo `DataRepository` dice que un almacén de datos debe tener los métodos save() y get_latest().*
 <br>
@@ -66,13 +66,13 @@ Me explico el concepto de "Duck Typing" y como basicamente no hay necesidad de l
 <br>
 *Como la clase tiene exactamente los mismos métodos que pide el protocolo, Python y tu validador estático (Mypy) dicen de forma automática: "Perfecto, esta clase es un DataRepository válido". No hace falta que la clase lo declare o lo llame explícitamente"*
 <br>
-Incluso al final me dio una analogia de hardware y de firmware, lo cual me sorprendio por que dedujo que lo entenderia mejor asi teniendo muy breve contexto de mi.
+Incluso al final me dio una analogía de hardware y de firmware, lo cual me sorprendió porque dedujo que lo entendería mejor así teniendo un muy breve contexto de mí.
 
 ## Entrada 6
 
 ### Objetivo
 
-Validar la implementacion de los principios SOLID (ISP, DIP) en la practica y probar DeepSeek (web) para medir su desempeño y confirmar si deberia pasarme a una IA local (Ollama con DeepSeek, que investigando es uno de los combos mas potentes) o seguir en Github Copilot.
+Validar la implementación de los principios SOLID (ISP, DIP) en la práctica y probar DeepSeek (web) para medir su desempeño y confirmar si debería pasarme a una IA local (Ollama con DeepSeek, que investigando es uno de los combos más potentes) o seguir en GitHub Copilot.
 
 ### Prompt
 
@@ -96,8 +96,8 @@ Validar la implementacion de los principios SOLID (ISP, DIP) en la practica y pr
 
 ### Resultados
 
-Al ser la version web del modelo no pude aceptar ni rechazar algo, sin embargo me dio una buena retroalimentacion.
-La seccion ISP era correcta y completa, no hizo cambios alli, por otro lado la seccion DIP tuvo fuertes cambios: Primero parece ser que no logre entender del todo las clases InMemoryRepository y PostgreSQLRepository por lo que refactorizo las clases, no entendi del todo que hizo y eso conllevo a la entrada 7 (esto fue un error mio en el prompt, se me olvido por completo agregarle que hiciera un resumen explicando los cambios, quizas esta IA es mas estricta con lo que se le pide y lo que entrega). Tambien hizo las debidas correcciones en el test y habia un test que corria al 96% y no logre leer el error en la terminal (por que no le entendia) y lo soluciono, de mi parte elimine la seccion en la que probaba PostgreSQLRepository y puse como comentario la clase debido a que en la guia pide explicitamente que se pruebe unicamente con InMemoryRepository.
+Al ser la versión web del modelo no pude aceptar ni rechazar algo, sin embargo me dio una buena retroalimentación.
+La sección ISP era correcta y completa, no hizo cambios allí; por otro lado, la sección DIP tuvo fuertes cambios: Primero parece ser que no logré entender del todo las clases InMemoryRepository y PostgreSQLRepository por lo que refactorizó las clases, no entendí del todo qué hizo y eso conllevó a la entrada 7 (esto fue un error mío en el prompt, se me olvidó por completo agregarle que hiciera un resumen explicando los cambios, quizás esta IA es más estricta con lo que se le pide y lo que entrega). También hizo las debidas correcciones en el test y había un test que corría al 96% y no logré leer el error en la terminal (porque no le entendía) y lo solucionó; de mi parte eliminé la sección en la que probaba PostgreSQLRepository y puse como comentario la clase debido a que en la guía pide explícitamente que se pruebe únicamente con InMemoryRepository.
 
 ## Entrada 3, 4 y 5
 
