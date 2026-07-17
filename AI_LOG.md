@@ -2,7 +2,23 @@
 
 Este documento registra las interacciones con Inteligencia Artificial generativa utilizadas como asistencia para el desarrollo de las actividades durante el curso.
 
+**Nota:** En casi todos las entradas la IA comete errores menores que no explico, por ejemplo poner Dict en vez de dict, o usar Optional en vez de "|".
+
 ## Semana 1
+
+## Entrada 9
+
+### Objetivo
+
+Mi archivo test_device.py a pesar de tener una funcion de test para cada funcion de la clase UartDevice marcaba error al commitear, en la prueba de covertura exactamente. La IA debia solucionar eso dandome un banco de pruebas para device.py
+
+### Prompt
+
+> Revisa el archivo `recorder.py` y `test_recorder.py`, me esta dando error en pytest-cov no se a que se debe si tengo una prueba para cada funcion de device. Realiza un pytest y pytest-cov para que verifiques que el coverage es bajo. Al final entregame en el archivo `test_recorder.py` un banco de test que cumpla con +90% de coverage y verificalo con los mismos comandos de pytest y pytest-cov.
+
+### Resultados
+
+Error mio, estaba probando las funciones de device, funciones que tienen herencias de config y parsers, sin importar al codigo las clases, por eso me tiraba error. Solo importo las funciones de config y parsers, creando @pytest.fixure (entornos de pruebas) y reinterpreto los test que tenia agregandole los entornos importados y dependencias necesarias.
 
 ## Entrada 8
 
