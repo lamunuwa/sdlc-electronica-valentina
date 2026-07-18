@@ -1,6 +1,6 @@
 import json
 
-from semana1.uart_driver.recorder import DataRecorder
+from semana1.uart_driver.recorder import DataRecorder, Log
 
 
 def test_recorder_write_json(tmp_path):
@@ -42,3 +42,47 @@ def test_recorder_unicode_utf8(tmp_path):
         line = f.readline()
 
     assert json.loads(line) == unicode_data
+
+# Test para Loggind JSON
+
+def test_info(capsys):
+    Log.log_json("info", "test_event", {"key": "value"})
+    
+    captured = capsys.readouterr()
+    log_entry = json.loads(captured.out.strip())
+    
+    assert log_entry["level"] == "INFO"
+    assert log_entry["event"] == "test_event"
+    assert log_entry["metadata"] == {"key": "value"}
+
+def test_warning(capsys):
+    Log.log_json("warning", "buffer_full", {"capacity": 10})
+    
+    captured = capsys.readouterr()
+    log_entry = json.loads(captured.out.strip())
+    
+    assert log_entry["level"] == "WARNING"
+    assert log_entry["event"] == "buffer_full"
+    assert log_entry["metadata"] == {"capacity": 10}
+
+def test_metadata_none(capsys):
+    Log.log_json("info", "simple_event", None)
+    
+    captured = capsys.readouterr()
+    log_entry = json.loads(captured.out.strip())
+    
+    assert log_entry["level"] == "INFO"
+    assert log_entry["event"] == "simple_event"
+    assert log_entry["metadata"] == {}
+
+def test_unicode(capsys):
+    unicode_metadata = {"message": "línea_#$😂"}
+    
+    Log.log_json("info", "unicode_event", unicode_metadata)
+    
+    captured = capsys.readouterr()
+    log_entry = json.loads(captured.out.strip())
+    
+    assert log_entry["level"] == "INFO"
+    assert log_entry["event"] == "unicode_event"
+    assert log_entry["metadata"] == unicode_metadata
