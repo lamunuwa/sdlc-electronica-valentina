@@ -19,6 +19,7 @@ class DataRecorder:
         if self.file and not self.file.closed:
             self.file.close()
 
+
 class Log:
     @staticmethod
     def log_json(level: str, event: str, metadata: dict[str, Any] | None) -> None:

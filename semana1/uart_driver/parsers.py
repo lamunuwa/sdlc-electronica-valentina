@@ -44,7 +44,7 @@ class CanFrame:
     valid: bool
 
     def to_dict(self) -> dict:
-        return {"id": self.id, "dlc": self.dlc, "data": self.data, "valid": self.valid}
+        return {"id": self.id, "dlc": self.dlc, "data": self.data.hex(), "valid": self.valid}
 
 
 @dataclass(frozen=True)

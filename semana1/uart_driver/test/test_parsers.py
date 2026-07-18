@@ -27,12 +27,12 @@ def test_to_dict_format():  # ModBusFrame cuenta dentro de los test para ModBusP
 
 
 def test_to_dict_cframe():
-    frame = CanFrame(id=0x123, dlc=4, data=bytes([0x0A, 0x0B, 0x0C, 0x0D]), valid=True)
+    frame = CanFrame(id=0x123, dlc=4, data=bytes([0xAA, 0xBB, 0xCC, 0xDD]), valid=True)
 
     dic = frame.to_dict()
     assert dic["id"] == 0x123
     assert dic["dlc"] == 4
-    assert dic["data"] == "abcd"
+    assert dic["data"] == "aabbccdd"
     assert dic["valid"] is True
 
 
