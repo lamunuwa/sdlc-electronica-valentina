@@ -37,6 +37,17 @@ class ModbusFrame:
 
 
 @dataclass(frozen=True)
+class CanFrame:
+    id: int
+    dlc: int
+    data: bytes
+    valid: bool
+
+    def to_dict(self) -> dict:
+        return {"id": self.id, "dlc": self.dlc, "data": self.data, "valid": self.valid}
+
+
+@dataclass(frozen=True)
 class NMEASentence:
     talker_id: str
     sentence_type: str
@@ -118,6 +129,24 @@ class ModBusParser(MessageParser):
             crc=received_crc,
             crc_valid=(crc == received_crc),
         )
+
+
+class CanParser:
+    sof = 0x5A
+
+    def can_parse(self, data: bytes) -> bool:
+        return len(data) == 12 and data[0] == self.sof
+
+    def parse(self, data: bytes) -> CanFrame | None:
+        if not self.can_parse(data):
+            return None
+
+        id = int.from_bytes(data[1:3], byteorder="big")
+        dlc = data[3]
+        payload = data[4 : 4 + dlc]
+        valid = dlc <= 8
+
+        return CanFrame(id=id, dlc=dlc, data=payload, valid=valid)
 
 
 class NMEAParser(MessageParser):
