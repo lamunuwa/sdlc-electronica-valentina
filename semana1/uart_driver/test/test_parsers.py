@@ -1,4 +1,11 @@
-from semana1.uart_driver.parsers import ModbusFrame, ModBusParser, NMEAParser, NMEASentence
+from semana1.uart_driver.parsers import (
+    CanFrame,
+    CanParser,
+    ModbusFrame,
+    ModBusParser,
+    NMEAParser,
+    NMEASentence,
+)
 
 
 def test_to_dict_format():  # ModBusFrame cuenta dentro de los test para ModBusParser
@@ -17,6 +24,16 @@ def test_to_dict_format():  # ModBusFrame cuenta dentro de los test para ModBusP
     assert dic["data"] == bytes([0xAA])
     assert dic["crc"] == 1234
     assert dic["crc_valid"]
+
+
+def test_to_dict_cframe():
+    frame = CanFrame(id=0x123, dlc=4, data=bytes([0xAA, 0xBB, 0xCC, 0xDD]), valid=True)
+
+    dic = frame.to_dict()
+    assert dic["id"] == 0x123
+    assert dic["dlc"] == 4
+    assert dic["data"] == "aabbccdd"
+    assert dic["valid"] is True
 
 
 def test_nmea_to_dict():  # NMEASentence cuenta dentro de los test de NMEAParser
@@ -84,6 +101,27 @@ def test_parse_successful_frame():
     assert frame.data == bytes([0x00, 0x00, 0x00, 0x01])
     assert frame.raw_data == data
     assert frame.crc_valid is True
+    assert frame.valid is True
+
+
+def test_can_valid_frame():
+    parser = CanParser()
+    valid_data = bytes([0x5A, 0x01, 0x23, 0x04, 0x11, 0x22, 0x33, 0x44, 0x00, 0x00, 0x00, 0x00])
+    assert parser.can_parse(valid_data) is True
+
+
+def test_can_parse_success():
+    parser = CanParser()
+    bin_data = bytes([0x5A, 0x01, 0x23, 0x04, 0x0A, 0x0B, 0x0C, 0x0D, 0x00, 0x00, 0x00, 0x00])
+    # Orden: SOF, ID, ID, DLC, Data... (ABCD)
+
+    frame = parser.parse(bin_data)
+
+    assert frame is not None
+    assert isinstance(frame, CanFrame)
+    assert frame.id == 0x0123
+    assert frame.dlc == 4
+    assert frame.data == bytes([0x0A, 0x0B, 0x0C, 0x0D])
     assert frame.valid is True
 
 

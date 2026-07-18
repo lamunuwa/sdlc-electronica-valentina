@@ -57,6 +57,6 @@ OCP - Open/Closed Principle: El código debe estar abierto a su extensión pero 
 
 LSP - Liskov Substitution Principle: Los subtipos de una clase deben poder reemplazar a la clase sin alterar el programa. Hay un ejemplo que vi en internet donde decían que la clase "Pingüino" que hereda de la clase "Ave" rompe el principio, ya que dicha clase tiene una función "volar()" y los pingüinos no pueden volar.
 
-4. ISP - Interface Segregation Principle: El más simple, es mejor tener muchas interfaces pequeñas y específicas que una sola interfaz "todo en uno" con funciones inútiles.
+ISP - Interface Segregation Principle: El más simple, es mejor tener muchas interfaces pequeñas y específicas que una sola interfaz "todo en uno" con funciones inútiles.
 
-5. DIP - Dependency Inversion Principle: Seguido la más complicada, como tal la definición es "Depende de abstracciones, no de concreciones", lo cual no dice nada, pero se entiende como que los módulos de alto nivel no deben depender de los módulos de bajo nivel; por ejemplo, la clase "Procesamiento" (módulo de alto nivel) no debe heredar la clase "Base de datos" (módulo de bajo nivel), para hacerlos trabajar juntos hacemos una función abstracta (@abstractmethod/ABC) que fije los valores que intercambiarán.
+DIP - Dependency Inversion Principle: Seguido la más complicada, como tal la definición es "Depende de abstracciones, no de concreciones", lo cual no dice nada, pero se entiende como que los módulos de alto nivel no deben depender de los módulos de bajo nivel; por ejemplo, la clase "Procesamiento" (módulo de alto nivel) no debe heredar la clase "Base de datos" (módulo de bajo nivel), para hacerlos trabajar juntos hacemos una función abstracta (@abstractmethod/ABC) que fije los valores que intercambiarán.
