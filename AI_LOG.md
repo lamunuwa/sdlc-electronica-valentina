@@ -2,7 +2,50 @@
 
 Este documento registra las interacciones con Inteligencia Artificial generativa utilizadas como asistencia para el desarrollo de las actividades durante el curso.
 
-**Nota:** En casi todas las entradas la IA comete errores menores que no explico, por ejemplo poner Dict en vez de dict, o usar Optional en vez de "|".
+**Nota:** En casi todas las entradas (generación de codigo) la IA comete errores menores que no explico, por ejemplo poner Dict en vez de dict.
+
+## Semana 2
+
+## Entrada 1
+
+### Objetivo
+
+Auditar mis US, verificar formatos y saber si son verificables, qué tan ambiguos son y qué casos borde faltan.
+
+### Prompt
+
+> La semana 2 en mi curso se basa en:
+>
+> - Aplicar Scrum completo: roles, eventos, artefactos y valores.
+> - Escribir user stories profesionales con criterios de aceptación en Gherkin.
+> - Practicar TDD estricto: el test siempre antes del código, sin excepción.
+>
+> Como actividad 2 se me pide hacer 10 user stories, no especifica bien de que, sin embargo hay un par de actividades mas en la semana que use para escribir los US, son estas:
+>
+> 1. Día 3 · Miércoles — TDD estricto ...
+> 2. Día 4 · Jueves — Definition of Done y calidad automatizada ...
+> 3. Día 5 · Viernes — EVALUACIÓN 1 ...
+>
+> *(Pegue las instrucciones completas, aqui lo substituyo por los 3 puntos)*
+>
+> Evalua mis US, se estricto con el Gherkin, mencioname ¿es verificable? ¿es ambiguo? ¿qué caso borde falta?
+>
+> `[Aqui pegue el texto de mi .md]`
+
+### Resultados
+
+Me explicó que comúnmente en US se redactan únicamente funcionalidades reales del sistema, no documentación, lo cual es un gran problema ya que 5 de mis 10 US se basan en documentación o tareas de proceso (como el .toml), por lo que debo de reescribir 5 US. Del lado de las que sí cumplen, todas las marcó como parcialmente verificables y ambiguas. No me generó un texto de referencia, pero sí me dejó los errores por cada US, ejemplo:
+
+```text
+¿Es verificable? Parcialmente. ¿Ambiguo? Sí.
+
+Problemas:
+• "registrado en el SensorRegistry": ¿cómo se registra? No hay un escenario de registro. Solo cubres consulta.
+• "devuelve la instancia correspondiente": muy vago. ¿Qué atributos debe tener esa instancia? ¿ID, tipo, ubicación?
+• SensorNotFoundError: bien que uses una excepción concreta, pero no especificas si es checked o runtime.
+```
+
+---
 
 ## Semana 1
 
@@ -59,13 +102,17 @@ Aclarar dudas sobre qué hizo en las correcciones del prompt anterior.
 ### Resultados
 
 Me explicó el concepto de "Duck Typing" y cómo básicamente no hay necesidad de llamar a las clases protocol en los módulos de bajo nivel si estos tienen los argumentos establecidos en la clase protocol, me dio el siguiente ejemplo:
-<br>
-*"- El protocolo `DataRepository` dice que un almacén de datos debe tener los métodos save() y get_latest().*
-<br>
-*- La clase `PostgreSQLRepository` tiene los métodos save() y get_latest().*
-<br>
-*Como la clase tiene exactamente los mismos métodos que pide el protocolo, Python y tu validador estático (Mypy) dicen de forma automática: "Perfecto, esta clase es un DataRepository válido". No hace falta que la clase lo declare o lo llame explícitamente"*
-<br>
+
+```text
+- El protocolo `DataRepository` dice que un almacén de datos debe tener los métodos save() y get_latest().
+
+- La clase `PostgreSQLRepository` tiene los métodos save() y get_latest().*
+
+Como la clase tiene exactamente los mismos métodos que pide el protocolo, Python y tu validador estático (Mypy)
+dicen de forma automática: "Perfecto, esta clase es un DataRepository válido". No hace falta que la clase lo declare
+o lo llame explícitamente.
+```
+
 Incluso al final me dio una analogía de hardware y de firmware, lo cual me sorprendió porque dedujo que lo entendería mejor así teniendo un muy breve contexto de mí.
 
 ## Entrada 6
@@ -135,7 +182,15 @@ Validar la implementación de los principios SOLID (SRP, OCP, LSP) en la prácti
 
 ### Resultados
 
-La primera vez que generé esta entrada no tuve cuidado en ver qué estaba haciendo Copilot, y me generó un código lleno de errores y warnings, al final se freezeó y tuve que repetir la instrucción. En la segunda (SRP), tercera (OCP), cuarta (LSP) iteración estuve al pendiente de qué hacía y no cometió errores (salvo algunos comandos en la terminal sin sentido que quería hacer y no le permití). El código estaba bien estructurado, citando *"En conclusión, el código original ya era muy bueno y funcional. La refactorización se centró en llevar la implementación y, sobre todo, las pruebas a un nivel de cumplimiento más estricto y expresivo de los principios SOLID, eliminando cualquier posible ambigüedad conceptual"*. Corrigió un par de imprecisiones que tenía el código de test de LSP que hacía que no cumpliera con el 100% de coverage y cambios menores para no confundir clases.
+La primera vez que generé esta entrada no tuve cuidado en ver qué estaba haciendo Copilot, y me generó un código lleno de errores y warnings, al final se freezeó y tuve que repetir la instrucción. En la segunda (SRP), tercera (OCP), cuarta (LSP) iteración estuve al pendiente de qué hacía y no cometió errores (salvo algunos comandos en la terminal sin sentido que quería hacer y no le permití). El código estaba bien estructurado, citando:
+
+```text
+En conclusión, el código original ya era muy bueno y funcional. La refactorización se centró en llevar la implementación
+y, sobre todo, las pruebas a un nivel de cumplimiento más estricto y expresivo de los principios SOLID, eliminando cualquier
+posible ambigüedad conceptual.
+```
+
+Corrigió un par de imprecisiones que tenía el código de test de LSP que hacía que no cumpliera con el 100% de coverage y cambios menores para no confundir clases.
 
 ## Entrada 2
 
@@ -175,7 +230,7 @@ Generar configuraciones (archivos) para automatizar el proceso de verificación 
 
 ### Resultados
 
-Generó los archivos `.pre-commit-config.yaml` y `pyproject.toml.` En un principio generó una configuración extraña en el .yaml donde no respetaba su propio archivo .toml; tuve que rechazar varias veces los cambios, ya que en un punto quería modificar los archivos .py de las prácticas. Al final generó una configuración bastante profesional: Ruff es muy estricto y en Pytest debo superar el 90% en el coverage para que permita realizar un commit.
+Generó los archivos `.pre-commit-config.yaml` y `pyproject.toml`. En un principio generó una configuración extraña en el .yaml donde no respetaba su propio archivo .toml; tuve que rechazar varias veces los cambios, ya que en un punto quería modificar los archivos .py de las prácticas. Al final generó una configuración bastante profesional: Ruff es muy estricto y en Pytest debo superar el 90% en el coverage para que permita realizar un commit.
 
 ## Entrada 1
 
