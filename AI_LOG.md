@@ -4,7 +4,27 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 **Nota:** En casi todas las entradas (generación de codigo) la IA comete errores menores que no explico, por ejemplo poner Dict en vez de dict.
 
+---
+
 ## Semana 2
+
+## Entrada 2
+
+### Objetivo
+
+Volver a valorar mis US, esta vez corregidos con las mismas preguntas y agregando revisar responsabilidades de cada US
+
+### Prompt
+
+> Hice de nuevo los US (User Stories) eliminando los que no eran funcionalidades del sistema, participando en las sesiones con el ingeniero comente uno de mis US y me menciono que estaba juntando 2 modelos de negocio en un solo US, que estaba bien pero que podia mejorar si los dividia en versiones mas reducidas y precisas. Lo corregi, ahora revisa el texto buscando mas discrepancias de responsabilidad unica y de nuevo ¿es verificable? ¿es ambiguo? ¿qué caso borde falta?. Ademas al final, agrega un US mas (US-12) en el que el punto sea hacer un modulo madre para todos los modulos de los US, prioridad Wont have.
+>
+> `[Aqui pegue el texto de mi .md]`
+
+### Resultados
+
+Mucho mejor que la vez pasada; esta vez los cambios realizados fueron mínimos, más que todo de redundancia en algunos US. Por ejemplo, había gherkins que pedían probar la misma lógica en temperatura y en humedad; la IA eliminó la humedad, mencionando que es redundante y es mejor mantener las pruebas limpias. Supongo que por lo mismo de querer mantener un entorno limpio, cambió nombres de IDs por nombres más descriptivos; esto lo revertí. A mí personalmente me gusta mantener pocos nombres y cortos, más cuando es un código breve, como es el caso; así me confundo menos.
+
+Para finalizar, sí creó el módulo madre que le pedí; sin embargo, este en un principio no usaba la parte de lectura y guardado de los datos leídos por el sensor (04 y 05). Cuando le pedí que agregara todos los módulos, lo terminé agregando manualmente (igual puede no usarse y por eso lo ignoro, pero eso lo veré en el proceso).
 
 ## Entrada 1
 
