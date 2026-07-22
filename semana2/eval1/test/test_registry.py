@@ -130,7 +130,7 @@ def test_consultar_sensor_inexistente() -> None:
     # When: solicito el sensor con ID "GHOST-99"
     # Then: se lanza SensorNotFoundError
     with pytest.raises(SensorNotFoundError):
-        lister.get_by_id("GHOST-99")
+        lister.find_by_id("GHOST-99")
 
 
 def test_listar_todos_los_sensores_registrados() -> None:

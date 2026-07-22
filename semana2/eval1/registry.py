@@ -54,6 +54,12 @@ class SensorLister:
     def get_by_id(self, sensor_id: str) -> SensorData | None:
         return self.repository.sensors.get(sensor_id)
 
+    def find_by_id(self, sensor_id: str) -> SensorData:
+        sensor = self.get_by_id(sensor_id)
+        if sensor is None:
+            raise SensorNotFoundError(f"Sensor con ID {sensor_id} no encontrado")
+        return sensor
+
     def list_all(self) -> list[SensorData]:
         return list(self.repository.sensors.values())
 
