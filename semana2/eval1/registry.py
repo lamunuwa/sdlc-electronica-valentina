@@ -31,6 +31,9 @@ class InvalidSensorDataError(Exception): ...
 class SensorAlreadyExistsError(Exception): ...
 
 
+class SensorNotFoundError(Exception): ...
+
+
 # ------------------------------------------------------
 
 
