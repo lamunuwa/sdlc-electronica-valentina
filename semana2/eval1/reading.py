@@ -47,14 +47,40 @@ class ReadingRecorder:
         self.readings.append(reading)
         return reading
 
-    def get_readings(self) -> list[SensorReading]:
-        return list(self.readings)
-
 
 class ReadingHistory:
+    """Clase para obtener el historial de lecturas de sensores"""
+
     def __init__(self, sensor_repository: SensorRepository, recorder: ReadingRecorder) -> None:
         self.sensor_lister = SensorLister(sensor_repository)
         self.recorder = recorder
+
+    def get_sensor_history(
+        self, sensor_id: str, start_date: datetime | None = None, end_date: datetime | None = None
+    ) -> list[SensorReading]:
+        self.sensor_lister.find_by_id(sensor_id)
+
+        sensor_readings = [
+            reading for reading in self.recorder.readings if reading.sensor_id == sensor_id
+        ]
+
+        # Filtro de fechas ------------------------------
+        if start_date is not None:
+            sensor_readings = [
+                reading for reading in sensor_readings if reading.timestamp >= start_date
+            ]
+
+        if end_date is not None:
+            sensor_readings = [
+                reading for reading in sensor_readings if reading.timestamp <= end_date
+            ]
+        # -----------------------------------------------
+
+        sensor_readings.sort(key=lambda reading: reading.timestamp)
+        return sensor_readings
+
+    def get_readings(self) -> list[SensorReading]:
+        return list(self.recorder.readings)
 
 
 # -----------------------------------------------------
