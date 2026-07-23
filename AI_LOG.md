@@ -8,11 +8,25 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 ## Semana 2
 
+## Entrada 3
+
+### Objetivo
+
+Cómo ingresar la hora y fecha actual para timestamp.
+
+### Prompt
+
+> Necesito la hora actual para timestamp en el formato "YYYY-MM-DD HH:MM, como lo puedo agregar?
+
+### Resultados
+
+Me explicó la librería datetime, varios imports de ella y cómo funcionan; solo lo apliqué.
+
 ## Entrada 2
 
 ### Objetivo
 
-Volver a valorar mis US, esta vez corregidos con las mismas preguntas y agregando revisar responsabilidades de cada US
+Volver a valorar mis US, esta vez corregidos con las mismas preguntas y agregando revisar responsabilidades de cada US.
 
 ### Prompt
 
