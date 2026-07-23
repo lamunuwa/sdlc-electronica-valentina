@@ -51,4 +51,10 @@ class ReadingRecorder:
         return list(self.readings)
 
 
+class ReadingHistory:
+    def __init__(self, sensor_repository: SensorRepository, recorder: ReadingRecorder) -> None:
+        self.sensor_lister = SensorLister(sensor_repository)
+        self.recorder = recorder
+
+
 # -----------------------------------------------------
