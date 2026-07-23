@@ -55,27 +55,39 @@ class ThresholdConfigManager:
     def configure_threshold(
         self, sensor_id: str, max_value: float, anomaly_type: AnomalyType
     ) -> ThresholdConfig:
-        raise NotImplementedError
+        config = ThresholdConfig(
+            sensor_id=sensor_id, max_value=max_value, anomaly_type=anomaly_type
+        )
+        self.thresholds[sensor_id] = config
+        return config
 
 
 class AnomalyDetector:
     """Clase para detectar anomalias en las lecturas"""
 
+    def __init__(self, config: ThresholdConfigManager) -> None:
+        self.config = config
+
     def evaluate(self, reading: SensorReading) -> AnomalyResult:
-        if reading.value > 35.0:
-            return AnomalyResult(
-                is_anomaly=True,
-                anomaly_type=AnomalyType.HIGH_TEMPERATURE,
-                sensor_id=reading.sensor_id,
-                value=reading.value,
-            )
-        else:
+        threshold_config = self.config.thresholds.get(reading.sensor_id)
+
+        if threshold_config is None:
+            # Si no hay configuracion, no hay anomalia
             return AnomalyResult(
                 is_anomaly=False,
                 anomaly_type=None,
                 sensor_id=reading.sensor_id,
                 value=reading.value,
             )
+
+        is_anomaly = reading.value > threshold_config.max_value
+
+        return AnomalyResult(
+            is_anomaly=is_anomaly,
+            anomaly_type=threshold_config.anomaly_type if is_anomaly else None,
+            sensor_id=reading.sensor_id,
+            value=reading.value,
+        )
 
 
 # -----------------------------------------------------
