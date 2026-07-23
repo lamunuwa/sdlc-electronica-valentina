@@ -1,14 +1,27 @@
 from dataclasses import dataclass
+from enum import Enum
 
 from semana2.eval1.reading import SensorReading
 
-
 # Clases de apoyo -------------------------------------
-@dataclass
-class AnomalyType:
+
+
+class AnomalyType(Enum):
     """Clase para determinar el tipo de anomalia"""
 
     HIGH_TEMPERATURE = "HIGH_TEMPERATURE"
+    TOO_FAR = "TOO_FAR"
+    # HIGH_HUMIDITY = "HIGH_HUMIDITY"
+    # TOO_SLOW = "TOO_SLOW"
+
+
+@dataclass
+class ThresholdConfig:
+    """Clase para configurar los umbrales"""
+
+    sensor_id: str
+    max_value: float
+    anomaly_type: AnomalyType | None = None
 
 
 class AnomalyResult:
@@ -17,7 +30,7 @@ class AnomalyResult:
     def __init__(
         self,
         is_anomaly: bool,
-        anomaly_type: str | None,
+        anomaly_type: AnomalyType | None,
         sensor_id: str,
         value: float,
     ):
@@ -31,6 +44,20 @@ class AnomalyResult:
 
 
 # Clases de negocio -----------------------------------
+
+
+class ThresholdConfigManager:
+    """Clase para configurar los umbrales"""
+
+    def __init__(self) -> None:
+        self.thresholds: dict[str, ThresholdConfig] = {}
+
+    def configure_threshold(
+        self, sensor_id: str, max_value: float, anomaly_type: AnomalyType
+    ) -> ThresholdConfig:
+        raise NotImplementedError
+
+
 class AnomalyDetector:
     """Clase para detectar anomalias en las lecturas"""
 
