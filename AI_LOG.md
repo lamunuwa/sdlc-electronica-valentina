@@ -8,6 +8,33 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 ## Semana 2
 
+## Entrada 4
+
+### Objetivo
+
+Recibir una explicación acerca de qué es un diagrama C4 nivel 2, específicamente, ¿por qué se llama así? ¿existen niveles mas altos? ¿mas bajos? ¿dónde se usa? ¿cómo se hace? Y generar un diagrama C4 nivel 2 para mi módulo madre device.py en base a una explicación, no al código.
+
+### Prompt
+
+> La ultima actividad que se me solicita en el curso es hacer un diagrama C4 nivel 2, la situacion es que no se que es JAJA.
+>
+> Explica que es, a que se debe su nombre, que otros tipos de diagramas (de la misma familia) existen, por que lo usaria como ingeniera y como hago uno (y en donde). Al final genera un ejemplo de diagrama C4 nivel 2 en base a este contexto:
+>
+> Mis modulos conforman un sistema de monitoreo IoT en una bodega. Su proposito es organizar todo el flujo de los datos recolectados por sensores, desde su simulacion hasta el printeo de alertas.
+>
+> Se divide en 6 modulos:
+>
+> 1. Modulo registry: Administra el catalogo de sensores en el sistema, SensorData y SensorType definen las propiedades del sensor (ID, ubicacion y tipo como TEMPERATURE o HUMIDITY), SensorRepository actua como almacenamiento central, SensorRegistry valida reglas de negocio para el alta de sensores (impide IDs vacios o duplicados), SensorLister permiten consultar info de los sensores, SensorDeleter da de baja sensores registrados.
+> 2. Modulo reading: Almacena y gestiona el historial de lecturas del sistema, SensorReading define la estructura de la lectura (sensor_id, valor y timestamp), ReadingRecorder valida la existencia previa del sensor antes de guardar la lectura y ReadingHistory permite consultar el historial (total o filtrado por fechas).
+> 3. Modulo anomaly: Evalua las lecturas para detectar valores fuera del limite, AnomalyType y ThresholdConfig definen los tipos de anomalia y límites maximos, ThresholdConfigManager administra la configuracion de umbrales por sensor (ID) y AnomalyDetector analiza la lectura frente a su configuración para emitir un AnomalyResult.
+> 4. Modulo alert: Notifica las anomalias detectadas a diferentes formatos, Alert define una base abstracta, ConsoleAlert muestra los mensajes en terminal, FileAlert registra las alertas en un archivo (alerts.log) y AlertManager coordina todos los formatos para mandar las alertas al mismo tiempo.
+> 5. Modulo gauss_distro: Genera lecturas simuladas para forzar el comportamiento de sensores, SensorSimulator utiliza una distribucion normal o gaussiana (basada en media y desviacion estandar) para simular datos.
+> 6. Modulo device: Actúa como "modulo madre", PipelineModule acopla todos los modulos mediante inyeccion de dependencias, ejecutando todo: obtención de lecturas, almacenamiento, evaluacion de anomalias y emision de alertas.
+
+### Resultados
+
+Entendí que este diagrama nos ayuda a intentar mostrar todo el sistema en un solo mapa, un diagrama basado en 4 niveles de abstracción; el importante ahora es el nivel 2, una forma de demostrar a alto nivel todo el flujo técnico del sistema. Se genera en código (Mermaid y diferentes softwares) o se puede hacer en bloques, sabiendo acomodarlos. Después de la explicación creo un diagrama con los 6 módulos interconectados entre sí; a simple vista comunica lo que hace mi sistema; supongo que ese es el punto, entenderse fácilmente.
+
 ## Entrada 3
 
 ### Objetivo
