@@ -1,7 +1,7 @@
 [tool.ruff]
 line-length = 100
 target-version = "py313"
-extend-exclude = ["*.md"]
+extend-exclude = ["*.md", "archive"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
@@ -12,7 +12,7 @@ indent-style = "space"
 
 [tool.mypy]
 python_version = "3.13"
-files = ["semana2"]
+files = ["app", "tests"]
 explicit_package_bases = true
 check_untyped_defs = true
 warn_return_any = true
@@ -20,6 +20,6 @@ warn_unused_ignores = true
 disallow_untyped_defs = true
 
 [tool.pytest.ini_options]
-testpaths = ["semana2"]
+testpaths = ["tests"]
 pythonpath = "."
-addopts = "--cov=semana2 --cov-fail-under=90"
+addopts = "--cov=app --cov-fail-under=90"

@@ -1,7 +1,6 @@
 import datetime
 
 import pytest
-
 from semana2.eval1.gauss_distro import InvalidCycleCountError, SensorSimulator
 
 

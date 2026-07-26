@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 
 import pytest
-
 from semana2.eval1.reading import (
     InvalidReadingError,
     ReadingHistory,
