@@ -6,6 +6,43 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 ---
 
+## Semana 3
+
+## Entrada 1
+
+### Objetivo
+
+Probar Gemini, me dieron una prueba de 1 mes PRO. Tenía que tomar el rol de un SCRUM master y revisar qué tan bien redactadas están mis US; no le especifiqué bien qué metodologías usar (SP, Gherkin, MoSCoW) para ver qué tan inteligente era el modelo y ver si lo deducía por sí mismo.
+
+### Prompt
+
+> Actua como un SCRUM master. En este punto estoy por cursar la introduccion a FastAPI y SQLAlchemy en mi curso, es la semana 3, en la semana pasada aprendi a hacer User Stories y metolodologias agiles. Genere unos US, estos deben cumplir con los siguientes requisitos:
+>
+> • API completa de SensorHub en app/ (estructura oficial del repositorio): CRUD de sensores y lecturas siguiendo las convenciones REST.
+> • Arquitectura en 4 capas limpiamente separadas: routers → services → repositories → models.
+> • Validación Pydantic con física real: rechaza unidades desconocidas y valores fuera de rango por tipo de sensor.
+> • Consulta con paginación y filtro por rango de fechas.
+> • Swagger funcional en /docs.
+> • Manejo de errores exhaustivo 400/404/409/422, decisiones de índices justificadas.
+>
+> Mis US son los siguientes, responde si cumplen con los requisitos de entrega, en caso de haber discrepancias o fallos arreglalos y explicame por que
+>
+> `[Aqui inserte el texto del .md de mis US]`
+
+### Resultados
+
+Tuve errores en 3 de los 6 US; me habló de detalles técnicos, de escritura, entendió la rúbrica (cabe recalcar que también le adjunté las 12 páginas del pdf) y también mencionó cosas que no se cumplían al 100%, ejemplo:
+
+```text
+1. Detalle Técnico en US-02: Error de escritura (typo) en la unidad
+2. Ajuste Faltante para Alto Potencial en US-03
+3. Ajuste Faltante para Alto Potencial en US-04
+```
+
+También entendió las metodologías usadas; como le pedí que arreglara el texto, generó los 6 US de nuevo, pero corregidos, y todos siguiendo SP, Gherkin, MoSCoW sin falla.
+
+---
+
 ## Semana 2
 
 ## Entrada 4
