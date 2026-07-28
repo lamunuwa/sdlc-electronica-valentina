@@ -8,6 +8,30 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 ## Semana 3
 
+## Entrada 2
+
+### Objetivo
+
+Probar Antigravity, ya que el anterior prompt era para texto y Gemini lo consideró un excelente modelo para platicar; lo hice en web. Esto, como es dentro de mi VSCode, no sé qué tan amigable sea la web para adjuntar todo un repositorio; entonces descargué y agregué la extensión de Antigravity a VSCode (la cual ya no funciona y tuve que descargar el IDE).
+
+Debía buscar entre el repositorio las direcciones proporcionadas, entender el código, la lógica de negocio de cada archivo y darme una conclusión en base a mi análisis de qué va en cada carpeta y lo que encontró y si era correcto.
+
+### Prompt
+
+> Actua como un ingeniero en software o similares, experto en Python orientado a objetos y plataformas de servidores API y contenedores. En base a las US de docs/agile/BACKLOG.md al final de la semana debo tener una API con los entregables solicitados. En este momento genere todo lo de US-02, lo dividi ya en las capas que se mencionan pero no se si lo hice correctamente, revisa cada archivo de entre app/models/sensors.py, app/repositories/sensors.py, app/routers/sensors.py, app/schemas/sensors.py y app/services/catalog.py. La logica del sistema, la estructura, pero NO toques otros archivos que no sean los dichos, NO entres con la terminal, todo pasa en 100% de covertura por pytest. Solo necesito verificar que todo va donde debe ir
+>
+> Aqui te dejo un breve analisis/resumen de que deberia ir en cada carpeta, corrigeme en caso de ser necesario
+>
+> 1. app/models/: Define la estructura de las tablas en la base de datos. Son clases que mapean directamente tablas SQL mediante el ORM (SQLAlchemy).
+> 2. app/schemas/: Valida datos que entran y salen de la API, el mas sencillo
+> 3. app/services/: Tiene la logica de negocio, las operaciones, aplica reglas, valida restricciones, etc.
+> 4. app/repositories/: Mete todas las operaciones de base de datos (CRUD). Es la unica que tiene "acceso" al interior de mi sensorhub.db
+> 5. app/routers/: Recibe peticiones HTTP, es lo que en la pagina vemos como los rectangulos expandibles con informacion. Es la unica que tiene acceso a los servicios.
+
+### Resultados
+
+Como todos los prompts que uso cuando salto entre IAs que no tienen mucho contexto sobre mí (soy de ChatGPT, pero sin Codex no sirve para este proyecto), siempre suelo hacer cosas simples que sé que puedo corregir si lo hacen mal; en este caso solo debía validar que todo era correcto y mis explicaciones. Lo hizo sorprendentemente bien; un modelo de copiloto como Raptor Mini hubiera empezado a meterse a la terminal y escribir código y hacer quién sabe cuántas cosas para probar esto, y Antigravity solo entró, revisó y fue tachando en una checklist que me dio antes de empezar. Me gustó mucho su forma de trabajar.
+
 ## Entrada 1
 
 ### Objetivo
@@ -194,8 +218,8 @@ Aclarar dudas sobre qué hizo en las correcciones del prompt anterior.
 
 ### Prompt
 
-> "Lo que no termino de entender es:
-> Si protocol es un intermediario entre el proceso a bajo nivel como el guardado o lectura y el de alto nivel que es toda la logica de como se mueven las cosas, por que en estos codigos tanto PostgreSQLRepository e InMemoryRepository no llaman nunca a la funcion de protocol."
+> Lo que no termino de entender es:
+> Si protocol es un intermediario entre el proceso a bajo nivel como el guardado o lectura y el de alto nivel que es toda la logica de como se mueven las cosas, por que en estos codigos tanto PostgreSQLRepository e InMemoryRepository no llaman nunca a la funcion de protocol.
 
 ### Resultados
 
@@ -221,7 +245,7 @@ Validar la implementación de los principios SOLID (ISP, DIP) en la práctica y 
 
 ### Prompt
 
-> "Comportate como un ingeniero en software senior, experto en Python, especificamente en Programacion Orientada a Objetos (POO), plataformas de servidores API y contenedores. Estoy llevando un curso para orientar mis conocimientos de firmware embebido hacia la creación de software profesional.
+> Comportate como un ingeniero en software senior, experto en Python, especificamente en Programacion Orientada a Objetos (POO), plataformas de servidores API y contenedores. Estoy llevando un curso para orientar mis conocimientos de firmware embebido hacia la creación de software profesional.
 >
 > Se divide en 6 semanas, en este momento me encuentro en la primera de ellas. Esta etapa se centra en los siguientes objetivos:
 >
@@ -338,7 +362,7 @@ Establecer el rol de la IA como experto para el chat usando CO-RE-CON (Contexto-
 
 ### Prompt
 
-> "Actua como un profesor egresado de ingeniería en software o similares, experto en Python orientado a objetos y plataformas de servidores API y contenedores. Actualmente estoy en un curso para orientar mis conocimientos de firmware embebido hacia la creación de software profesional.
+> Actua como un profesor egresado de ingeniería en software o similares, experto en Python orientado a objetos y plataformas de servidores API y contenedores. Actualmente estoy en un curso para orientar mis conocimientos de firmware embebido hacia la creación de software profesional.
 >
 > Se divide en 6 semanas, en este momento me encuentro en la primera de ellas. Esta etapa se centra en los siguientes objetivos:
 >
@@ -352,7 +376,7 @@ Establecer el rol de la IA como experto para el chat usando CO-RE-CON (Contexto-
 >
 > No seas vago o impreciso con tu explicación, alargate, me gustan las explicaciones completas, basate puramente en la documentacion oficial de python, por el momento no me expliques SOLID enfocate únicamente en type hints, no expliques la logica de programacion.  
 >
-> Explicame la sintaxis linea por linea, especialmente los type hints, que significa, donde se usa, por que me deberia importar para POO (Programacion orientada a objetos), API, IA. Por ultimo y siguiendo con el ejercicio, generame el "esqueleto" (los def con los argumentos vacíos) para que yo los rellene con la logica y los type hints."
+> Explicame la sintaxis linea por linea, especialmente los type hints, que significa, donde se usa, por que me deberia importar para POO (Programacion orientada a objetos), API, IA. Por ultimo y siguiendo con el ejercicio, generame el "esqueleto" (los def con los argumentos vacíos) para que yo los rellene con la logica y los type hints.
 
 ### Resultados
 
