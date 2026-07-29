@@ -8,6 +8,32 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 ## Semana 3
 
+## Entrada 3
+
+### Objetivo
+
+Terminar los ultimos 3 archivos para feat commit de US-04.
+
+### Prompt
+
+> Generando la estructura para las lecturas y lo solicitado en docs/BACKLOG.md en la seccion de US-04, entre en completo burnout. Tener 8 archivos abiertos para escribir + BACKLOG + archivos de sensors para guiarme, es muy dificil, estoy confundiendome todo el rato de archivos, de nombres de funciones o clases y es poco eficaz esto que estoy haciendo.
+>
+> En los archivos services/ingestion.py y validators.py asi como routers/readings.py escribe el codigo faltante. En validators debes crear los errores de dominio, por ejemplos hacer la excepcion si el sensor no existe, si el sensor esta inactivo, si no soporta la unidad, valores fuera del rango permitido. En ingestion debes gestionar servicios de lectura de sensores:
+>
+> 1. Verifica que el sensor existe
+> 2, Verifica que el sensor este activo
+> 3. Valida la unidad de medida soportada
+> 4. Valida el rango fisico, si esta dentro
+> 5. Calcula el hash (clase para calcular el hash)
+> 6. Verifica duplicados
+> 7. Guarda la lectura
+>
+> Por ultimo en routers debes de agregar las rutas que apareceran en la API, en este caso creo que deberia ser un unico POST pero valida junto con BACKLOG.md
+
+### Resultados
+
+Impecables, salvo los típicos errores de IA, como poner Optional en vez de "| None" o pass en vez de "..." que tuve que arreglar manualmente, ya que no pasan los linters; al ejecutar pytest pasa con +99% de cobertura, sin errores de compilación o de lógica. Todavía no lo probé en el Swagger, solo validé los test; primero haré una refactorización del código completo, poniendo comentarios, mejorando legibilidad y, en general, dejar un código de US-04 completo; sin embargo, en este punto ya funciona.
+
 ## Entrada 2
 
 ### Objetivo

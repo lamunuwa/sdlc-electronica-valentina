@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from datetime import datetime
 
 import pytest
 from fastapi.testclient import TestClient
@@ -8,6 +9,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.db import Base, get_db
 from app.main import app
+from app.models.sensors import SensorInfo
 
 db_url = "sqlite:///:memory:"
 
@@ -37,6 +39,17 @@ def set_db() -> Generator[None]:
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)
+
+
+@pytest.fixture
+def temp_sensor() -> SensorInfo:
+    db = sessionlocal()
+    sensor = SensorInfo(name="TEMP-01", type="TEMPERATURE", unit="C", active=True)
+    db.add(sensor)
+    db.commit()
+    db.refresh(sensor)
+    db.close()
+    return sensor
 
 
 # Test de US-01 ---------------------------------------
@@ -175,11 +188,81 @@ def test_actualizacion_nombre_duplicado() -> None:
 
 
 def test_desactivar_sensor_no_encontrado() -> None:
-    # When hago DELETE /sensors/9999
+    # When: hago DELETE /sensors/9999
     response = client.delete("/sensors/9999")
-    # Then recibo 404 "Not Found"
+    # Then: recibo 404 "Not Found"
     assert response.status_code == 404
     assert response.json()["detail"]
+
+
+# -----------------------------------------------------
+
+
+# Test de US-04 ---------------------------------------
+def test_lectura_valida(temp_sensor: SensorInfo) -> None:
+    # Given: un sensor de tipo "TEMPERATURE"
+    # When: {"value": 24.5, "unit": "C"} a /sensors/{id}/readings
+    payload = {"value": 24.5, "unit": "C"}
+    response = client.post(f"/sensors/{temp_sensor.id}/readings", json=payload)
+    # Then: recibo 201 "Created"
+    assert response.status_code == 201
+    data = response.json()
+    assert "id" in data
+    assert "timestamp" in data
+    # And: el id de la lectura y timestamp
+    assert data["sensor_id"] == temp_sensor.id
+    assert data["value"] == 24.5
+    assert data["unit"] == "C"
+    assert "hash_id" in data
+
+
+def test_sensor_no_encontrado() -> None:
+    payload = {"value": 20.0, "unit": "C"}
+    # When: mando lectura a /sensors/9999/readings
+    response = client.post("/sensors/9999/readings", json=payload)
+    # Then: recibo 404 "Not Found"
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Sensor con id 9999 no encontrado"
+
+
+def test_unidad_no_soportada(temp_sensor: SensorInfo) -> None:
+    # Given: un sensor de temperatura
+    payload = {"value": 20.0, "unit": "PSI"}
+    # When: envio {"value": 20, "unit": "PSI"}
+    response = client.post(f"/sensors/{temp_sensor.id}/readings", json=payload)
+    # Then: recibo 422 "Unprocessable Entity"
+    assert response.status_code == 422
+    detail = response.json()["detail"]
+    assert "PSI" in detail
+    assert "TEMPERATURE" in detail
+
+
+def test_valor_fuera_rango_fisico(temp_sensor: SensorInfo) -> None:
+    # Given: un sensor de temperatura
+    payload = {"value": -345.67, "unit": "C"}
+    # When: {"value": -345.67, "unit": "C"}
+    response = client.post(f"/sensors/{temp_sensor.id}/readings", json=payload)
+    # Then: recibo 400 "Bad Request"
+    assert response.status_code == 400
+    detail = response.json()["detail"]
+    assert "-273.15" in detail
+    assert "-345.67" in detail
+
+
+def test_lectura_duplicada_mismo_timestamp(temp_sensor: SensorInfo) -> None:
+    payload = {
+        "value": 24.5,
+        "unit": "C",
+    }
+    datetime.now()
+    response1 = client.post(f"/sensors/{temp_sensor.id}/readings", json=payload)
+    assert response1.status_code == 201  # debe ser exitosa
+    # Given: una lectura ya procesada con el mismo hash/timestamp
+    # When: reenvio la misma lectura
+    response2 = client.post(f"/sensors/{temp_sensor.id}/readings", json=payload)
+    # Then recibo 409 "Conflict"
+    assert response2.status_code == 409  # debe ser rechazada
+    assert "duplicada" in response2.json()["detail"].lower()
 
 
 # -----------------------------------------------------
