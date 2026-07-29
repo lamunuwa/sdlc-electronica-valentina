@@ -39,14 +39,30 @@ def set_db() -> Generator[None]:
     Base.metadata.drop_all(bind=engine)
 
 
+# Test de US-01 ---------------------------------------
+def test_verificar_estado_activo() -> None:
+    # Given: SensorHub esta activo
+    # When: envio una solicitud GET /health
+    response = client.get("/health")
+    # Then: recibo una respuesta HTTP con codigo de estado 200
+    assert response.status_code == 200
+    # And: la respuesta es '{"status": "ok"}'
+    assert response.json() == {"status": "ok"}
+
+
+# -----------------------------------------------------
+
+
+# Test de US-02 ---------------------------------------
 def test_registro_exitoso() -> None:
     # Given: envio datos para un registro
     payload = {"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C"}
     # When: hago POST /sensors
     response = client.post("/sensors/", json=payload)
-    # Then: recibo 201 "Created" y verificamos
+    # Then: recibo 201 "Created"
     assert response.status_code == 201
     data = response.json()
+    # And: el sensor creado con toda su informacion
     assert data["name"] == "TEMP-01"
     assert data["type"] == "TEMPERATURE"
     assert data["unit"] == "C"
@@ -73,3 +89,97 @@ def test_payload_invalido() -> None:
     # Then: recibo 422 ""Unprocessable Entity"" con sus detalles
     assert response.status_code == 422
     assert response.json()["detail"]
+
+
+# -----------------------------------------------------
+
+
+# Test de US-03A --------------------------------------
+def test_listar_sensores() -> None:
+    client.post("/sensors", json={"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C"})
+    client.post("/sensors", json={"name": "PRESS-01", "type": "PRESSURE", "unit": "BAR"})
+    # Given: existen sensores registrados
+    # When: envio GET /sensors
+    response = client.get("/sensors")
+    # Then: recibo 200 "OK"
+    assert response.status_code == 200
+    # And: la lista completa
+    assert len(response.json()) >= 2
+
+
+def test_actualizacion_sensor() -> None:
+    sensor = client.post(
+        "/sensors", json={"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C"}
+    ).json()["id"]
+    # Given: un sensor existente
+    # When: hago PATCH /sensors/{id} con {"unit": "F"}
+    response = client.patch(f"/sensors/{sensor}", json={"unit": "F"})
+    # Then recibo 200 "OK"
+    assert response.status_code == 200
+    assert response.json()["name"] == "TEMP-01"  # Verificacion
+    # And: los datos actualizados
+    assert response.json()["unit"] == "F"
+
+
+def test_desactivar_sensor() -> None:
+    sensor = client.post(
+        "/sensors", json={"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C"}
+    ).json()
+    sensor_id = sensor["id"]
+    # Given: un sensor existente
+    # When: hago DELETE /sensors/{id}
+    response = client.delete(f"/sensors/{sensor_id}")
+    # Then: recibo 204 "No Content"
+    assert response.status_code == 204
+    for_response = client.get(f"/sensors/{sensor_id}")
+    assert for_response.status_code == 200
+    # And el sensor tiene active=false (eliminacion parcial)
+    assert for_response.json()["active"] is False
+
+
+# -----------------------------------------------------
+
+
+# Test de US-03B --------------------------------------
+def test_obtener_ID_inexistente() -> None:
+    # When: GET /sensors/9999
+    response = client.get("/sensors/9999")
+    # Then: recibo 404 "Not Found"
+    assert response.status_code == 404
+    assert response.json()["detail"]
+
+
+def test_actualizar_ID_inexistente() -> None:
+    # When: PATCH /sensors/9999 con {"unit": "F"}
+    response = client.patch("/sensors/9999", json={"unit": "F"})
+    # Then: recibo 404 "Not Found"
+    assert response.status_code == 404
+    # And: un mensaje de error
+    assert response.json()["detail"] == "El sensor con id '9999' no encontrado"
+
+
+def test_actualizacion_nombre_duplicado() -> None:
+    sensor1 = client.post(
+        "/sensors", json={"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C"}
+    ).json()["id"]
+    client.post("/sensors", json={"name": "TEMP-02", "type": "TEMPERATURE", "unit": "C"}).json()[
+        "id"
+    ]
+    # Given: existen sensores "TEMP-01" y "TEMP-02"
+    # When hago PATCH /sensors/{""} con {"name": "TEMP-02"}
+    response = client.patch(f"/sensors/{sensor1}", json={"name": "TEMP-02"})
+    # Then: recibo 409 "Conflict"
+    assert response.status_code == 409
+    # And: un mensaje de error
+    assert response.json()["detail"] == "El sensor con el nombre 'TEMP-02' ya existe"
+
+
+def test_desactivar_sensor_no_encontrado() -> None:
+    # When hago DELETE /sensors/9999
+    response = client.delete("/sensors/9999")
+    # Then recibo 404 "Not Found"
+    assert response.status_code == 404
+    assert response.json()["detail"]
+
+
+# -----------------------------------------------------

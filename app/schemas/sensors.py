@@ -9,6 +9,14 @@ class SensorCreate(BaseModel):
     unit: str = Field(..., examples=["C"], description="Unidad de medida")
 
 
+class SensorUpdate(BaseModel):
+    """Clase para la actualizacion de un sensor"""
+
+    name: str | None = Field(None, examples=["TEMP-01"], description="Nombre unico del sensor")
+    type: str | None = Field(None, examples=["TEMPERATURE"], description="Nueva magnitud")
+    unit: str | None = Field(None, examples=["C"], description="Nueva unidad de medida")
+
+
 class SensorResponse(BaseModel):
     """Clase para representar un sensor completo"""
 
