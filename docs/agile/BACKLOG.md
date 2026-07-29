@@ -32,7 +32,8 @@ Scenario: Verificar el estado del servicio
 Scenario: Registro exitoso
   Given envío {"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C"}
   When hago POST /sensors
-  Then recibo 201 "Created" con el sensor creado y su ID
+  Then recibo 201 "Created"
+  And el sensor creado y su ID
 
 Scenario: Nombre duplicado
   Given ya existe un sensor con el mismo nombre
@@ -44,32 +45,59 @@ Scenario: Payload inválido (tipo de dato incorrecto o falta campo obligatorio)
   Then recibo 422 "Unprocessable Entity"
 ```
 
-## US-03: Consultar, actualizar y desactivar sensores
+## US-03A: Consultar, actualizar y desactivar sensores
 
 **Prioridad:** Must Have <br>
 **Dificultad:** 3 Story Points
 
-**As** desarrolladora de la plataforma, **I want to** listar todos los sensores por id, modificarlo parcialmente (PATCH) y desactivarlo, **So that** mantener el catálogo actualizado sin perder historial.
+**As** desarrolladora de la plataforma, **I want to** listar todos los sensores por id, modificarlo parcialmente (PATCH) y desactivarlo, **So that** mantener el catalogo actualizado sin perder historial.
 
 ```gherkin
 Scenario: Listar sensores
   Given que existen sensores registrados
   When hago GET /sensors
-  Then recibo 200 "OK" con la lista completa
+  Then recibo 200 "OK" 
+  And la lista completa
 
-Scenario: Obtener sensor por ID inexistente
-  When hago GET /sensors/9999
-  Then recibo 404 "Not Found"
-
-Scenario: Actualización parcial
+Scenario: Actualizacion tipo PATCH
   Given un sensor existente
   When hago PATCH /sensors/{id} con {"unit": "F"}
-  Then recibo 200 "OK" con los datos actualizados
+  Then recibo 200 "OK" 
+  And los datos actualizados
 
 Scenario: Desactivar sensor
   Given un sensor existente
   When hago DELETE /sensors/{id}
-  Then recibo 204 "No Content" y el sensor queda con is_active=false
+  Then recibo 204 "No Content"
+  And el sensor queda con active=false
+```
+
+## US-03B: Gestion de errores
+
+**Prioridad:** Must Have <br>
+**Dificultad:** 2 Story Points
+
+**As** usuario de la API, **I want to** recibir mensajes de error claros, **When** intento una petición incorrecta, **So that** corregir mis solicitudes.
+
+```gherkin
+Scenario: Obtener sensor por ID inexistente
+  When hago GET /sensors/9999
+  Then recibo 404 "Not Found"
+
+Scenario: Error al actualizar sensor inexistente
+  When hago PATCH /sensors/9999 con {"unit": "F"}
+  Then recibo 404 "Not Found" 
+  And un mensaje "Sensor con id 9999 no encontrado."
+
+Scenario: Error por nombre duplicado al actualizar
+  Given existen sensores "TEMP-01" y "TEMP-02"
+  When hago PATCH /sensors/{id_TEMP-01} con {"name": "TEMP-02"}
+  Then recibo 409 "Conflict" 
+  And un mensaje de nombre duplicado
+
+Scenario: Error al desactivar sensor inexistente
+  When hago DELETE /sensors/9999
+  Then recibo 404 "Not Found"
 ```
 
 ## US-04: Registrar lectura con validación de unidades y rangos físicos
@@ -83,7 +111,8 @@ Scenario: Desactivar sensor
 Scenario: Lectura válida
   Given un sensor de tipo "TEMPERATURE"
   When envío {"value": 24.5, "unit": "C"} a /sensors/{id}/readings
-  Then recibo 201 "Created" con el id de la lectura y timestamp
+  Then recibo 201 "Created" 
+  And el id de la lectura y timestamp
 
 Scenario: Sensor no encontrado
   When envío una lectura a /sensors/9999/readings
@@ -116,7 +145,8 @@ Scenario: Intento de registrar lectura duplicada en el mismo timestamp
 Scenario: Paginación y filtro por fechas
   Given 100 lecturas para el sensor en julio 2026
   When hago GET /sensors/{id}/readings?from=2026-07-01T00:00:00&to=2026-07-27T00:00:00&limit=10&offset=0
-  Then recibo 200 "OK" con exactamente las primeras 10 lecturas dentro del rango
+  Then recibo 200 "OK" 
+  And exactamente las primeras 10 lecturas dentro del rango
 
 Scenario: Índices justificados
   Given `readings` (tabla) tiene un índice compuesto (sensor_id, created_at)
@@ -143,7 +173,8 @@ Scenario: Validación de parámetros de consulta
 Scenario: Swagger funcional
   Given la API está corriendo
   When visito /docs
-  Entonces veo Swagger UI con todos los endpoints y esquemas
+  Then veo Swagger UI
+  And todos los endpoints y esquemas
 ```
 
 ---
