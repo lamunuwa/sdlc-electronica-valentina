@@ -34,7 +34,7 @@ class ReadingService:
         self.validator = validator or ReadingValidator()
 
     @staticmethod
-    def _compute_hash(sensor_id: int, value: float, unit: str) -> str:
+    def compute_hash(sensor_id: int, value: float, unit: str) -> str:
         """Genera un hash unico basado en el contenido de la lectura"""
         payload = json.dumps({"sensor_id": sensor_id, "value": value, "unit": unit}, sort_keys=True)
         return hashlib.sha256(payload.encode()).hexdigest()
@@ -52,8 +52,29 @@ class ReadingService:
 
         self.validator.validate(sensor, reading_in)
 
-        hash_id = self._compute_hash(sensor_id, reading_in.value, reading_in.unit)
+        hash_id = self.compute_hash(sensor_id, reading_in.value, reading_in.unit)
         if self.reading_repository.by_hash(sensor_id, hash_id):
             raise DuplicateReadingError(sensor_id)
 
         return self.reading_repository.create(sensor_id, reading_in, hash_id, get_now())
+
+    def get_readings(
+        self,
+        sensor_id: int,
+        from_date: datetime | None = None,
+        to_date: datetime | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[ReadingInfo]:
+        """Captura lecturas paginadas y filtradas por fecha/valida que el sensor existe"""
+
+        sensor = self.sensor_repository.by_id(sensor_id)
+        if sensor is None:
+            raise SensorNotFoundError(sensor_id)
+        return self.reading_repository.get_reading(
+            sensor_id=sensor_id,
+            from_date=from_date,
+            to_date=to_date,
+            limit=limit,
+            offset=offset,
+        )

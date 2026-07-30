@@ -62,7 +62,7 @@ def get_sensor(sensor_id: int, db: Session = dbsession) -> SensorResponse:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(nf)) from nf
 
 
-@router.patch(
+@router.put(
     "/{sensor_id}",
     response_model=SensorResponse,
     summary="Actualizar un sensor",

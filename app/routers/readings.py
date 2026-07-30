@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from datetime import datetime
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.db import get_db
@@ -61,3 +63,37 @@ def create_reading(
             status_code=status.HTTP_409_CONFLICT,
             detail=str(error),
         ) from error
+
+
+@router.get(
+    "/{sensor_id}/readings",
+    response_model=list[ReadingResponse],
+    summary="Consultar lecturas de un sensor por filtros",
+)
+def get_readings(
+    sensor_id: int,
+    from_date: datetime | None = None,
+    to_date: datetime | None = None,
+    limit: int = Query(100, ge=1),
+    offset: int = Query(0, ge=0),
+    db: Session = dbsession,
+) -> list[ReadingResponse]:
+    reading_repo = ReadingSQLAlchemyRepository(db)
+    sensor_repo = SensorSQLAlchemyRepository(db)
+    service = ReadingService(reading_repository=reading_repo, sensor_repository=sensor_repo)
+
+    try:
+        readings = service.get_readings(
+            sensor_id=sensor_id,
+            from_date=from_date,
+            to_date=to_date,
+            limit=limit,
+            offset=offset,
+        )
+    except SensorNotFoundError as error:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Sensor con id {error.sensor_id} no encontrado",
+        ) from error
+
+    return [ReadingResponse.model_validate(rr) for rr in readings]

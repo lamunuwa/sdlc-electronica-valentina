@@ -1,13 +1,15 @@
 from collections.abc import Generator
+from datetime import datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.db import Base, get_db
 from app.main import app
+from app.models.readings import ReadingInfo
 from app.models.sensors import SensorInfo
 
 db_url = "sqlite:///:memory:"
@@ -125,7 +127,7 @@ def test_actualizacion_sensor() -> None:
     ).json()["id"]
     # Given: un sensor existente
     # When: hago PATCH /sensors/{id} con {"unit": "F"}
-    response = client.patch(f"/sensors/{sensor}", json={"unit": "F"})
+    response = client.put(f"/sensors/{sensor}", json={"unit": "F"})
     # Then recibo 200 "OK"
     assert response.status_code == 200
     assert response.json()["name"] == "TEMP-01"  # Verificacion
@@ -163,7 +165,7 @@ def test_obtener_ID_inexistente() -> None:
 
 def test_actualizar_ID_inexistente() -> None:
     # When: PATCH /sensors/9999 con {"unit": "F"}
-    response = client.patch("/sensors/9999", json={"unit": "F"})
+    response = client.put("/sensors/9999", json={"unit": "F"})
     # Then: recibo 404 "Not Found"
     assert response.status_code == 404
     # And: un mensaje de error
@@ -179,7 +181,7 @@ def test_actualizacion_nombre_duplicado() -> None:
     ]
     # Given: existen sensores "TEMP-01" y "TEMP-02"
     # When hago PATCH /sensors/{""} con {"name": "TEMP-02"}
-    response = client.patch(f"/sensors/{sensor1}", json={"name": "TEMP-02"})
+    response = client.put(f"/sensors/{sensor1}", json={"name": "TEMP-02"})
     # Then: recibo 409 "Conflict"
     assert response.status_code == 409
     # And: un mensaje de error
@@ -258,6 +260,89 @@ def test_lectura_duplicada_mismo_contenido(temp_sensor: SensorInfo) -> None:
     # Then recibo 409 "Conflict"
     assert response2.status_code == 409  # debe ser rechazada
     assert "duplicada" in response2.json()["detail"].lower()
+
+
+# -----------------------------------------------------
+
+
+# Test de US-05 ---------------------------------------
+def test_paginacion_y_filtro_fechas(temp_sensor: SensorInfo) -> None:
+    db = sessionlocal()
+    base_date = datetime(2026, 7, 1, 0, 0, 0)
+    readings = []
+    for i in range(100):
+        # Generamos lecturas separadas por 4 horas
+        reading_time = base_date + timedelta(hours=i * 4)
+        reading = ReadingInfo(
+            sensor_id=temp_sensor.id,
+            value=20.0 + (i % 5),
+            unit="C",
+            timestamp=reading_time,
+            hash_id=f"hash_sample_{i}",
+        )
+        readings.append(reading)
+    # Given: 100 lecturas para el sensor distribuidas en julio 2026
+    db.add_all(readings)
+    db.commit()
+    db.close()
+    """
+    When: hago GET /sensors/{id}/readings
+    from=2026-07-01T00:00:00
+    to=2026-07-27T00:00:00
+    limit=10
+    offset=0
+    """
+    filter_params = {
+        "from": "2026-07-01T00:00:00",
+        "to": "2026-07-27T00:00:00",
+        "limit": 10,
+        "offset": 0,
+    }
+    response = client.get(f"/sensors/{temp_sensor.id}/readings", params=filter_params)
+    # Then: recibo 200 "OK"
+    assert response.status_code == 200
+    data = response.json()
+    # And: exactamente las primeras 10 lecturas dentro del rango
+    assert len(data) == 10
+    first_timestamp = data[0]["timestamp"]
+    assert "2026-07-01" in first_timestamp  # las lecturas deben estar dentro del rango especificado
+
+
+def test_indices_justificados() -> None:
+    # Given: la tabla "readings" tiene un indice compuesto (sensor_id, timestamp/created_at)
+    inspector = inspect(engine)
+    indexes = inspector.get_indexes("readings")
+
+    # When: buscamos un indice que incluya "sensor_id" y "timestamp/created_at"
+    index_found = False
+    for idx in indexes:
+        column_names = idx.get("column_names", [])
+        if "sensor_id" in column_names and (
+            "timestamp" in column_names or "created_at" in column_names
+        ):
+            index_found = True
+            break
+
+    # Then: se usa dicho indice
+    assert index_found, "Indice compuesto en 'readings' con 'sensor_id, timestamp/created_at'"
+
+
+def test_sensor_no_encontrado_lecturas() -> None:
+    # When: consulto lecturas de un sensor inexistente
+    response = client.get("/sensors/9999/readings")
+
+    # Then: recibo 404 "Not Found"
+    assert response.status_code == 404
+    assert response.json()["detail"]
+
+
+def test_validacion_parametros_consulta(temp_sensor: SensorInfo) -> None:
+    # When: mando limit con un valor no numérico
+    response = client.get(f"/sensors/{temp_sensor.id}/readings?limit=invalid_value")
+
+    # Then: recibo 422 "Unprocessable Entity"
+    assert response.status_code == 422
+    assert response.json()["detail"]
 
 
 # -----------------------------------------------------

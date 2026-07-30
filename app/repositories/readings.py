@@ -20,6 +20,15 @@ class ReadingRepository(Protocol):
 
     def by_hash(self, sensor_id: int, hash_id: str) -> bool: ...
 
+    def get_reading(
+        self,
+        sensor_id: int,
+        from_date: datetime | None = None,
+        to_date: datetime | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> list[ReadingInfo]: ...
+
 
 class ReadingSQLAlchemyRepository:
     """Crea el repositorio de lecturas en base a SQLAlchemy"""
@@ -62,3 +71,22 @@ class ReadingSQLAlchemyRepository:
         self.db.commit()
         self.db.refresh(reading)
         return reading
+
+    def get_reading(
+        self,
+        sensor_id: int,
+        from_date: datetime | None = None,
+        to_date: datetime | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> list[ReadingInfo]:
+        """Obtiene lecturas con filtros de fechas y paginacion"""
+
+        query_filter = self.db.query(ReadingInfo).filter(ReadingInfo.sensor_id == sensor_id)
+        if from_date is not None:
+            query_filter = query_filter.filter(ReadingInfo.timestamp >= from_date)
+        if to_date is not None:
+            query_filter = query_filter.filter(ReadingInfo.timestamp <= to_date)
+
+        query_filter = query_filter.order_by(ReadingInfo.timestamp.asc())
+        return query_filter.limit(limit).offset(offset).all()

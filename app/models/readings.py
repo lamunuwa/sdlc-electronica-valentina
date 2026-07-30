@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Float, ForeignKey, String, UniqueConstraint
+from sqlalchemy import Float, ForeignKey, Index, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -22,4 +22,7 @@ class ReadingInfo(Base):
     genera un hash unico para cada lectura, estilo 5d4140... """
     hash_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
 
-    __table_args__ = (UniqueConstraint("sensor_id", "hash_id", name="unique_hash"),)
+    __table_args__ = (
+        UniqueConstraint("sensor_id", "hash_id", name="unique_hash"),
+        Index("ix_reading_timestamp", "sensor_id", "timestamp"),
+    )

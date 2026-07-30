@@ -1,5 +1,3 @@
-"""Esquemas Pydantic de entrada y salida para sensores."""
-
 from pydantic import BaseModel, ConfigDict, Field
 
 
