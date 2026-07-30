@@ -8,6 +8,41 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 ## Semana 3
 
+## Entrada 4
+
+### Objetivo
+
+Validar la nuevo estructura de app/. Se modificaron nombres de algunas clases, funciones, variables, y uso de ciertos archivos.
+
+### Prompt
+
+> Realice multiples cambios en todo el repositorio, los mas grandes se encuentran dentro de services/ justo ahi quiero que revises lo siguiente:
+>
+> 1. Catalog.py:
+> - Contiene `SensorDuplicateError` `SensorNotFounError` y `SensorService` implementa create_sensor, list_sensors, get_sensor, update_Sensor con sentido legibilidad y comentarios acertados
+> 2. Ingestion.py:
+> - Contiene `DuplicateReadingError` `ReadingService` y get_now, todos son legibles, bien implementados y tiene comentarios acertados
+> 3. Validators.py:
+> - Contiene `ReadingValidationError` `SensorInactiveError`, `UnsupportedUnitError` y `ValueOutOfRangeError` implementados con comentarios acertados y son de facil mantenimiento
+>
+> Especificamente lo que me interesa es que el codigo dentro de los 3 archivos este correcto en ese archivo, es decir que no haya cosas que deberian ir en ingestion en validators, que haya entendido bien el funcionamiento de services y la division que genere
+
+### Resultados
+
+Al no detectar cambios dejo directamente una cita de la IA:
+```text
+La separación de los módulos catalog, ingestion, validators es limpia y no rompe el comportamiento. 
+Cada archivo tiene una responsabilidad clara:
+
+    • Catálogo → gestión de sensores.
+
+    • Ingesta → recepción, deduplicación y almacenamiento de lecturas.
+
+    • Validadores → reglas puras de negocio para las lecturas.
+
+Todo el flujo original funciona igual, y la modularidad ahora facilita el mantenimiento y los tests.
+```
+
 ## Entrada 3
 
 ### Objetivo
