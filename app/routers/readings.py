@@ -2,12 +2,16 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.repositories.readings import SQLAlchemyReadingRepository
-from app.repositories.sensors import SQLAlchemyRepository
+from app.repositories.readings import ReadingSQLAlchemyRepository
+from app.repositories.sensors import SensorSQLAlchemyRepository
 from app.schemas.readings import ReadingCreate, ReadingResponse
 from app.services.catalog import SensorNotFoundError
-from app.services.ingestion import DuplicateReadingError, IngestionService
-from app.services.validators import SensorInactiveError, UnsupportedUnitError, ValueOutOfRangeError
+from app.services.ingestion import DuplicateReadingError, ReadingService
+from app.services.validators import (
+    SensorInactiveError,
+    UnsupportedUnitError,
+    ValueOutOfRangeError,
+)
 
 router = APIRouter(prefix="/sensors", tags=["readings"])
 dbsession = Depends(get_db)
@@ -24,38 +28,36 @@ def create_reading(
     reading_in: ReadingCreate,
     db: Session = dbsession,
 ) -> ReadingResponse:
-    reading_repo = SQLAlchemyReadingRepository(db)
-    sensor_repo = SQLAlchemyRepository(db)
+    """Interfaz HTTP para registrar una lectura"""
 
-    service = IngestionService(
-        reading_repo=reading_repo,
-        sensor_repo=sensor_repo,
-    )
+    reading_repo = ReadingSQLAlchemyRepository(db)
+    sensor_repo = SensorSQLAlchemyRepository(db)
+    service = ReadingService(reading_repository=reading_repo, sensor_repository=sensor_repo)
 
     try:
         reading = service.register_reading(sensor_id, reading_in)
         return ReadingResponse.model_validate(reading)
 
-    except SensorNotFoundError as e:
+    except SensorNotFoundError as error:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Sensor con id {e.sensor_id} no encontrado",
-        ) from e
+            detail=f"Sensor con id {error.sensor_id} no encontrado",
+        ) from error
 
-    except UnsupportedUnitError as e:
+    except UnsupportedUnitError as error:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(e),
-        ) from e
+            detail=str(error),
+        ) from error
 
-    except (ValueOutOfRangeError, SensorInactiveError) as e:
+    except (ValueOutOfRangeError, SensorInactiveError) as error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
-        ) from e
+            detail=str(error),
+        ) from error
 
-    except DuplicateReadingError as e:
+    except DuplicateReadingError as error:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=str(e),
-        ) from e
+            detail=str(error),
+        ) from error

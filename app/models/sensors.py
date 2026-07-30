@@ -5,7 +5,7 @@ from app.db import Base
 
 
 class SensorInfo(Base):
-    """Clase para la tabla de sensores"""
+    """Genera el modelo para un sensor, lo que se debe configurar al crear"""
 
     __tablename__ = "sensors"
 

@@ -1,5 +1,4 @@
 from collections.abc import Generator
-from datetime import datetime
 
 import pytest
 from fastapi.testclient import TestClient
@@ -249,15 +248,11 @@ def test_valor_fuera_rango_fisico(temp_sensor: SensorInfo) -> None:
     assert "-345.67" in detail
 
 
-def test_lectura_duplicada_mismo_timestamp(temp_sensor: SensorInfo) -> None:
-    payload = {
-        "value": 24.5,
-        "unit": "C",
-    }
-    datetime.now()
+def test_lectura_duplicada_mismo_contenido(temp_sensor: SensorInfo) -> None:
+    payload = {"value": 24.5, "unit": "C"}
     response1 = client.post(f"/sensors/{temp_sensor.id}/readings", json=payload)
     assert response1.status_code == 201  # debe ser exitosa
-    # Given: una lectura ya procesada con el mismo hash/timestamp
+    # Given: una lectura ya procesada con el mismo contenido y, por tanto, el mismo hash
     # When: reenvio la misma lectura
     response2 = client.post(f"/sensors/{temp_sensor.id}/readings", json=payload)
     # Then recibo 409 "Conflict"

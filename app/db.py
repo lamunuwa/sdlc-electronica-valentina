@@ -9,13 +9,12 @@ engine = create_engine(db_url, connect_args={"check_same_thread": False})
 sessionlocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, expire_on_commit=False)
 
 
-class Base(DeclarativeBase):
-    """Clase para crear modelos de la base de datos"""
-
-    ...
+class Base(DeclarativeBase): ...
 
 
 def get_db() -> Generator[Session]:
+    """Abre la DB para el ingreso y luego la cierra"""
+
     db = sessionlocal()
     try:
         yield db

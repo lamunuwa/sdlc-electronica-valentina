@@ -7,6 +7,8 @@ from app.db import Base
 
 
 class ReadingInfo(Base):
+    """Genera el modelo para una lectura, lo que se debe configurar al crear"""
+
     __tablename__ = "readings"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -16,8 +18,8 @@ class ReadingInfo(Base):
     value: Mapped[float] = mapped_column(Float, nullable=False)
     unit: Mapped[str] = mapped_column(String(10), nullable=False)
     timestamp: Mapped[datetime] = mapped_column(default=lambda: datetime.now(), nullable=False)
-    # hash_id es una forma de identificacion unica, revisa cada lectura y genera un codigo
-    # inmutable estilo "a7b8c9d...", ayuda a identificar duplicados
+    """ Un hash_id es una forma de interpretar lecturas unicas, en la logica de negocios se 
+    genera un hash unico para cada lectura, estilo 5d4140... """
     hash_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
 
     __table_args__ = (UniqueConstraint("sensor_id", "hash_id", name="unique_hash"),)

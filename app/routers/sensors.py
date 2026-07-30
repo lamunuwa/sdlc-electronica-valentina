@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.repositories.sensors import SQLAlchemyRepository
+from app.repositories.sensors import SensorSQLAlchemyRepository
 from app.schemas.sensors import SensorCreate, SensorResponse, SensorUpdate
 from app.services.catalog import SensorDuplicateError, SensorNotFoundError, SensorService
 
@@ -17,10 +17,12 @@ dbsession = Depends(get_db)
     summary="Registrar un nuevo sensor",
 )
 def create_sensor(sensor_in: SensorCreate, db: Session = dbsession) -> SensorResponse:
-    repo = SQLAlchemyRepository(db)
+    """Interfaz HTTP para crear un sensor"""
+
+    repo = SensorSQLAlchemyRepository(db)
     service = SensorService(repo)
     try:
-        sensor = service.create_sensors(sensor_in)
+        sensor = service.create_sensor(sensor_in)
         return SensorResponse.model_validate(sensor)
     except SensorDuplicateError as d:
         raise HTTPException(
@@ -35,7 +37,9 @@ def create_sensor(sensor_in: SensorCreate, db: Session = dbsession) -> SensorRes
     summary="Obtener todos los sensores",
 )
 def list_sensor(db: Session = dbsession) -> list[SensorResponse]:
-    repo = SQLAlchemyRepository(db)
+    """Interfaz HTTP para listar sensores"""
+
+    repo = SensorSQLAlchemyRepository(db)
     service = SensorService(repo)
     sensors = service.list_sensors()
     return [SensorResponse.model_validate(sensor) for sensor in sensors]
@@ -47,10 +51,12 @@ def list_sensor(db: Session = dbsession) -> list[SensorResponse]:
     summary="Obtener un sensor por id",
 )
 def get_sensor(sensor_id: int, db: Session = dbsession) -> SensorResponse:
-    repo = SQLAlchemyRepository(db)
+    """Interfaz HTTP para buscar un sensor especifico"""
+
+    repo = SensorSQLAlchemyRepository(db)
     service = SensorService(repo)
     try:
-        sensor = service.get_sensors(sensor_id)
+        sensor = service.get_sensor(sensor_id)
         return SensorResponse.model_validate(sensor)
     except SensorNotFoundError as nf:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(nf)) from nf
@@ -64,10 +70,12 @@ def get_sensor(sensor_id: int, db: Session = dbsession) -> SensorResponse:
 def update_sensor(
     sensor_id: int, sensor_in: SensorUpdate, db: Session = dbsession
 ) -> SensorResponse:
-    repo = SQLAlchemyRepository(db)
+    """Interfaz HTTP para actualizar un sensor"""
+
+    repo = SensorSQLAlchemyRepository(db)
     service = SensorService(repo)
     try:
-        sensor = service.update_sensors(sensor_id, sensor_in)
+        sensor = service.update_sensor(sensor_id, sensor_in)
         return SensorResponse.model_validate(sensor)
     except SensorNotFoundError as nf:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(nf)) from nf
@@ -81,9 +89,11 @@ def update_sensor(
     summary="Eliminar un sensor (desactivar)",
 )
 def delete_sensor(sensor_id: int, db: Session = dbsession) -> None:
-    repo = SQLAlchemyRepository(db)
+    """Interfaz HTTP para desactivar un sensor"""
+
+    repo = SensorSQLAlchemyRepository(db)
     service = SensorService(repo)
     try:
-        service.desactivate_sensors(sensor_id)
+        service.deactivate_sensor(sensor_id)
     except SensorNotFoundError as nf:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(nf)) from nf

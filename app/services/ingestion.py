@@ -3,8 +3,8 @@ import json
 from datetime import datetime
 
 from app.models.readings import ReadingInfo
-from app.repositories.readings import RepositoryProtocolReading
-from app.repositories.sensors import RepositoryProtocol
+from app.repositories.readings import ReadingRepository
+from app.repositories.sensors import SensorRepository
 from app.schemas.readings import ReadingCreate
 from app.services.catalog import SensorNotFoundError
 from app.services.validators import ReadingValidator
@@ -20,49 +20,40 @@ def get_now() -> datetime:
     return datetime.now()
 
 
-class IngestionService:
+class ReadingService:
+    """Coordina las sesiones: buscar sensor, validar, evitar duplicados y guardar"""
+
     def __init__(
         self,
-        reading_repo: RepositoryProtocolReading,
-        sensor_repo: RepositoryProtocol,
-        validator: ReadingValidator = ReadingValidator(),  # noqa: B008
+        reading_repository: ReadingRepository,
+        sensor_repository: SensorRepository,
+        validator: ReadingValidator | None = None,
     ) -> None:
-        self.reading_repo = reading_repo
-        self.sensor_repo = sensor_repo
-        self.validator = validator
+        self.reading_repository = reading_repository
+        self.sensor_repository = sensor_repository
+        self.validator = validator or ReadingValidator()
 
-    def _compute_hash(self, sensor_id: int, value: float, unit: str) -> str:
-        payload = json.dumps(
-            {
-                "sensor_id": sensor_id,
-                "value": value,
-                "unit": unit,
-            },
-            sort_keys=True,
-        )
+    @staticmethod
+    def _compute_hash(sensor_id: int, value: float, unit: str) -> str:
+        """Genera un hash unico basado en el contenido de la lectura"""
+        payload = json.dumps({"sensor_id": sensor_id, "value": value, "unit": unit}, sort_keys=True)
         return hashlib.sha256(payload.encode()).hexdigest()
 
     def register_reading(self, sensor_id: int, reading_in: ReadingCreate) -> ReadingInfo:
-        sensor = self.sensor_repo.by_id(sensor_id)
-        if not sensor:
+        """
+        1. Confirma existencia del sensor
+        2. Ejecuta validacion con ReadingValidator
+        3. Verifica no duplicidad mediante el hash
+        4. Inserta el registro en la base de datos
+        """
+        sensor = self.sensor_repository.by_id(sensor_id)
+        if sensor is None:
             raise SensorNotFoundError(sensor_id)
 
         self.validator.validate(sensor, reading_in)
 
-        now = get_now()
-        hash_id = self._compute_hash(
-            sensor_id=sensor_id,
-            value=reading_in.value,
-            unit=reading_in.unit,
-        )
-
-        if self.reading_repo.exists_by_hash(sensor_id, hash_id):
+        hash_id = self._compute_hash(sensor_id, reading_in.value, reading_in.unit)
+        if self.reading_repository.by_hash(sensor_id, hash_id):
             raise DuplicateReadingError(sensor_id)
 
-        # 5. Guardar en Base de Datos
-        return self.reading_repo.create(
-            sensor_id=sensor_id,
-            reading_in=reading_in,
-            hash_id=hash_id,
-            timestamp=now,
-        )
+        return self.reading_repository.create(sensor_id, reading_in, hash_id, get_now())

@@ -1,8 +1,10 @@
+"""Esquemas Pydantic de entrada y salida para sensores."""
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
 class SensorCreate(BaseModel):
-    """Clase para la creacion de un nuevo sensor"""
+    """Representa lo que se necesita para registrar un sensor"""
 
     name: str = Field(..., examples=["TEMP-01"], description="Nombre unico del sensor")
     type: str = Field(..., examples=["TEMPERATURE"], description="Magnitud que mide el sensor")
@@ -10,7 +12,7 @@ class SensorCreate(BaseModel):
 
 
 class SensorUpdate(BaseModel):
-    """Clase para la actualizacion de un sensor"""
+    """Representa los cambios opcionales que pueden aplicarse a un sensor"""
 
     name: str | None = Field(None, examples=["TEMP-01"], description="Nombre unico del sensor")
     type: str | None = Field(None, examples=["TEMPERATURE"], description="Nueva magnitud")
@@ -18,7 +20,7 @@ class SensorUpdate(BaseModel):
 
 
 class SensorResponse(BaseModel):
-    """Clase para representar un sensor completo"""
+    """Muestra un sensor registrado en la API"""
 
     id: int
     name: str

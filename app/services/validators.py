@@ -19,25 +19,24 @@ class UnsupportedUnitError(ReadingValidationError):
 
 
 class ValueOutOfRangeError(ReadingValidationError):
-    def __init__(self, value: float, unit: str, min_val: float | None = None) -> None:
+    def __init__(self, value: float, unit: str, min_value: float | None = None) -> None:
         self.value = value
         self.unit = unit
         super().__init__(
-            f"Valor {value} {unit} fuera del rango físico permitido (mínimo: {min_val})"
+            f"Valor {value} {unit} fuera del rango físico permitido (mínimo: {min_value})"
         )
 
 
 class ReadingValidator:
+    """Evalua de forma si una lectura cumple las condiciones para procesarse"""
+
     @staticmethod
     def validate(sensor: SensorInfo, reading_in: ReadingCreate) -> None:
-        # 1. Validar Unidad compatible con el Tipo de Sensor
-        # Ejemplo de regla: TEMPERATURE solo acepta "C", "F", "K"
-        if sensor.type == "TEMPERATURE" and reading_in.unit not in ["C", "F", "K"]:
+        if not sensor.active:
+            raise SensorInactiveError(sensor.id)
+
+        if sensor.type == "TEMPERATURE" and reading_in.unit not in ("C", "F", "K"):
             raise UnsupportedUnitError(reading_in.unit, sensor.type)
 
-        # 2. Validar Rango Físico (ejemplo para Cero Absoluto: -273.15 °C)
-        if sensor.type == "TEMPERATURE" and reading_in.unit == "C":
-            if reading_in.value < -273.15:
-                raise ValueOutOfRangeError(
-                    value=reading_in.value, unit=reading_in.unit, min_val=-273.15
-                )
+        if sensor.type == "TEMPERATURE" and reading_in.unit == "C" and reading_in.value < -273.15:
+            raise ValueOutOfRangeError(reading_in.value, reading_in.unit, min_value=-273.15)

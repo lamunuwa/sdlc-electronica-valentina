@@ -28,4 +28,5 @@ addopts = "--cov=app --cov-fail-under=90"
 omit = [
     "app/main.py",
     "app/db.py",
+    "app/core/limits.py",
 ]

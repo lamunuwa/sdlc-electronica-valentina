@@ -7,7 +7,9 @@ from app.models.readings import ReadingInfo
 from app.schemas.readings import ReadingCreate
 
 
-class RepositoryProtocolReading(Protocol):
+class ReadingRepository(Protocol):
+    """Define las operaciones que un repositorio debe proveer"""
+
     def create(
         self,
         sensor_id: int,
@@ -16,14 +18,18 @@ class RepositoryProtocolReading(Protocol):
         timestamp: datetime | None = None,
     ) -> ReadingInfo: ...
 
-    def exists_by_hash(self, sensor_id: int, hash_id: str) -> bool: ...
+    def by_hash(self, sensor_id: int, hash_id: str) -> bool: ...
 
 
-class SQLAlchemyReadingRepository:
+class ReadingSQLAlchemyRepository:
+    """Crea el repositorio de lecturas en base a SQLAlchemy"""
+
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def exists_by_hash(self, sensor_id: int, hash_id: str) -> bool:
+    def by_hash(self, sensor_id: int, hash_id: str) -> bool:
+        """Recibe sensor y hash, evalua si ya hay una lectura con esos parametros"""
+
         return (
             self.db.query(ReadingInfo)
             .filter(
@@ -41,6 +47,8 @@ class SQLAlchemyReadingRepository:
         hash_id: str,
         timestamp: datetime | None = None,
     ) -> ReadingInfo:
+        """Persiste datos de lectura y devuelve la entidad creada con su id"""
+
         reading = ReadingInfo(
             sensor_id=sensor_id,
             value=reading_in.value,
