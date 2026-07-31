@@ -12,7 +12,7 @@ En sistemas de ingesta IoT masiva, los sensores pueden reenviar la misma lectura
 
 Se implementó un mecanismo de deduplicación basado en un **Hash SHA-256**:
 
-1. Antes de la persistencia, se genera una huella digital (hash) calculada a partir de la tupla: `(sensor_id + value + unit)`.
+1. Antes de la persistencia, se genera una huella digital (hash) calculada a partir de la tupla: `(sensor_id + value + unit, timestamp)`.
 2. Se verifica la existencia del hash en el repositorio de lecturas mediante la función `by_hash`.
 3. A nivel de base de datos, la columna `hash_id` se declaró con una restricción de unicidad (`UniqueConstraint`), sirviendo como una segunda barrera defensiva que evita la inserción en caso de condiciones de carrera.
 

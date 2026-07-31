@@ -10,6 +10,11 @@ class ReadingCreate(BaseModel):
 
     value: float = Field(..., examples=[10.5], description="Valor de la lectura")
     unit: str = Field(..., examples=["C"], description="Unidad de medida (C, BAR, V, ...)")
+    timestamp: datetime | None = Field(
+        default=None,
+        examples=["2026-07-30T12:00:00"],
+        description="Timestamp opcional de la lectura",
+    )
 
 
 class ReadingResponse(BaseModel):

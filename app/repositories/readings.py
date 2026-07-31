@@ -64,8 +64,9 @@ class ReadingSQLAlchemyRepository:
             unit=reading_in.unit,
             hash_id=hash_id,
         )
-        if timestamp is not None:
-            reading.timestamp = timestamp
+        effective_timestamp = reading_in.timestamp or timestamp
+        if effective_timestamp is not None:
+            reading.timestamp = effective_timestamp
 
         self.db.add(reading)
         self.db.commit()

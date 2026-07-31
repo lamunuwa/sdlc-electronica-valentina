@@ -251,14 +251,15 @@ def test_valor_fuera_rango_fisico(temp_sensor: SensorInfo) -> None:
 
 
 def test_lectura_duplicada_mismo_contenido(temp_sensor: SensorInfo) -> None:
-    payload = {"value": 24.5, "unit": "C"}
+    time = datetime(2026, 7, 30, 12, 0, 0)
+    payload = {"value": 24.5, "unit": "C", "timestamp": time.isoformat()}
     response1 = client.post(f"/sensors/{temp_sensor.id}/readings", json=payload)
-    assert response1.status_code == 201  # debe ser exitosa
+    assert response1.status_code == 201
     # Given: una lectura ya procesada con el mismo contenido y, por tanto, el mismo hash
     # When: reenvio la misma lectura
     response2 = client.post(f"/sensors/{temp_sensor.id}/readings", json=payload)
     # Then recibo 409 "Conflict"
-    assert response2.status_code == 409  # debe ser rechazada
+    assert response2.status_code == 409
     assert "duplicada" in response2.json()["detail"].lower()
 
 

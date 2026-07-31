@@ -34,10 +34,19 @@ class ReadingService:
         self.validator = validator or ReadingValidator()
 
     @staticmethod
-    def compute_hash(sensor_id: int, value: float, unit: str) -> str:
-        """Genera un hash unico basado en el contenido de la lectura"""
-        payload = json.dumps({"sensor_id": sensor_id, "value": value, "unit": unit}, sort_keys=True)
-        return hashlib.sha256(payload.encode()).hexdigest()
+    def compute_hash(sensor_id: int, value: float, unit: str, timestamp: datetime) -> str:
+        """Genera un hash unico basado en el contenido de la lectura y su timestamp"""
+        payload = json.dumps(
+            {
+                "sensor_id": sensor_id,
+                "value": value,
+                "unit": unit,
+                "timestamp": timestamp.isoformat(timespec="microseconds"),
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
     def register_reading(self, sensor_id: int, reading_in: ReadingCreate) -> ReadingInfo:
         """
@@ -52,11 +61,12 @@ class ReadingService:
 
         self.validator.validate(sensor, reading_in)
 
-        hash_id = self.compute_hash(sensor_id, reading_in.value, reading_in.unit)
+        timestamp = reading_in.timestamp or get_now()
+        hash_id = self.compute_hash(sensor_id, reading_in.value, reading_in.unit, timestamp)
         if self.reading_repository.by_hash(sensor_id, hash_id):
             raise DuplicateReadingError(sensor_id)
 
-        return self.reading_repository.create(sensor_id, reading_in, hash_id, get_now())
+        return self.reading_repository.create(sensor_id, reading_in, hash_id, timestamp)
 
     def get_readings(
         self,
