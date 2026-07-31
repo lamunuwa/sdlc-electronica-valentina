@@ -8,6 +8,66 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 ## Semana 3
 
+## Entrada 6
+
+### Objetivo
+
+Tener una plantilla para escribir ADRs.
+
+### Prompt
+
+> Necesito escribir un ADR acerca de mi API, se que es un documentos donde relato decisiones importantes de arquitectura, pero no se como se estructura. Entregame una plantilla y realizame un cuestionario que al contestarlo y mandarselo junto a la plantilla a cualquier IA me genere automaticamente el ADR
+
+### Resultados
+
+Me generó la siguiente plantilla en Markdown (ideal para hablar con IAs y para el repositorio):
+
+```markdown
+# ADR-00X: [Título de la decisión]
+
+- **Estado:** Aceptado
+- **Fecha:** 2026-07-30
+- **Autores:** [Tu Nombre / Equipo]
+
+## Contexto
+[¿Qué problema o necesidad técnica/negocio teníamos que resolver?]
+
+## Decisión
+[¿Qué solución elegimos y por qué?]
+
+## Opciones Consideradas
+1. [Opción A]
+2. [Opción B (Elegida)]
+
+## Consecuencias
+**Positivas:** [Beneficios ganados]
+**Negativas / Desventajas:** [Trade-offs o sacrificios aceptados]
+```
+
+Abajo creo el cuestionario, dividiéndolo en 3 secciones:
+
+1. Problema: ¿Qué dolor, cuello de botella o restricción tenías?
+2. Solución elegida: ¿Qué implementación o patrón seleccionaste?
+3. Opciones descartadas: ¿Qué otras opciones consideraste y por qué no las usaste?
+4. Ventajas principales: ¿Qué ganaste?
+5. Desventajas / Sacrificios: ¿Qué costo o complejidad asumiste a cambio?
+
+El siguiente prompt que le mandé fue el cuestionario resuelto; no lo agregaré como otra entrada.
+
+## Entrada 5
+
+### Objetivo
+
+Revisar y mejorar estéticamente el Swagger de la API.
+
+### Prompt
+
+> Se puede mejorar de alguna manera la presentacion del Swagger de la API? Es decir la pagina que me sale al hacer "uvicorn app.main:app --reload"
+
+### Resultados
+
+Este prompt fue con Gemini, no Antigravity. Me mostró múltiples formas de mejorar la estética, personalizar los routers con descripción, agregar una descripción a la API, mejorar la forma en la que se muestran ejemplos en schemas, etc. De eso elegí solo ponerles una descripción a los routers y cambiarles el título a mayúsculas.
+
 ## Entrada 4
 
 ### Objetivo
