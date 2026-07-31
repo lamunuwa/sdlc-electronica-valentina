@@ -5,7 +5,22 @@ from app.routers import health, readings, sensors
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="SensorHub API", version="0.3.0")
+tags_metadata = [
+    {
+        "name": "SENSORS",
+        "description": "Operaciones para el manejo de inventario de sensores.",
+    },
+    {
+        "name": "READINGS",
+        "description": "Registro y consultas paginadas de lecturas de sensores.",
+    },
+]
+
+app = FastAPI(
+    title="SensorHub API",
+    version="0.4.0",
+    openapi_tags=tags_metadata,
+)
 
 app.include_router(health.router)
 app.include_router(sensors.router)

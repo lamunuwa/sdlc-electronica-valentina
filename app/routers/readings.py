@@ -15,7 +15,7 @@ from app.services.validators import (
     ValueOutOfRangeError,
 )
 
-router = APIRouter(prefix="/sensors", tags=["readings"])
+router = APIRouter(prefix="/sensors", tags=["READINGS"])
 dbsession = Depends(get_db)
 
 
@@ -23,7 +23,7 @@ dbsession = Depends(get_db)
     "/{sensor_id}/readings",
     response_model=ReadingResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Registrar una nueva lectura para un sensor",
+    summary="Registrar una nueva lectura",
 )
 def create_reading(
     sensor_id: int,
@@ -68,7 +68,7 @@ def create_reading(
 @router.get(
     "/{sensor_id}/readings",
     response_model=list[ReadingResponse],
-    summary="Consultar lecturas de un sensor por filtros",
+    summary="Consultar lecturas por filtros",
 )
 def get_readings(
     sensor_id: int,

@@ -6,7 +6,7 @@ from app.repositories.sensors import SensorSQLAlchemyRepository
 from app.schemas.sensors import SensorCreate, SensorResponse, SensorUpdate
 from app.services.catalog import SensorDuplicateError, SensorNotFoundError, SensorService
 
-router = APIRouter(prefix="/sensors", tags=["sensors"])
+router = APIRouter(prefix="/sensors", tags=["SENSORS"])
 dbsession = Depends(get_db)
 
 
