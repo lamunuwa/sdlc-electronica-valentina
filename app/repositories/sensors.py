@@ -13,7 +13,7 @@ class SensorRepository(Protocol):
 
     def create(self, sensor_in: SensorCreate) -> SensorInfo: ...
 
-    def list_all(self) -> list[SensorInfo]: ...
+    def list_all(self, limit: int = 50, offset: int = 0) -> list[SensorInfo]: ...
 
     def by_id(self, sensor_id: int) -> SensorInfo | None: ...
 
@@ -42,10 +42,10 @@ class SensorSQLAlchemyRepository:
         self.db.refresh(db_sensor)
         return db_sensor
 
-    def list_all(self) -> list[SensorInfo]:
-        """Lista todos los sensores existentes"""
+    def list_all(self, limit: int = 50, offset: int = 0) -> list[SensorInfo]:
+        """Lista sensores paginados"""
 
-        return self.db.query(SensorInfo).all()
+        return self.db.query(SensorInfo).offset(offset).limit(limit).all()
 
     def by_id(self, sensor_id: int) -> SensorInfo | None:
         """En base a un ID busca una coincidencia, si no hay devuelve "None" """

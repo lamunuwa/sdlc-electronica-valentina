@@ -34,14 +34,14 @@ def create_sensor(sensor_in: SensorCreate, db: Session = dbsession) -> SensorRes
 @router.get(
     "",
     response_model=list[SensorResponse],
-    summary="Obtener todos los sensores",
+    summary="Obtener sensores paginados",
 )
-def list_sensor(db: Session = dbsession) -> list[SensorResponse]:
+def list_sensor(limit: int = 50, offset: int = 0, db: Session = dbsession) -> list[SensorResponse]:
     """Interfaz HTTP para listar sensores"""
 
     repo = SensorSQLAlchemyRepository(db)
     service = SensorService(repo)
-    sensors = service.list_sensors()
+    sensors = service.list_sensors(limit=limit, offset=offset)
     return [SensorResponse.model_validate(sensor) for sensor in sensors]
 
 
