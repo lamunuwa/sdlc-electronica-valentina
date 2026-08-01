@@ -6,6 +6,188 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 ---
 
+## Semana 3
+
+## Entrada 6
+
+### Objetivo
+
+Tener una plantilla para escribir ADRs.
+
+### Prompt
+
+> Necesito escribir un ADR acerca de mi API, se que es un documentos donde relato decisiones importantes de arquitectura, pero no se como se estructura. Entregame una plantilla y realizame un cuestionario que al contestarlo y mandarselo junto a la plantilla a cualquier IA me genere automaticamente el ADR
+
+### Resultados
+
+Me generó la siguiente plantilla en Markdown (ideal para hablar con IAs y para el repositorio):
+
+```markdown
+# ADR-00X: [Título de la decisión]
+
+- **Estado:** Aceptado
+- **Fecha:** 2026-07-30
+- **Autores:** [Tu Nombre / Equipo]
+
+## Contexto
+[¿Qué problema o necesidad técnica/negocio teníamos que resolver?]
+
+## Decisión
+[¿Qué solución elegimos y por qué?]
+
+## Opciones Consideradas
+1. [Opción A]
+2. [Opción B (Elegida)]
+
+## Consecuencias
+**Positivas:** [Beneficios ganados]
+**Negativas / Desventajas:** [Trade-offs o sacrificios aceptados]
+```
+
+Abajo creo el cuestionario, dividiéndolo en 3 secciones:
+
+1. Problema: ¿Qué dolor, cuello de botella o restricción tenías?
+2. Solución elegida: ¿Qué implementación o patrón seleccionaste?
+3. Opciones descartadas: ¿Qué otras opciones consideraste y por qué no las usaste?
+4. Ventajas principales: ¿Qué ganaste?
+5. Desventajas / Sacrificios: ¿Qué costo o complejidad asumiste a cambio?
+
+El siguiente prompt que le mandé fue el cuestionario resuelto; no lo agregaré como otra entrada.
+
+## Entrada 5
+
+### Objetivo
+
+Revisar y mejorar estéticamente el Swagger de la API.
+
+### Prompt
+
+> Se puede mejorar de alguna manera la presentacion del Swagger de la API? Es decir la pagina que me sale al hacer "uvicorn app.main:app --reload"
+
+### Resultados
+
+Este prompt fue con Gemini, no Antigravity. Me mostró múltiples formas de mejorar la estética, personalizar los routers con descripción, agregar una descripción a la API, mejorar la forma en la que se muestran ejemplos en schemas, etc. De eso elegí solo ponerles una descripción a los routers y cambiarles el título a mayúsculas.
+
+## Entrada 4
+
+### Objetivo
+
+Validar la nuevo estructura de app/. Se modificaron nombres de algunas clases, funciones, variables, y uso de ciertos archivos.
+
+### Prompt
+
+> Realice multiples cambios en todo el repositorio, los mas grandes se encuentran dentro de services/ justo ahi quiero que revises lo siguiente:
+>
+> 1. Catalog.py:
+> - Contiene `SensorDuplicateError` `SensorNotFounError` y `SensorService` implementa create_sensor, list_sensors, get_sensor, update_Sensor con sentido legibilidad y comentarios acertados
+> 2. Ingestion.py:
+> - Contiene `DuplicateReadingError` `ReadingService` y get_now, todos son legibles, bien implementados y tiene comentarios acertados
+> 3. Validators.py:
+> - Contiene `ReadingValidationError` `SensorInactiveError`, `UnsupportedUnitError` y `ValueOutOfRangeError` implementados con comentarios acertados y son de facil mantenimiento
+>
+> Especificamente lo que me interesa es que el codigo dentro de los 3 archivos este correcto en ese archivo, es decir que no haya cosas que deberian ir en ingestion en validators, que haya entendido bien el funcionamiento de services y la division que genere
+
+### Resultados
+
+Al no detectar cambios dejo directamente una cita de la IA:
+```text
+La separación de los módulos catalog, ingestion, validators es limpia y no rompe el comportamiento. 
+Cada archivo tiene una responsabilidad clara:
+
+    • Catálogo → gestión de sensores.
+
+    • Ingesta → recepción, deduplicación y almacenamiento de lecturas.
+
+    • Validadores → reglas puras de negocio para las lecturas.
+
+Todo el flujo original funciona igual, y la modularidad ahora facilita el mantenimiento y los tests.
+```
+
+## Entrada 3
+
+### Objetivo
+
+Terminar los ultimos 3 archivos para feat commit de US-04.
+
+### Prompt
+
+> Generando la estructura para las lecturas y lo solicitado en docs/BACKLOG.md en la seccion de US-04, entre en completo burnout. Tener 8 archivos abiertos para escribir + BACKLOG + archivos de sensors para guiarme, es muy dificil, estoy confundiendome todo el rato de archivos, de nombres de funciones o clases y es poco eficaz esto que estoy haciendo.
+>
+> En los archivos services/ingestion.py y validators.py asi como routers/readings.py escribe el codigo faltante. En validators debes crear los errores de dominio, por ejemplos hacer la excepcion si el sensor no existe, si el sensor esta inactivo, si no soporta la unidad, valores fuera del rango permitido. En ingestion debes gestionar servicios de lectura de sensores:
+>
+> 1. Verifica que el sensor existe
+> 2, Verifica que el sensor este activo
+> 3. Valida la unidad de medida soportada
+> 4. Valida el rango fisico, si esta dentro
+> 5. Calcula el hash (clase para calcular el hash)
+> 6. Verifica duplicados
+> 7. Guarda la lectura
+>
+> Por ultimo en routers debes de agregar las rutas que apareceran en la API, en este caso creo que deberia ser un unico POST pero valida junto con BACKLOG.md
+
+### Resultados
+
+Impecables, salvo los típicos errores de IA, como poner Optional en vez de "| None" o pass en vez de "..." que tuve que arreglar manualmente, ya que no pasan los linters; al ejecutar pytest pasa con +99% de cobertura, sin errores de compilación o de lógica. Todavía no lo probé en el Swagger, solo validé los test; primero haré una refactorización del código completo, poniendo comentarios, mejorando legibilidad y, en general, dejar un código de US-04 completo; sin embargo, en este punto ya funciona.
+
+## Entrada 2
+
+### Objetivo
+
+Probar Antigravity, ya que el anterior prompt era para texto y Gemini lo consideró un excelente modelo para platicar; lo hice en web. Esto, como es dentro de mi VSCode, no sé qué tan amigable sea la web para adjuntar todo un repositorio; entonces descargué y agregué la extensión de Antigravity a VSCode (la cual ya no funciona y tuve que descargar el IDE).
+
+Debía buscar entre el repositorio las direcciones proporcionadas, entender el código, la lógica de negocio de cada archivo y darme una conclusión en base a mi análisis de qué va en cada carpeta y lo que encontró y si era correcto.
+
+### Prompt
+
+> Actua como un ingeniero en software o similares, experto en Python orientado a objetos y plataformas de servidores API y contenedores. En base a las US de docs/agile/BACKLOG.md al final de la semana debo tener una API con los entregables solicitados. En este momento genere todo lo de US-02, lo dividi ya en las capas que se mencionan pero no se si lo hice correctamente, revisa cada archivo de entre app/models/sensors.py, app/repositories/sensors.py, app/routers/sensors.py, app/schemas/sensors.py y app/services/catalog.py. La logica del sistema, la estructura, pero NO toques otros archivos que no sean los dichos, NO entres con la terminal, todo pasa en 100% de covertura por pytest. Solo necesito verificar que todo va donde debe ir
+>
+> Aqui te dejo un breve analisis/resumen de que deberia ir en cada carpeta, corrigeme en caso de ser necesario
+>
+> 1. app/models/: Define la estructura de las tablas en la base de datos. Son clases que mapean directamente tablas SQL mediante el ORM (SQLAlchemy).
+> 2. app/schemas/: Valida datos que entran y salen de la API, el mas sencillo
+> 3. app/services/: Tiene la logica de negocio, las operaciones, aplica reglas, valida restricciones, etc.
+> 4. app/repositories/: Mete todas las operaciones de base de datos (CRUD). Es la unica que tiene "acceso" al interior de mi sensorhub.db
+> 5. app/routers/: Recibe peticiones HTTP, es lo que en la pagina vemos como los rectangulos expandibles con informacion. Es la unica que tiene acceso a los servicios.
+
+### Resultados
+
+Como todos los prompts que uso cuando salto entre IAs que no tienen mucho contexto sobre mí (soy de ChatGPT, pero sin Codex no sirve para este proyecto), siempre suelo hacer cosas simples que sé que puedo corregir si lo hacen mal; en este caso solo debía validar que todo era correcto y mis explicaciones. Lo hizo sorprendentemente bien; un modelo de copiloto como Raptor Mini hubiera empezado a meterse a la terminal y escribir código y hacer quién sabe cuántas cosas para probar esto, y Antigravity solo entró, revisó y fue tachando en una checklist que me dio antes de empezar. Me gustó mucho su forma de trabajar.
+
+## Entrada 1
+
+### Objetivo
+
+Probar Gemini, me dieron una prueba de 1 mes PRO. Tenía que tomar el rol de un SCRUM master y revisar qué tan bien redactadas están mis US; no le especifiqué bien qué metodologías usar (SP, Gherkin, MoSCoW) para ver qué tan inteligente era el modelo y ver si lo deducía por sí mismo.
+
+### Prompt
+
+> Actua como un SCRUM master. En este punto estoy por cursar la introduccion a FastAPI y SQLAlchemy en mi curso, es la semana 3, en la semana pasada aprendi a hacer User Stories y metolodologias agiles. Genere unos US, estos deben cumplir con los siguientes requisitos:
+>
+> • API completa de SensorHub en app/ (estructura oficial del repositorio): CRUD de sensores y lecturas siguiendo las convenciones REST.
+> • Arquitectura en 4 capas limpiamente separadas: routers → services → repositories → models.
+> • Validación Pydantic con física real: rechaza unidades desconocidas y valores fuera de rango por tipo de sensor.
+> • Consulta con paginación y filtro por rango de fechas.
+> • Swagger funcional en /docs.
+> • Manejo de errores exhaustivo 400/404/409/422, decisiones de índices justificadas.
+>
+> Mis US son los siguientes, responde si cumplen con los requisitos de entrega, en caso de haber discrepancias o fallos arreglalos y explicame por que
+>
+> `[Aqui inserte el texto del .md de mis US]`
+
+### Resultados
+
+Tuve errores en 3 de los 6 US; me habló de detalles técnicos, de escritura, entendió la rúbrica (cabe recalcar que también le adjunté las 12 páginas del pdf) y también mencionó cosas que no se cumplían al 100%, ejemplo:
+
+```text
+1. Detalle Técnico en US-02: Error de escritura (typo) en la unidad
+2. Ajuste Faltante para Alto Potencial en US-03
+3. Ajuste Faltante para Alto Potencial en US-04
+```
+
+También entendió las metodologías usadas; como le pedí que arreglara el texto, generó los 6 US de nuevo, pero corregidos, y todos siguiendo SP, Gherkin, MoSCoW sin falla.
+
+---
+
 ## Semana 2
 
 ## Entrada 4
@@ -157,8 +339,8 @@ Aclarar dudas sobre qué hizo en las correcciones del prompt anterior.
 
 ### Prompt
 
-> "Lo que no termino de entender es:
-> Si protocol es un intermediario entre el proceso a bajo nivel como el guardado o lectura y el de alto nivel que es toda la logica de como se mueven las cosas, por que en estos codigos tanto PostgreSQLRepository e InMemoryRepository no llaman nunca a la funcion de protocol."
+> Lo que no termino de entender es:
+> Si protocol es un intermediario entre el proceso a bajo nivel como el guardado o lectura y el de alto nivel que es toda la logica de como se mueven las cosas, por que en estos codigos tanto PostgreSQLRepository e InMemoryRepository no llaman nunca a la funcion de protocol.
 
 ### Resultados
 
@@ -184,7 +366,7 @@ Validar la implementación de los principios SOLID (ISP, DIP) en la práctica y 
 
 ### Prompt
 
-> "Comportate como un ingeniero en software senior, experto en Python, especificamente en Programacion Orientada a Objetos (POO), plataformas de servidores API y contenedores. Estoy llevando un curso para orientar mis conocimientos de firmware embebido hacia la creación de software profesional.
+> Comportate como un ingeniero en software senior, experto en Python, especificamente en Programacion Orientada a Objetos (POO), plataformas de servidores API y contenedores. Estoy llevando un curso para orientar mis conocimientos de firmware embebido hacia la creación de software profesional.
 >
 > Se divide en 6 semanas, en este momento me encuentro en la primera de ellas. Esta etapa se centra en los siguientes objetivos:
 >
@@ -301,7 +483,7 @@ Establecer el rol de la IA como experto para el chat usando CO-RE-CON (Contexto-
 
 ### Prompt
 
-> "Actua como un profesor egresado de ingeniería en software o similares, experto en Python orientado a objetos y plataformas de servidores API y contenedores. Actualmente estoy en un curso para orientar mis conocimientos de firmware embebido hacia la creación de software profesional.
+> Actua como un profesor egresado de ingeniería en software o similares, experto en Python orientado a objetos y plataformas de servidores API y contenedores. Actualmente estoy en un curso para orientar mis conocimientos de firmware embebido hacia la creación de software profesional.
 >
 > Se divide en 6 semanas, en este momento me encuentro en la primera de ellas. Esta etapa se centra en los siguientes objetivos:
 >
@@ -315,7 +497,7 @@ Establecer el rol de la IA como experto para el chat usando CO-RE-CON (Contexto-
 >
 > No seas vago o impreciso con tu explicación, alargate, me gustan las explicaciones completas, basate puramente en la documentacion oficial de python, por el momento no me expliques SOLID enfocate únicamente en type hints, no expliques la logica de programacion.  
 >
-> Explicame la sintaxis linea por linea, especialmente los type hints, que significa, donde se usa, por que me deberia importar para POO (Programacion orientada a objetos), API, IA. Por ultimo y siguiendo con el ejercicio, generame el "esqueleto" (los def con los argumentos vacíos) para que yo los rellene con la logica y los type hints."
+> Explicame la sintaxis linea por linea, especialmente los type hints, que significa, donde se usa, por que me deberia importar para POO (Programacion orientada a objetos), API, IA. Por ultimo y siguiendo con el ejercicio, generame el "esqueleto" (los def con los argumentos vacíos) para que yo los rellene con la logica y los type hints.
 
 ### Resultados
 

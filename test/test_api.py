@@ -1,0 +1,349 @@
+from collections.abc import Generator
+from datetime import datetime, timedelta
+
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine, inspect
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
+
+from app.db import Base, get_db
+from app.main import app
+from app.models.readings import ReadingInfo
+from app.models.sensors import SensorInfo
+
+db_url = "sqlite:///:memory:"
+
+engine = create_engine(
+    db_url,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
+
+sessionlocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, expire_on_commit=False)
+
+
+def override_get_db() -> Generator[Session]:
+    try:
+        db = sessionlocal()
+        yield db
+    finally:
+        db.close()
+
+
+app.dependency_overrides[get_db] = override_get_db
+client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def set_db() -> Generator[None]:
+    Base.metadata.create_all(bind=engine)
+    yield
+    Base.metadata.drop_all(bind=engine)
+
+
+@pytest.fixture
+def temp_sensor() -> SensorInfo:
+    db = sessionlocal()
+    sensor = SensorInfo(name="TEMP-01", type="TEMPERATURE", unit="C", active=True)
+    db.add(sensor)
+    db.commit()
+    db.refresh(sensor)
+    db.close()
+    return sensor
+
+
+# Test de US-01 ---------------------------------------
+def test_verificar_estado_activo() -> None:
+    # Given: SensorHub esta activo
+    # When: envio una solicitud GET /health
+    response = client.get("/health")
+    # Then: recibo una respuesta HTTP con codigo de estado 200
+    assert response.status_code == 200
+    # And: la respuesta es '{"status": "ok"}'
+    assert response.json() == {"status": "ok"}
+
+
+# -----------------------------------------------------
+
+
+# Test de US-02 ---------------------------------------
+def test_registro_exitoso() -> None:
+    # Given: envio datos para un registro
+    payload = {"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C"}
+    # When: hago POST /sensors
+    response = client.post("/sensors/", json=payload)
+    # Then: recibo 201 "Created"
+    assert response.status_code == 201
+    data = response.json()
+    # And: el sensor creado con toda su informacion
+    assert data["name"] == "TEMP-01"
+    assert data["type"] == "TEMPERATURE"
+    assert data["unit"] == "C"
+    assert "id" in data
+    assert data["active"] is True
+
+
+def test_nombre_duplicado() -> None:
+    payload = {"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C"}
+    first_response = client.post("/sensors", json=payload)
+    assert first_response.status_code == 201
+    # Given: ya existe un sensor con el mismo nombre (reenvio el anterior)
+    # When: envio POST /sensors
+    response = client.post("/sensors", json=payload)
+    # Then: recibo 409 ""Conflict" con sus detalles
+    assert response.status_code == 409
+    assert response.json()["detail"]
+
+
+def test_payload_invalido() -> None:
+    # When: envio datos incorrectos
+    payload = {"name": "TEMP-01", "type": "TEMPERATURE"}  # Falta unit
+    response = client.post("/sensors", json=payload)
+    # Then: recibo 422 ""Unprocessable Entity"" con sus detalles
+    assert response.status_code == 422
+    assert response.json()["detail"]
+
+
+# -----------------------------------------------------
+
+
+# Test de US-03A --------------------------------------
+def test_listar_sensores() -> None:
+    client.post("/sensors", json={"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C"})
+    client.post("/sensors", json={"name": "PRESS-01", "type": "PRESSURE", "unit": "BAR"})
+    # Given: existen sensores registrados
+    # When: envio GET /sensors
+    response = client.get("/sensors")
+    # Then: recibo 200 "OK"
+    assert response.status_code == 200
+    # And: la lista completa
+    assert len(response.json()) >= 2
+
+
+def test_actualizacion_sensor() -> None:
+    sensor = client.post(
+        "/sensors", json={"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C"}
+    ).json()["id"]
+    # Given: un sensor existente
+    # When: hago PATCH /sensors/{id} con {"unit": "F"}
+    response = client.put(f"/sensors/{sensor}", json={"unit": "F"})
+    # Then recibo 200 "OK"
+    assert response.status_code == 200
+    assert response.json()["name"] == "TEMP-01"  # Verificacion
+    # And: los datos actualizados
+    assert response.json()["unit"] == "F"
+
+
+def test_desactivar_sensor() -> None:
+    sensor = client.post(
+        "/sensors", json={"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C"}
+    ).json()
+    sensor_id = sensor["id"]
+    # Given: un sensor existente
+    # When: hago DELETE /sensors/{id}
+    response = client.delete(f"/sensors/{sensor_id}")
+    # Then: recibo 204 "No Content"
+    assert response.status_code == 204
+    for_response = client.get(f"/sensors/{sensor_id}")
+    assert for_response.status_code == 200
+    # And el sensor tiene active=false (eliminacion parcial)
+    assert for_response.json()["active"] is False
+
+
+# -----------------------------------------------------
+
+
+# Test de US-03B --------------------------------------
+def test_obtener_ID_inexistente() -> None:
+    # When: GET /sensors/9999
+    response = client.get("/sensors/9999")
+    # Then: recibo 404 "Not Found"
+    assert response.status_code == 404
+    assert response.json()["detail"]
+
+
+def test_actualizar_ID_inexistente() -> None:
+    # When: PATCH /sensors/9999 con {"unit": "F"}
+    response = client.put("/sensors/9999", json={"unit": "F"})
+    # Then: recibo 404 "Not Found"
+    assert response.status_code == 404
+    # And: un mensaje de error
+    assert response.json()["detail"] == "El sensor con id '9999' no encontrado"
+
+
+def test_actualizacion_nombre_duplicado() -> None:
+    sensor1 = client.post(
+        "/sensors", json={"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C"}
+    ).json()["id"]
+    client.post("/sensors", json={"name": "TEMP-02", "type": "TEMPERATURE", "unit": "C"}).json()[
+        "id"
+    ]
+    # Given: existen sensores "TEMP-01" y "TEMP-02"
+    # When hago PATCH /sensors/{""} con {"name": "TEMP-02"}
+    response = client.put(f"/sensors/{sensor1}", json={"name": "TEMP-02"})
+    # Then: recibo 409 "Conflict"
+    assert response.status_code == 409
+    # And: un mensaje de error
+    assert response.json()["detail"] == "El sensor con el nombre 'TEMP-02' ya existe"
+
+
+def test_desactivar_sensor_no_encontrado() -> None:
+    # When: hago DELETE /sensors/9999
+    response = client.delete("/sensors/9999")
+    # Then: recibo 404 "Not Found"
+    assert response.status_code == 404
+    assert response.json()["detail"]
+
+
+# -----------------------------------------------------
+
+
+# Test de US-04 ---------------------------------------
+def test_lectura_valida(temp_sensor: SensorInfo) -> None:
+    # Given: un sensor de tipo "TEMPERATURE"
+    # When: {"value": 24.5, "unit": "C"} a /sensors/{id}/readings
+    payload = {"value": 24.5, "unit": "C"}
+    response = client.post(f"/sensors/{temp_sensor.id}/readings", json=payload)
+    # Then: recibo 201 "Created"
+    assert response.status_code == 201
+    data = response.json()
+    assert "id" in data
+    assert "timestamp" in data
+    # And: el id de la lectura y timestamp
+    assert data["sensor_id"] == temp_sensor.id
+    assert data["value"] == 24.5
+    assert data["unit"] == "C"
+    assert "hash_id" in data
+
+
+def test_sensor_no_encontrado() -> None:
+    payload = {"value": 20.0, "unit": "C"}
+    # When: mando lectura a /sensors/9999/readings
+    response = client.post("/sensors/9999/readings", json=payload)
+    # Then: recibo 404 "Not Found"
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Sensor con id 9999 no encontrado"
+
+
+def test_unidad_no_soportada(temp_sensor: SensorInfo) -> None:
+    # Given: un sensor de temperatura
+    payload = {"value": 20.0, "unit": "PSI"}
+    # When: envio {"value": 20, "unit": "PSI"}
+    response = client.post(f"/sensors/{temp_sensor.id}/readings", json=payload)
+    # Then: recibo 422 "Unprocessable Entity"
+    assert response.status_code == 422
+    detail = response.json()["detail"]
+    assert "PSI" in detail
+    assert "TEMPERATURE" in detail
+
+
+def test_valor_fuera_rango_fisico(temp_sensor: SensorInfo) -> None:
+    # Given: un sensor de temperatura
+    payload = {"value": -345.67, "unit": "C"}
+    # When: {"value": -345.67, "unit": "C"}
+    response = client.post(f"/sensors/{temp_sensor.id}/readings", json=payload)
+    # Then: recibo 400 "Bad Request"
+    assert response.status_code == 400
+    detail = response.json()["detail"]
+    assert "-273.15" in detail
+    assert "-345.67" in detail
+
+
+def test_lectura_duplicada_mismo_contenido(temp_sensor: SensorInfo) -> None:
+    time = datetime(2026, 7, 30, 12, 0, 0)
+    payload = {"value": 24.5, "unit": "C", "timestamp": time.isoformat()}
+    response1 = client.post(f"/sensors/{temp_sensor.id}/readings", json=payload)
+    assert response1.status_code == 201
+    # Given: una lectura ya procesada con el mismo contenido y, por tanto, el mismo hash
+    # When: reenvio la misma lectura
+    response2 = client.post(f"/sensors/{temp_sensor.id}/readings", json=payload)
+    # Then recibo 409 "Conflict"
+    assert response2.status_code == 409
+    assert "duplicada" in response2.json()["detail"].lower()
+
+
+# -----------------------------------------------------
+
+
+# Test de US-05 ---------------------------------------
+def test_paginacion_y_filtro_fechas(temp_sensor: SensorInfo) -> None:
+    db = sessionlocal()
+    base_date = datetime(2026, 7, 1, 0, 0, 0)
+    readings = []
+    for i in range(100):
+        # Generamos lecturas separadas por 4 horas
+        reading_time = base_date + timedelta(hours=i * 4)
+        reading = ReadingInfo(
+            sensor_id=temp_sensor.id,
+            value=20.0 + (i % 5),
+            unit="C",
+            timestamp=reading_time,
+            hash_id=f"hash_sample_{i}",
+        )
+        readings.append(reading)
+    # Given: 100 lecturas para el sensor distribuidas en julio 2026
+    db.add_all(readings)
+    db.commit()
+    db.close()
+    """
+    When: hago GET /sensors/{id}/readings
+    from=2026-07-01T00:00:00
+    to=2026-07-27T00:00:00
+    limit=10
+    offset=0
+    """
+    filter_params = {
+        "from": "2026-07-01T00:00:00",
+        "to": "2026-07-27T00:00:00",
+        "limit": 10,
+        "offset": 0,
+    }
+    response = client.get(f"/sensors/{temp_sensor.id}/readings", params=filter_params)
+    # Then: recibo 200 "OK"
+    assert response.status_code == 200
+    data = response.json()
+    # And: exactamente las primeras 10 lecturas dentro del rango
+    assert len(data) == 10
+    first_timestamp = data[0]["timestamp"]
+    assert "2026-07-01" in first_timestamp  # las lecturas deben estar dentro del rango especificado
+
+
+def test_indices_justificados() -> None:
+    # Given: la tabla "readings" tiene un indice compuesto (sensor_id, timestamp/created_at)
+    inspector = inspect(engine)
+    indexes = inspector.get_indexes("readings")
+
+    # When: buscamos un indice que incluya "sensor_id" y "timestamp/created_at"
+    index_found = False
+    for idx in indexes:
+        column_names = idx.get("column_names", [])
+        if "sensor_id" in column_names and (
+            "timestamp" in column_names or "created_at" in column_names
+        ):
+            index_found = True
+            break
+
+    # Then: se usa dicho indice
+    assert index_found, "Indice compuesto en 'readings' con 'sensor_id, timestamp/created_at'"
+
+
+def test_sensor_no_encontrado_lecturas() -> None:
+    # When: consulto lecturas de un sensor inexistente
+    response = client.get("/sensors/9999/readings")
+
+    # Then: recibo 404 "Not Found"
+    assert response.status_code == 404
+    assert response.json()["detail"]
+
+
+def test_validacion_parametros_consulta(temp_sensor: SensorInfo) -> None:
+    # When: mando limit con un valor no numérico
+    response = client.get(f"/sensors/{temp_sensor.id}/readings?limit=invalid_value")
+
+    # Then: recibo 422 "Unprocessable Entity"
+    assert response.status_code == 422
+    assert response.json()["detail"]
+
+
+# -----------------------------------------------------

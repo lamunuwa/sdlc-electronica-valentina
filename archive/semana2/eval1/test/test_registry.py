@@ -1,5 +1,4 @@
 import pytest
-
 from semana2.eval1.registry import (
     InvalidSensorDataError,
     SensorAlreadyExistsError,

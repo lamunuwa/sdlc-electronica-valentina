@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from _pytest.capture import CaptureFixture
-
 from semana2.eval1.alert import AlertManager, ConsoleAlert, FileAlert
 from semana2.eval1.anomaly import AnomalyResult, AnomalyType
 
