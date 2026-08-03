@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Protocol
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.readings import ReadingInfo
@@ -39,15 +40,11 @@ class ReadingSQLAlchemyRepository:
     def by_hash(self, sensor_id: int, hash_id: str) -> bool:
         """Recibe sensor y hash, evalua si ya hay una lectura con esos parametros"""
 
-        return (
-            self.db.query(ReadingInfo)
-            .filter(
-                ReadingInfo.sensor_id == sensor_id,
-                ReadingInfo.hash_id == hash_id,
-            )
-            .first()
-            is not None
+        sen = select(ReadingInfo).where(
+            ReadingInfo.sensor_id == sensor_id,
+            ReadingInfo.hash_id == hash_id,
         )
+        return self.db.execute(sen).first() is not None
 
     def create(
         self,
@@ -83,11 +80,21 @@ class ReadingSQLAlchemyRepository:
     ) -> list[ReadingInfo]:
         """Obtiene lecturas con filtros de fechas y paginacion"""
 
-        query_filter = self.db.query(ReadingInfo).filter(ReadingInfo.sensor_id == sensor_id)
-        if from_date is not None:
-            query_filter = query_filter.filter(ReadingInfo.timestamp >= from_date)
-        if to_date is not None:
-            query_filter = query_filter.filter(ReadingInfo.timestamp <= to_date)
+        sen = select(ReadingInfo).where(ReadingInfo.sensor_id == sensor_id)
 
-        query_filter = query_filter.order_by(ReadingInfo.timestamp.asc())
-        return query_filter.limit(limit).offset(offset).all()
+        if from_date is not None:
+            sen = sen.where(ReadingInfo.timestamp >= from_date)
+        if to_date is not None:
+            sen = sen.where(ReadingInfo.timestamp <= to_date)
+
+        sen = sen.order_by(
+            ReadingInfo.timestamp.asc(),
+            ReadingInfo.id.asc(),
+        )
+
+        if offset is not None:
+            sen = sen.offset(offset)
+        if limit is not None:
+            sen = sen.limit(limit)
+
+        return list(self.db.scalars(sen).all())
