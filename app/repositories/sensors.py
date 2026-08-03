@@ -1,5 +1,6 @@
 from typing import Protocol
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.sensors import SensorInfo
@@ -13,7 +14,7 @@ class SensorRepository(Protocol):
 
     def create(self, sensor_in: SensorCreate) -> SensorInfo: ...
 
-    def list_all(self, limit: int = 50, offset: int = 0) -> list[SensorInfo]: ...
+    def list_sensor(self, limit: int = 50, offset: int = 0) -> list[SensorInfo]: ...
 
     def by_id(self, sensor_id: int) -> SensorInfo | None: ...
 
@@ -31,7 +32,8 @@ class SensorSQLAlchemyRepository:
     def by_name(self, name: str) -> SensorInfo | None:
         """Entrega el sensor coincidente o "None" en base a un sensor buscado"""
 
-        return self.db.query(SensorInfo).filter(SensorInfo.name == name).first()
+        sen = select(SensorInfo).where(SensorInfo.name == name)
+        return self.db.scalars(sen).first()
 
     def create(self, sensor_in: SensorCreate) -> SensorInfo:
         """Crea una entidad (sensor) con los datos validados"""
@@ -42,15 +44,16 @@ class SensorSQLAlchemyRepository:
         self.db.refresh(db_sensor)
         return db_sensor
 
-    def list_all(self, limit: int = 50, offset: int = 0) -> list[SensorInfo]:
+    def list_sensor(self, limit: int = 50, offset: int = 0) -> list[SensorInfo]:
         """Lista sensores paginados"""
 
-        return self.db.query(SensorInfo).offset(offset).limit(limit).all()
+        sen = select(SensorInfo).order_by(SensorInfo.id.asc()).offset(offset).limit(limit)
+        return list(self.db.scalars(sen).all())
 
     def by_id(self, sensor_id: int) -> SensorInfo | None:
         """En base a un ID busca una coincidencia, si no hay devuelve "None" """
 
-        return self.db.query(SensorInfo).filter(SensorInfo.id == sensor_id).first()
+        return self.db.get(SensorInfo, sensor_id)
 
     def update(self, sensor: SensorInfo, sensor_in: SensorUpdate) -> SensorInfo:
         """Cambia informacion en base a un ID de un sensor y lo guarda"""

@@ -29,7 +29,7 @@ class SensorService:
 
     def list_sensors(self, limit: int = 50, offset: int = 0) -> list[SensorInfo]:
         """Obtiene y devuelve la lista de sensores paginados"""
-        return self.repository.list_all(limit=limit, offset=offset)
+        return self.repository.list_sensor(limit=limit, offset=offset)
 
     def get_sensor(self, sensor_id: int) -> SensorInfo:
         """Busca un sensor por su ID. Lanza SensorNotFoundError si no existe"""
