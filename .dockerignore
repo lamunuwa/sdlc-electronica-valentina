@@ -2,8 +2,7 @@
 .env
 .env.*
 *.env
-*.pem
-*.key
+.git/
 
 # Base de Datos y Logs Locales
 *.db
@@ -23,10 +22,11 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .coverage
-htmlcov/
+
+# Archivos locales de Docker
+postgres-data/
+pgdata/
 
 # IDEs y SO
 .vscode/
 .idea/
-.DS_Store
-Thumbs.db
