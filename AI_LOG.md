@@ -6,6 +6,24 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 ---
 
+## Semana 4
+
+## Entrada 1
+
+### Objetivo
+
+Evitar buscar el link del Swagger y desplegarlo automáticamente.
+
+### Prompt
+
+> Hay manera de que cuando inicie la API me tire el mensaje con el link correcto (http://localhost:8000/docs) para abrir el Swagger, es medio cansado estarlo buscando cada que quiero probar manualmente algo.
+
+### Resultados
+
+Me tiró aproximadamente 4 líneas de código, donde importaba de fastapi.responses, RedirectResponse y configuraba la ruta. Me explicó las líneas, qué hacen y cómo. Como "detalle pro", incluyó `include_in_schema=False`. Tuvo un error de mypy no-untyped-def y lo solucioné.
+
+---
+
 ## Semana 3
 
 ## Entrada 6
