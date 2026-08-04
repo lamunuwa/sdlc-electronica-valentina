@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 
 from app.db import Base, engine
 from app.routers import health, readings, sensors
@@ -25,3 +26,8 @@ app = FastAPI(
 app.include_router(health.router)
 app.include_router(sensors.router)
 app.include_router(readings.router)
+
+
+@app.get("/", include_in_schema=False)
+async def root() -> RedirectResponse:
+    return RedirectResponse(url="/docs")
