@@ -8,6 +8,22 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 ## Semana 4
 
+## Entrada 2
+
+### Objetivo
+
+Mejorar y optimizar .gitignore y crear .dockerignore para mantener seguridad e integridad en el despliegue de la API.
+
+### Prompt
+
+> Revisando informacion de dockers me encontre con un archivo tipo .gitignore llamado .dockerignore, entiendo que es para ignorar los dichos "secretos" que pueden ocacionar problemas en el despliegue y contenerizacion de mi API. Necesito crear el archivo, las plantillas que encuentro en internet tienen muchos documentos ignorados, creo que para este punto es un poco de sobreingenieria, necesito que me crees un .dockerignore en la raiz del proyecto con lo justo y necesario para poder crear imagenes/containers, desplegar docker compose, alembic y render.
+>
+> Aprovechando el commit, revisa mi .gitignore, en este momento tiene un monton de frameworks que ni conozco ni uso como Django, Flask, Scrappy, Marimo, entre otros. Elimina los ignore que no sean de Python, FastAPI, Dockers, Linters, editores de codigo, entornos y base de datos.
+
+### Resultados
+
+Entrego los 2 archivos tal cual se lo pedi. El dockerignore lo compare con los dockerignore de otros repositorios en github y modifique algunas cosas, agregue *.db-journal, *.log, *.py[cod]. Lo mismo para el gitignore, solo tuve que ajustar un poco lo que entrego para dejarlo mas seguro.
+
 ## Entrada 1
 
 ### Objetivo
