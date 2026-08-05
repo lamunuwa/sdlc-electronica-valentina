@@ -1,0 +1,32 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+psycopg://sensor:secretdb@db:5432/sensordb
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: sensor
+      POSTGRES_PASSWORD: secretdb
+      POSTGRES_DB: sensordb
+    volumes:
+      - pydata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sensor -d sensordb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: always
+
+volumes:
+  pydata:
