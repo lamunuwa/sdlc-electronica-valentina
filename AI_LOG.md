@@ -8,11 +8,25 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 ## Semana 4
 
+## Entrada 3
+
+### Objetivo
+
+Cuando tiré `docker compose up⁣`, encendía la base de datos, pero no la API, y me tiraba error `SQLite objects created in a thread can only be used in that same thread`, lo que me llevó a `db.py`, a la línea de `connect_args["check_same_thread"] = False`. Intenté hacer de todo para mantenerla, pero solo sirvió eliminarla, y no sabía por qué. Necesitaba que la IA me explicara.
+
+### Prompt
+
+> Si tengo `connect_args["check_same_thread"] = False` en una database de SQAlchemy 2.x (SQLite), y funciona en un container de dockers pero al usarlo en un compose me da error, a que se debe?
+
+### Resultados
+
+Me explicó que PostgreSQL no soporta SQLite, por lo que no soporta `check_same_thread`. Esto se debe a que SQLite es una base de datos embebida y PostgreSQL es cliente-servidor; al ser así, PostgreSQL tiene su propio sistema de gestión de conexiones y concurrencia, es decir, cuando la app se conecta a PostgreSQL, no está accediendo a un archivo como tal, sino que está hablando con un proceso de servidor que ya sabe cómo llevar muchas conexiones simultáneas, no hay necesidad de que yo se lo indique.
+
 ## Entrada 2
 
 ### Objetivo
 
-Mejorar y optimizar .gitignore y crear .dockerignore para mantener seguridad e integridad en el despliegue de la API.
+Mejorar y optimizar `.gitignore` y crear `.dockerignore` para mantener seguridad e integridad en el despliegue de la API.
 
 ### Prompt
 
@@ -22,7 +36,7 @@ Mejorar y optimizar .gitignore y crear .dockerignore para mantener seguridad e i
 
 ### Resultados
 
-Entrego los 2 archivos tal cual se lo pedi. El dockerignore lo compare con los dockerignore de otros repositorios en github y modifique algunas cosas, agregue *.db-journal, *.log, *.py[cod]. Lo mismo para el gitignore, solo tuve que ajustar un poco lo que entrego para dejarlo mas seguro.
+Entrego los 2 archivos tal cual se los pedí. El .dockerignore lo comparé con los dockerignore de otros repositorios en GitHub y modifiqué algunas cosas; agregué `*.db-journal`, `*.log`, `*.py[cod]`. Lo mismo para el gitignore; solo tuve que ajustar un poco lo que entrego para dejarlo más seguro.
 
 ## Entrada 1
 
