@@ -18,7 +18,7 @@ def get_database_url() -> str:
 
 db_url = get_database_url()
 
-engine = create_engine(db_url, connect_args={"check_same_thread": False})
+engine = create_engine(db_url)
 sessionlocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, expire_on_commit=False)
 
 
