@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: sensorhub-api
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase: 
+        name: sensorhub-db
+        property: connectionString
+
+databases:
+  - name: sensorhub-db
+    databaseName: sensorhub
+    plan: free
