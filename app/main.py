@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 
 from app.db import Base, engine
 from app.routers import health, readings, sensors
@@ -18,10 +19,15 @@ tags_metadata = [
 
 app = FastAPI(
     title="SensorHub API",
-    version="0.4.0",
+    version="0.4.1",
     openapi_tags=tags_metadata,
 )
 
 app.include_router(health.router)
 app.include_router(sensors.router)
 app.include_router(readings.router)
+
+
+@app.get("/", include_in_schema=False)
+async def root() -> RedirectResponse:
+    return RedirectResponse(url="/docs")

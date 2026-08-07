@@ -6,6 +6,54 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 ---
 
+## Semana 4
+
+## Entrada 3
+
+### Objetivo
+
+Cuando tiré `docker compose up⁣`, encendía la base de datos, pero no la API, y me tiraba error `SQLite objects created in a thread can only be used in that same thread`, lo que me llevó a `db.py`, a la línea de `connect_args["check_same_thread"] = False`. Intenté hacer de todo para mantenerla, pero solo sirvió eliminarla, y no sabía por qué. Necesitaba que la IA me explicara.
+
+### Prompt
+
+> Si tengo `connect_args["check_same_thread"] = False` en una database de SQAlchemy 2.x (SQLite), y funciona en un container de dockers pero al usarlo en un compose me da error, a que se debe?
+
+### Resultados
+
+Me explicó que PostgreSQL no soporta SQLite, por lo que no soporta `check_same_thread`. Esto se debe a que SQLite es una base de datos embebida y PostgreSQL es cliente-servidor; al ser así, PostgreSQL tiene su propio sistema de gestión de conexiones y concurrencia, es decir, cuando la app se conecta a PostgreSQL, no está accediendo a un archivo como tal, sino que está hablando con un proceso de servidor que ya sabe cómo llevar muchas conexiones simultáneas, no hay necesidad de que yo se lo indique.
+
+## Entrada 2
+
+### Objetivo
+
+Mejorar y optimizar `.gitignore` y crear `.dockerignore` para mantener seguridad e integridad en el despliegue de la API.
+
+### Prompt
+
+> Revisando informacion de dockers me encontre con un archivo tipo .gitignore llamado .dockerignore, entiendo que es para ignorar los dichos "secretos" que pueden ocacionar problemas en el despliegue y contenerizacion de mi API. Necesito crear el archivo, las plantillas que encuentro en internet tienen muchos documentos ignorados, creo que para este punto es un poco de sobreingenieria, necesito que me crees un .dockerignore en la raiz del proyecto con lo justo y necesario para poder crear imagenes/containers, desplegar docker compose, alembic y render.
+>
+> Aprovechando el commit, revisa mi .gitignore, en este momento tiene un monton de frameworks que ni conozco ni uso como Django, Flask, Scrappy, Marimo, entre otros. Elimina los ignore que no sean de Python, FastAPI, Dockers, Linters, editores de codigo, entornos y base de datos.
+
+### Resultados
+
+Entrego los 2 archivos tal cual se los pedí. El .dockerignore lo comparé con los dockerignore de otros repositorios en GitHub y modifiqué algunas cosas; agregué `*.db-journal`, `*.log`, `*.py[cod]`. Lo mismo para el gitignore; solo tuve que ajustar un poco lo que entrego para dejarlo más seguro.
+
+## Entrada 1
+
+### Objetivo
+
+Evitar buscar el link del Swagger y desplegarlo automáticamente.
+
+### Prompt
+
+> Hay manera de que cuando inicie la API me tire el mensaje con el link correcto (http://localhost:8000/docs) para abrir el Swagger, es medio cansado estarlo buscando cada que quiero probar manualmente algo.
+
+### Resultados
+
+Me tiró aproximadamente 4 líneas de código, donde importaba de fastapi.responses, RedirectResponse y configuraba la ruta. Me explicó las líneas, qué hacen y cómo. Como "detalle pro", incluyó `include_in_schema=False`. Tuvo un error de mypy no-untyped-def y lo solucioné.
+
+---
+
 ## Semana 3
 
 ## Entrada 6
