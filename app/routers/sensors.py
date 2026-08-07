@@ -4,7 +4,13 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.repositories.sensors import SensorSQLAlchemyRepository
 from app.schemas.sensors import SensorCreate, SensorResponse, SensorUpdate
-from app.services.catalog import SensorDuplicateError, SensorNotFoundError, SensorService
+from app.services.catalog import (
+    InvalidSensorTypeError,
+    InvalidSensorUnitError,
+    SensorDuplicateError,
+    SensorNotFoundError,
+    SensorService,
+)
 
 router = APIRouter(prefix="/sensors", tags=["SENSORS"])
 dbsession = Depends(get_db)
@@ -24,6 +30,16 @@ def create_sensor(sensor_in: SensorCreate, db: Session = dbsession) -> SensorRes
     try:
         sensor = service.create_sensor(sensor_in)
         return SensorResponse.model_validate(sensor)
+    except InvalidSensorTypeError as te:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(te),
+        ) from te
+    except InvalidSensorUnitError as ue:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(ue),
+        ) from ue
     except SensorDuplicateError as d:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -77,6 +93,16 @@ def update_sensor(
     try:
         sensor = service.update_sensor(sensor_id, sensor_in)
         return SensorResponse.model_validate(sensor)
+    except InvalidSensorTypeError as te:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(te),
+        ) from te
+    except InvalidSensorUnitError as ue:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(ue),
+        ) from ue
     except SensorNotFoundError as nf:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(nf)) from nf
     except SensorDuplicateError as d:

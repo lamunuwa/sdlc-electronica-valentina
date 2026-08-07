@@ -111,7 +111,7 @@ def test_payload_invalido() -> None:
 # Test de US-03A --------------------------------------
 def test_listar_sensores() -> None:
     client.post("/sensors", json={"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C"})
-    client.post("/sensors", json={"name": "PRESS-01", "type": "PRESSURE", "unit": "BAR"})
+    client.post("/sensors", json={"name": "TEMP-02", "type": "TEMPERATURE", "unit": "K"})
     # Given: existen sensores registrados
     # When: envio GET /sensors
     response = client.get("/sensors")
@@ -344,6 +344,48 @@ def test_validacion_parametros_consulta(temp_sensor: SensorInfo) -> None:
     # Then: recibo 422 "Unprocessable Entity"
     assert response.status_code == 422
     assert response.json()["detail"]
+
+
+# -----------------------------------------------------
+
+
+# FIX-02 ----------------------------------------------
+def test_registro_con_tipo_no_soportado() -> None:
+    payload = {"name": "TEMP-01", "type": "INVALID_TYPE", "unit": "C"}
+    response = client.post("/sensors", json=payload)
+    assert response.status_code == 422
+    detail = response.json()["detail"]
+    assert "INVALID_TYPE" in detail
+
+
+def test_registro_con_unidad_no_soportada() -> None:
+    payload = {"name": "TEMP-01", "type": "TEMPERATURE", "unit": "PSI"}
+    response = client.post("/sensors", json=payload)
+    assert response.status_code == 422
+    detail = response.json()["detail"]
+    assert "PSI" in detail
+    assert "TEMPERATURE" in detail
+
+
+def test_actualizacion_con_tipo_no_soportado() -> None:
+    sensor_id = client.post(
+        "/sensors", json={"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C"}
+    ).json()["id"]
+    response = client.put(f"/sensors/{sensor_id}", json={"type": "INVALID_TYPE"})
+    assert response.status_code == 422
+    detail = response.json()["detail"]
+    assert "INVALID_TYPE" in detail
+
+
+def test_actualizacion_con_unidad_no_soportada() -> None:
+    sensor_id = client.post(
+        "/sensors", json={"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C"}
+    ).json()["id"]
+    response = client.put(f"/sensors/{sensor_id}", json={"unit": "PSI"})
+    assert response.status_code == 422
+    detail = response.json()["detail"]
+    assert "PSI" in detail
+    assert "TEMPERATURE" in detail
 
 
 # -----------------------------------------------------
