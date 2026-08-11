@@ -32,6 +32,61 @@ Me entregó el calendario y esta vez lo revisé y acepté; la IA me propuso un p
 
 ## Semana 5
 
+## Entrada 6 y 7
+
+Las entradas 6 y 7 de la semana 5 son parte del ejercicio de comparacion entre prompts basicos vs estructurados. Se puede encontrar en el archivo [PROMPTING.md](semana5/PROMPTING.md) como "Tarea 2".
+
+## Entrada 3, 4 y 5
+
+### Objetivo
+
+Arreglar la instalación de Aider.
+
+### Prompt 1
+
+> Acabo de instalar Aider para hacer automatizar revisiones y commits en git, lo hice desde mi Ollama usando Qwen 2.5-coder: 7B-base. Mi Ollama esta corriendo en windows no lo tengo en el WSL2 pero tampoco veo necesario instalarlo doble, pero Aider encuentra un problema y no logra conectar bien con Ollama. Me tira este error:
+>
+> ```bash
+>  You can skip this check with --no-gitignore
+>
+> Add .aider* to .gitignore (recommended)? (Y)es/(N)o [Yes]: y
+>
+> Added .aider* to .gitignore
+>
+> OllamaError: Error getting model info for qwen2.5-coder:7b. Set Ollama API Base via `OLLAMA_API_BASE` environment variable. Error: [Errno 111] Connection refused
+>
+> Warning for ollama/qwen2.5-coder:7b: Unknown context window size and costs, using sane defaults.
+> ```
+>
+> Como puedo solucionarlo?
+
+### Prompt 2
+
+> Bien, funciona, ya no me tira el error, pero me di cuenta de otro error, si lo intento ejecutar en el entorno virtual no me lo permite, me tira directamente aider command not found, sin embargo por como vi la instalacion de Aider se instalo con uv y si ejecuto pip list en el entorno virtual y el global no aparece Aider, es decir se instalo en una carpeta externa pero aun asi funciona, como soluciono eso?
+
+### Prompt 3
+
+> Ya funciona automaticamente, esta todo perfecto. Para finalizar con Aider (creo) tengo que hacer un archivo `conversions.py`, supongo que este debe ser automatico, se configura de alguna manera o le digo a Aider en cada prompt que agregue el contexto, el prompt que hizo y el commit final en dicho archivo?
+
+### Resultados
+
+Para la primera solución, me mencionó que esto ocurre porque estamos en entornos aislados; tanto Windows como WSL2 de forma nativa no se pueden hablar; había que hacer unas configuraciones para que pudieran comunicarse sin errores. La solución fue agregar Ollama como variables de entorno de Windows para mi usuario y ejecutar Ollama en el mismo puerto que Aider.
+
+```bash
+set OLLAMA_HOST=0.0.0.0
+set OLLAMA_ORIGINS=*
+ollama serve
+```
+
+```bash
+curl http://$(ip route show | grep default | awk '{print $3}'):11434/api/tags
+run-aider
+```
+
+Para la segunda solución, fue un poco más simple; teníamos que agregar Aider a una ruta PATH para que el .venv pudiera hablar con Aider, que estaba instalado en una carpeta de Debian externa al proyecto. El comando se ve así: `export PATH="$HOME/.local/bin:$PATH"`
+
+Para la última solución, me mencionó que si necesitaba el archivo conversation.py, se lo podía pedir manualmente, ya que, y como había pensado, Aider genera su propio archivo llamado .aider.chat.history donde guarda todo el chat; entonces era innecesario. A todo esto, revisé el checklist para la entrega semanal y no se menciona este archivo como un requisito, entonces pasaré de él.
+
 ## Entrada 1 y 2
 
 Las entradas 1 y 2 de la semana 5 son parte del ejercicio de comparacion entre prompts basicos vs estructurados. Se puede encontrar en el archivo [PROMPTING.md](semana5/PROMPTING.md) como "Tarea 1".

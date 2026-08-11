@@ -2,7 +2,37 @@
 
 Este documento registra las comparativas entre estrategias de prompting (básico vs. estructurado) aplicadas a tareas reales de diseño de software y requerimientos para la API de SensorHub. El objetivo es analizar cómo el contexto, las restricciones y la especificación del dominio reducen la alucinación y mejoran la precisión del resultado.
 
+**Nota:** Todos los prompts "básicos" los ejecuté en archivos copia de los originales para no generar problemas; cumple con el cometido, pero nunca entró en la API realmente.
+
 ---
+
+## Tarea 2
+
+### Prompt basico
+
+> Hazme los tests en pytest para estos escenarios gherkin de anomalias.
+
+### Prompt estructurado
+
+> CONTEXTO: En la tarea anterior definimos los escenarios Gherkin para el sistema de anomalias y alertas (basicas) en docs/BACKLOG.md. Ahora debemos aplicar TDD creando primero la suite de pruebas que valide la implementacion del feature.
+>
+> TAREA: Escribe la suite de tests TDD en `test/test_api.py` traduciendo los escenarios Gherkin del backlog.
+>
+> RESTRICCIONES:
+>
+> - Utiliza exclusivamente las librerias/imports que ya existen en tests/test_api.py (por ejemplo: pytest, datetime, etc.) y las importaciones internas de la propia API (creo que en este feat no se agregan mas modelos que deban ser importados). Solo se permiten imports externos si es tecnicamente imposible realizar la prueba sin el o en caso de que exista un modelo nuevo en la API que deba ser importado.
+> - Las funciones de prueba deben cumplir con Ruff y Mypy, puedes correr `mypy app test` y `ruff check app test`.
+> - Los tests deben probar ESTRICTAMENTE TODOS los casos escritos en docs/BACKLOG.md.
+> - Debes usar la misma estructura de todos los test del archivo `test/test_api.py`, es decir, escribir literalmente el given, when, then, and encima de las lineas de codigo como comentario
+>
+> ENTREGA: Unicamente el codigo Python para el archivo de tests.
+
+### Análisis Comparativo
+
+| Criterio | Prompt Básico | Prompt Estructurado |
+| :--- | :--- | :--- |
+| **¿Por qué es malo/bueno?** | Lo mismo que en la tarea anterior, la ambigüedad es un factor de muerte para el prompt, agregando que en ese chat no hay nada de donde guiarse. | Es un prompt que tiene muchos factores positivos; para mí el principal es el historial. Tiene una referencia clara, específica y revisada de qué debe hacer; las restricciones son bastante específicas, entonces no debería equivocarse justamente en los puntos que más mermaron mi tiempo en el curso. Además, usa la terminal para revisar los linters automáticamente. |
+| **Resultados obtenidos** | Este prompt pudo ser útil en un contexto donde no tengo una API ya bastante avanzada; los test que genero cumplen con lo puesto en los US, pero no es lo que necesito. | Todos los test parecen tener sentido; no generé aún las modificaciones al código para probarlos, pero todos mantienen una estructura que ya entiendo, son prácticamente iguales a como yo los hago, siguen también la misma estructura de comentarios de Gherkin y, a pesar de no habérselo pedido, los dividió en secciones como yo lo hago. Siguió a la perfección todas las restricciones; solo tuvo un error: al ejecutar mypy y ruff no pudo, ya que no activó el .venv. Esta es una muestra de cómo las restricciones pueden ayudar a no alucinar, pero también no le permiten a la IA salirse de ellas. |
 
 ## Tarea 1
 
