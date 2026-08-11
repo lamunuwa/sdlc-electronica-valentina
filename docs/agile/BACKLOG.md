@@ -4,6 +4,101 @@ Este documento organiza el trabajo pendiente siguiendo los principios de SCRUM. 
 
 ---
 
+## Sprint 3
+
+## US-01: Umbrales configurables por sensor
+
+**Prioridad:** Must Have  
+**Dificultad:** 2 Story Points
+
+**As** desarrolladora de la plataforma, **I want to** que el registro y la actualización de un `sensor` acepte un `sensor_umbral` en el payload, **So that** cada sensor pueda disponer de un umbral configurable por dispositivo incorporado al modelo del sensor.
+
+```gherkin
+Scenario: Registrar sensor con umbral
+  Given envío {"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C", "sensor_umbral": {"max": 35.0, "min": -40.0}} 
+  When hago POST /sensors
+  Then recibo 201 "Created"
+
+Scenario: Actualizar umbral mediante PUT
+  Given un sensor existente con umbral
+  When hago PUT /sensors/{id} con {"sensor_umbral": {"max": 30.0}}
+  Then recibo 200 "OK"
+
+Scenario: Registrar sensor sin umbral
+  Given envío {"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C", "sensor_umbral": {"max": "", "min": ""}} 
+  When hago POST /sensors
+  Then recibo 400 "Bad Request"
+
+Scenario: Validación de umbral inválido en registro
+  When intento registrar un sensor con {"sensor_umbral": {"max": "alto"}}
+  Then recibo 422 "Unprocessable Entity"
+  And un mensaje de validación indicando tipo numérico requerido
+
+Scenario: Validación de umbral inválido en actualización
+  When intento actualizar un sensor con {"sensor_umbral": {"max": "alto"}}
+  Then recibo 422 "Unprocessable Entity"
+  And un mensaje de validación indicando tipo numérico requerido
+```
+
+## US-02: Detección de anomalías al recibir lecturas
+
+**Prioridad:** Must Have  
+**Dificultad:** 3 Story Points
+
+**As** operadora del sistema, **I want to** que al registrar una lectura del sensor el sistema compare el valor contra el `sensor_umbral` y genere una `alerta` si se supera, **So that** las anomalías se detecten en el punto de ingestión y queden registradas.
+
+```gherkin
+Scenario: Lectura que supera umbral genera alerta
+  Given un sensor con sensor_umbral.max = 35.0
+  When envío POST /sensors/{id}/readings con {"value": 36.5, "unit": "C"}
+  Then recibo 201 "Created"
+  And se persiste una alerta asociada al sensor con tipo HIGH_TEMPERATURE y value 36.5
+
+Scenario: Lectura dentro de umbral no genera alerta
+  Given un sensor con sensor_umbral.max = 35.0
+  When envío POST /sensors/{id}/readings con {"value": 22.0, "unit": "C"}
+  Then recibo 201 "Created"
+
+Scenario: Lectura que supera umbral fisico genera alerta
+  Given un sensor con sensor_umbral.min = -500.0
+  When envío POST /sensors/{id}/readings con {"value": -500.0, "unit": "C"}
+  Then recibo 201 "Created"
+  And se persiste una alerta asociada al sensor con tipo INVALID_TEMPERATURE y value -500.0
+
+Scenario: Alerta incluye metadatos para auditoría
+  Given se genera una alerta por lectura
+  Then la alerta contiene: id, sensor_id, type, value, unit, timestamp, reading_id
+```
+
+## US-03: Gestión de alertas consultables
+
+**Prioridad:** Must Have  
+**Dificultad:** 2 Story Points
+
+**As** analista de operaciones, **I want to** consultar las `alerta` generadas a través de un endpoint de solo lectura, **So that** pueda revisar eventos anómalos sin posibilidad de crear, modificar o borrar alertas vía API.
+
+```gherkin
+Scenario: Listar alertas de un sensor
+  Given existen varias alertas asociadas a un sensor
+  When hago GET /alerts?sensor_id={id}&limit=10&offset=0
+  Then recibo 200 "OK"
+  And la respuesta contiene una lista de alerta ordenadas por timestamp descendente
+
+Scenario: Obtener alerta por id
+  Given existe una alerta con id 1
+  When hago GET /alerts/1
+  Then recibo 200 "OK"
+  And el cuerpo contiene los campos id, sensor_id, type, value, unit, timestamp, reading_id
+
+Scenario: Filtrado por rango de fechas
+  Given existen alertas en un sensor en diferentes fechas
+  When hago GET /alerts?from=2026-07-01T00:00:00&to=2026-07-31T23:59:59
+  Then recibo 200 "OK"
+  And solo las salertas dentro del rango
+```
+
+---
+
 ## Sprint 2
 
 ## US-01: Inicialización de la API base

@@ -6,6 +6,38 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 ---
 
+## Planificacion final
+
+### Objetivo
+
+Organizar mi tiempo de esta semana para tratar de cumplir con la semana 5 y lo más que pueda de la semana 6.
+
+### Prompt
+
+> Estoy en la penultima semana de mi curso. Esta semana la noto un poco mas facil que las anteriores, es uso de IA como copiloto y algunas de las tareas ya las hice. Para esto, la siguiente semana que es el cierre la quiero usar para estudiar, y organizar el pitch final, aparte de ser mi primera semana de clases entonces tendre menos tiempo. Ayudame a organizar las 2 semanas en una sola, cumpliendo todo lo que debo hacer en cada una de las 2 semanas para tener el 100% en las 2, sobretodo en la final de forma organizada y que las tareas congenien entre ellas. Ve proponiendo una organizacion y te voy corrigiendo las secciones poco a poco hasta llegar a un estado base y de ahi partir.
+
+### Resultados
+
+Creo un plan de 5 días, donde no recuerdo (seguro fue porque es en otro chat) todo lo que hemos trabajado. Le tuve que recordar las tareas que ya estaban realizadas para ir ajustando el plan; de ahí nace el prompt 2.
+
+### Prompt
+
+> En este momento mi API ya cuenta con el CRUD completo de sensores y un Append-Only verificado por el ingeniero (no necesito CRUD) para las lecturas, tengo toda la parte de dockerizacion, despliegue en Render, persistencia en SQLAlchemy y en postgreSQL para docker y render, cuento con migraciones con alembic y pipeline CI/CD con github actions, de documentos cuento ya con 2 adr. Como esto ya no se tiene que ejecutar, reestructura el calendario semanal para las tareas restantes, vamos purgando. Otra cosa, me gustaria extender el tiempo, de lunes a sabado, no de lunes a viernes de esta semana.
+
+### Resultados
+
+Me entregó el calendario y esta vez lo revisé y acepté; la IA me propuso un plan extensible y totalmente modificable de 6 días para asegurar que el proyecto quedara terminado con todo incluido. La IA me planteó el calendario como un proceso claro por etapas; lo mejor y más útil fue que no me dio una lista genérica, sino una guía para cada día, con actividades concretas y links directos al pdf de la guía de estudios para que revise los requisitos reales.
+
+---
+
+## Semana 5
+
+## Entrada 1 y 2
+
+Las entradas 1 y 2 de la semana 5 son parte del ejercicio de comparacion entre prompts basicos vs estructurados. Se puede encontrar en el archivo [PROMPTING.md](semana5/PROMPTING.md) como "Tarea 1".
+
+---
+
 ## Semana 4
 
 ## Entrada 3
