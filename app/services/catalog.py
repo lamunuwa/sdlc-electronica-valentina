@@ -29,6 +29,11 @@ class InvalidSensorUnitError(Exception):
         super().__init__(f"Unidad '{unit}' no soportada para sensores de tipo {sensor_type}")
 
 
+class EmptySensorThresholdError(Exception):
+    def __init__(self) -> None:
+        super().__init__("Umbral max y/o umbral min no pueden estar vacios")
+
+
 class SensorService:
     """Todas las sesiones de consulta y modificacion del catalogo de sensores"""
 
@@ -48,6 +53,9 @@ class SensorService:
     def create_sensor(self, sensor_in: SensorCreate) -> SensorInfo:
         """Crea un nuevo sensor validando duplicidad"""
         self.validate_sensor_configuration(sensor_in.type, sensor_in.unit)
+        threshold = sensor_in.sensor_umbral
+        if threshold.min is None or threshold.max is None:
+            raise EmptySensorThresholdError()
         if self.repository.by_name(sensor_in.name):
             raise SensorDuplicateError(sensor_in.name)
         return self.repository.create(sensor_in)

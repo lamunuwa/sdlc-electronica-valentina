@@ -45,7 +45,14 @@ def set_db() -> Generator[None]:
 @pytest.fixture
 def temp_sensor() -> SensorInfo:
     db = sessionlocal()
-    sensor = SensorInfo(name="TEMP-01", type="TEMPERATURE", unit="C", active=True)
+    sensor = SensorInfo(
+        name="TEMP-01",
+        type="TEMPERATURE",
+        unit="C",
+        threshold_min=-40.0,
+        threshold_max=40.0,
+        active=True,
+    )
     db.add(sensor)
     db.commit()
     db.refresh(sensor)
@@ -70,7 +77,12 @@ def test_verificar_estado_activo() -> None:
 # Test de US-02: Registro de sensores -----------------
 def test_registro_exitoso() -> None:
     # Given: envio datos para un registro
-    payload = {"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C"}
+    payload = {
+        "name": "TEMP-01",
+        "type": "TEMPERATURE",
+        "unit": "C",
+        "sensor_umbral": {"max": 35.0, "min": -40.0},
+    }
     # When: hago POST /sensors
     response = client.post("/sensors/", json=payload)
     # Then: recibo 201 "Created"
@@ -85,7 +97,12 @@ def test_registro_exitoso() -> None:
 
 
 def test_nombre_duplicado() -> None:
-    payload = {"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C"}
+    payload = {
+        "name": "TEMP-01",
+        "type": "TEMPERATURE",
+        "unit": "C",
+        "sensor_umbral": {"max": 35.0, "min": -40.0},
+    }
     first_response = client.post("/sensors", json=payload)
     assert first_response.status_code == 201
     # Given: ya existe un sensor con el mismo nombre (reenvio el anterior)
@@ -98,7 +115,7 @@ def test_nombre_duplicado() -> None:
 
 def test_payload_invalido() -> None:
     # When: envio datos incorrectos
-    payload = {"name": "TEMP-01", "type": "TEMPERATURE"}  # Falta unit
+    payload = {"name": "TEMP-01", "type": "TEMPERATURE"}  # Falta unit y sensor_umbral
     response = client.post("/sensors", json=payload)
     # Then: recibo 422 ""Unprocessable Entity"" con sus detalles
     assert response.status_code == 422
@@ -110,8 +127,24 @@ def test_payload_invalido() -> None:
 
 # Test de US-03A: Consulta de sensores ----------------
 def test_listar_sensores() -> None:
-    client.post("/sensors", json={"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C"})
-    client.post("/sensors", json={"name": "TEMP-02", "type": "TEMPERATURE", "unit": "K"})
+    client.post(
+        "/sensors",
+        json={
+            "name": "TEMP-01",
+            "type": "TEMPERATURE",
+            "unit": "C",
+            "sensor_umbral": {"max": 35.0, "min": -40.0},
+        },
+    )
+    client.post(
+        "/sensors",
+        json={
+            "name": "TEMP-02",
+            "type": "TEMPERATURE",
+            "unit": "K",
+            "sensor_umbral": {"max": 100.0, "min": 0.0},
+        },
+    )
     # Given: existen sensores registrados
     # When: envio GET /sensors
     response = client.get("/sensors")
@@ -123,7 +156,13 @@ def test_listar_sensores() -> None:
 
 def test_actualizacion_sensor() -> None:
     sensor = client.post(
-        "/sensors", json={"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C"}
+        "/sensors",
+        json={
+            "name": "TEMP-01",
+            "type": "TEMPERATURE",
+            "unit": "C",
+            "sensor_umbral": {"max": 35.0, "min": -40.0},
+        },
     ).json()["id"]
     # Given: un sensor existente
     # When: hago PATCH /sensors/{id} con {"unit": "F"}
@@ -137,7 +176,13 @@ def test_actualizacion_sensor() -> None:
 
 def test_desactivar_sensor() -> None:
     sensor = client.post(
-        "/sensors", json={"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C"}
+        "/sensors",
+        json={
+            "name": "TEMP-01",
+            "type": "TEMPERATURE",
+            "unit": "C",
+            "sensor_umbral": {"max": 35.0, "min": -40.0},
+        },
     ).json()
     sensor_id = sensor["id"]
     # Given: un sensor existente
@@ -174,11 +219,23 @@ def test_actualizar_ID_inexistente() -> None:
 
 def test_actualizacion_nombre_duplicado() -> None:
     sensor1 = client.post(
-        "/sensors", json={"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C"}
+        "/sensors",
+        json={
+            "name": "TEMP-01",
+            "type": "TEMPERATURE",
+            "unit": "C",
+            "sensor_umbral": {"max": 35.0, "min": -40.0},
+        },
     ).json()["id"]
-    client.post("/sensors", json={"name": "TEMP-02", "type": "TEMPERATURE", "unit": "C"}).json()[
-        "id"
-    ]
+    client.post(
+        "/sensors",
+        json={
+            "name": "TEMP-02",
+            "type": "TEMPERATURE",
+            "unit": "C",
+            "sensor_umbral": {"max": 35.0, "min": -40.0},
+        },
+    ).json()["id"]
     # Given: existen sensores "TEMP-01" y "TEMP-02"
     # When hago PATCH /sensors/{""} con {"name": "TEMP-02"}
     response = client.put(f"/sensors/{sensor1}", json={"name": "TEMP-02"})
@@ -351,7 +408,12 @@ def test_validacion_parametros_consulta(temp_sensor: SensorInfo) -> None:
 
 # FIX-02: Tipos o unidades no soportadas --------------
 def test_registro_con_tipo_no_soportado() -> None:
-    payload = {"name": "TEMP-01", "type": "INVALID_TYPE", "unit": "C"}
+    payload = {
+        "name": "TEMP-01",
+        "type": "INVALID_TYPE",
+        "unit": "C",
+        "sensor_umbral": {"max": 35.0, "min": -40.0},
+    }
     response = client.post("/sensors", json=payload)
     assert response.status_code == 422
     detail = response.json()["detail"]
@@ -359,7 +421,12 @@ def test_registro_con_tipo_no_soportado() -> None:
 
 
 def test_registro_con_unidad_no_soportada() -> None:
-    payload = {"name": "TEMP-01", "type": "TEMPERATURE", "unit": "PSI"}
+    payload = {
+        "name": "TEMP-01",
+        "type": "TEMPERATURE",
+        "unit": "PSI",
+        "sensor_umbral": {"max": 35.0, "min": -40.0},
+    }
     response = client.post("/sensors", json=payload)
     assert response.status_code == 422
     detail = response.json()["detail"]
@@ -369,7 +436,13 @@ def test_registro_con_unidad_no_soportada() -> None:
 
 def test_actualizacion_con_tipo_no_soportado() -> None:
     sensor_id = client.post(
-        "/sensors", json={"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C"}
+        "/sensors",
+        json={
+            "name": "TEMP-01",
+            "type": "TEMPERATURE",
+            "unit": "C",
+            "sensor_umbral": {"max": 35.0, "min": -40.0},
+        },
     ).json()["id"]
     response = client.put(f"/sensors/{sensor_id}", json={"type": "INVALID_TYPE"})
     assert response.status_code == 422
@@ -379,7 +452,13 @@ def test_actualizacion_con_tipo_no_soportado() -> None:
 
 def test_actualizacion_con_unidad_no_soportada() -> None:
     sensor_id = client.post(
-        "/sensors", json={"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C"}
+        "/sensors",
+        json={
+            "name": "TEMP-01",
+            "type": "TEMPERATURE",
+            "unit": "C",
+            "sensor_umbral": {"max": 35.0, "min": -40.0},
+        },
     ).json()["id"]
     response = client.put(f"/sensors/{sensor_id}", json={"unit": "PSI"})
     assert response.status_code == 422
@@ -409,6 +488,7 @@ def test_registrar_sensor_con_umbral() -> None:
     assert data["sensor_umbral"]["max"] == 35.0
     assert data["sensor_umbral"]["min"] == -40.0
 
+
 def test_actualizar_umbral_mediante_put() -> None:
     # Given: un sensor existente con umbral
     sensor_id = client.post(
@@ -428,6 +508,7 @@ def test_actualizar_umbral_mediante_put() -> None:
     # And: el sensor actualizado conserva el nuevo umbral
     assert data["sensor_umbral"]["max"] == 30.0
 
+
 def test_registrar_sensor_sin_umbral() -> None:
     # Given: envío un payload con un sensor_umbral vacío
     payload = {
@@ -440,6 +521,7 @@ def test_registrar_sensor_sin_umbral() -> None:
     response = client.post("/sensors", json=payload)
     # Then: recibo 400 "Bad Request"
     assert response.status_code == 400
+
 
 def test_validacion_umbral_invalido_en_registro() -> None:
     # Given: intento registrar un sensor con un umbral inválido
@@ -456,11 +538,17 @@ def test_validacion_umbral_invalido_en_registro() -> None:
     # And: el mensaje indica que se requiere un valor numérico
     assert response.json()["detail"]
 
+
 def test_validacion_umbral_invalido_en_actualizacion() -> None:
     # Given: existe un sensor válido
     sensor_id = client.post(
         "/sensors",
-        json={"name": "TEMP-05", "type": "TEMPERATURE", "unit": "C"},
+        json={
+            "name": "TEMP-05",
+            "type": "TEMPERATURE",
+            "unit": "C",
+            "sensor_umbral": {"max": 35.0, "min": -40.0},
+        },
     ).json()["id"]
     # When: intento actualizar un sensor con un umbral no numérico
     response = client.put(f"/sensors/{sensor_id}", json={"sensor_umbral": {"max": "alto"}})
@@ -496,6 +584,7 @@ def test_lectura_que_supera_umbral_genera_alerta() -> None:
     assert alerts[0]["type"] == "HIGH_TEMPERATURE"
     assert alerts[0]["value"] == 36.5
 
+
 def test_lectura_dentro_de_umbral_no_genera_alerta() -> None:
     # Given: un sensor con sensor_umbral.max = 35.0
     sensor_id = client.post(
@@ -514,6 +603,7 @@ def test_lectura_dentro_de_umbral_no_genera_alerta() -> None:
     alerts = client.get(f"/alerts?sensor_id={sensor_id}").json()
     # And: no se crea ninguna alerta
     assert alerts == []
+
 
 def test_lectura_que_supera_umbral_fisico_genera_alerta() -> None:
     # Given: un sensor con sensor_umbral.min = -500.0
@@ -537,6 +627,7 @@ def test_lectura_que_supera_umbral_fisico_genera_alerta() -> None:
     assert alerts[0]["type"] == "INVALID_TEMPERATURE"
     assert alerts[0]["value"] == -500.0
 
+
 def test_alerta_incluye_metadatos_para_auditoria() -> None:
     # Given: se genera una alerta por lectura
     sensor_id = client.post(
@@ -557,6 +648,7 @@ def test_alerta_incluye_metadatos_para_auditoria() -> None:
     # And: la alerta contiene id, sensor_id, type, value, unit, timestamp, reading_id
     for field in ["id", "sensor_id", "type", "value", "unit", "timestamp", "reading_id"]:
         assert field in data
+
 
 # -----------------------------------------------------
 
@@ -585,6 +677,7 @@ def test_listar_alertas_de_un_sensor() -> None:
     assert all(item["sensor_id"] == sensor_id for item in data)
     assert data[0]["timestamp"] >= data[-1]["timestamp"]
 
+
 def test_obtener_alerta_por_id() -> None:
     # Given: existe una alerta con id 1
     sensor_id = client.post(
@@ -606,6 +699,7 @@ def test_obtener_alerta_por_id() -> None:
     # And: el cuerpo contiene los campos id, sensor_id, type, value, unit, timestamp, reading_id
     for field in ["id", "sensor_id", "type", "value", "unit", "timestamp", "reading_id"]:
         assert field in data
+
 
 def test_filtrado_por_rango_de_fechas() -> None:
     # Given: existen alertas en un sensor en diferentes fechas

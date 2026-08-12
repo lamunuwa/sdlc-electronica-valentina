@@ -38,7 +38,13 @@ class SensorSQLAlchemyRepository:
     def create(self, sensor_in: SensorCreate) -> SensorInfo:
         """Crea una entidad (sensor) con los datos validados"""
 
-        db_sensor = SensorInfo(**sensor_in.model_dump())
+        sensor_data = sensor_in.model_dump(exclude={"sensor_umbral"})
+        threshold_data = sensor_in.sensor_umbral
+        db_sensor = SensorInfo(
+            **sensor_data,
+            threshold_min=threshold_data.min,
+            threshold_max=threshold_data.max,
+        )
         self.db.add(db_sensor)
         self.db.commit()
         self.db.refresh(db_sensor)
@@ -59,6 +65,13 @@ class SensorSQLAlchemyRepository:
         """Cambia informacion en base a un ID de un sensor y lo guarda"""
 
         changes = sensor_in.model_dump(exclude_unset=True)
+        threshold_data = changes.pop("sensor_umbral", None)
+        if threshold_data is not None:
+            if threshold_data.get("min") is not None:
+                changes["threshold_min"] = threshold_data["min"]
+            if threshold_data.get("max") is not None:
+                changes["threshold_max"] = threshold_data["max"]
+
         for field, value in changes.items():
             setattr(sensor, field, value)
         self.db.commit()
