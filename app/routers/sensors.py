@@ -4,13 +4,13 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.repositories.sensors import SensorSQLAlchemyRepository
 from app.schemas.sensors import SensorCreate, SensorResponse, SensorUpdate
-from app.services.catalog import (
+from app.services.catalog import SensorService
+from app.services.validators import (
     EmptySensorThresholdError,
     InvalidSensorTypeError,
     InvalidSensorUnitError,
     SensorDuplicateError,
     SensorNotFoundError,
-    SensorService,
 )
 
 router = APIRouter(prefix="/sensors", tags=["SENSORS"])

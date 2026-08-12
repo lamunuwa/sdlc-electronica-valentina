@@ -6,14 +6,7 @@ from app.models.readings import ReadingInfo
 from app.repositories.readings import ReadingRepository
 from app.repositories.sensors import SensorRepository
 from app.schemas.readings import ReadingCreate
-from app.services.catalog import SensorNotFoundError
-from app.services.validators import ReadingValidator
-
-
-class DuplicateReadingError(Exception):
-    def __init__(self, sensor_id: int) -> None:
-        self.sensor_id = sensor_id
-        super().__init__(f"Lectura duplicada detectada para el sensor {sensor_id}")
+from app.services.validators import DuplicateReadingError, ReadingValidator, SensorNotFoundError
 
 
 def get_now() -> datetime:

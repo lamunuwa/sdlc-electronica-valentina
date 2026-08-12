@@ -7,10 +7,11 @@ from app.db import get_db
 from app.repositories.readings import ReadingSQLAlchemyRepository
 from app.repositories.sensors import SensorSQLAlchemyRepository
 from app.schemas.readings import ReadingCreate, ReadingResponse
-from app.services.catalog import SensorNotFoundError
-from app.services.ingestion import DuplicateReadingError, ReadingService
+from app.services.ingestion import ReadingService
 from app.services.validators import (
+    DuplicateReadingError,
     SensorInactiveError,
+    SensorNotFoundError,
     UnsupportedUnitError,
     ValueOutOfRangeError,
 )

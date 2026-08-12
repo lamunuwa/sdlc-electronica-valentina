@@ -2,36 +2,13 @@ from app.core.limits import is_type_supported, is_unit_supported
 from app.models.sensors import SensorInfo
 from app.repositories.sensors import SensorRepository
 from app.schemas.sensors import SensorCreate, SensorUpdate
-
-
-class SensorDuplicateError(Exception):
-    def __init__(self, name: str) -> None:
-        self.name = name
-        super().__init__(f"El sensor con el nombre '{name}' ya existe")
-
-
-class SensorNotFoundError(Exception):
-    def __init__(self, sensor_id: int) -> None:
-        self.sensor_id = sensor_id
-        super().__init__(f"El sensor con id '{sensor_id}' no encontrado")
-
-
-class InvalidSensorTypeError(Exception):
-    def __init__(self, sensor_type: str) -> None:
-        self.sensor_type = sensor_type
-        super().__init__(f"Tipo de sensor '{sensor_type}' no soportado")
-
-
-class InvalidSensorUnitError(Exception):
-    def __init__(self, sensor_type: str, unit: str) -> None:
-        self.sensor_type = sensor_type
-        self.unit = unit
-        super().__init__(f"Unidad '{unit}' no soportada para sensores de tipo {sensor_type}")
-
-
-class EmptySensorThresholdError(Exception):
-    def __init__(self) -> None:
-        super().__init__("Umbral max y/o umbral min no pueden estar vacios")
+from app.services.validators import (
+    EmptySensorThresholdError,
+    InvalidSensorTypeError,
+    InvalidSensorUnitError,
+    SensorDuplicateError,
+    SensorNotFoundError,
+)
 
 
 class SensorService:
