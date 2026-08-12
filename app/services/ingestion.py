@@ -3,9 +3,11 @@ import json
 from datetime import datetime
 
 from app.models.readings import ReadingInfo
+from app.repositories.alerts import AlertRepository
 from app.repositories.readings import ReadingRepository
 from app.repositories.sensors import SensorRepository
 from app.schemas.readings import ReadingCreate
+from app.services.anomalies import AlertService
 from app.services.validators import DuplicateReadingError, ReadingValidator, SensorNotFoundError
 
 
@@ -21,10 +23,12 @@ class ReadingService:
         reading_repository: ReadingRepository,
         sensor_repository: SensorRepository,
         validator: ReadingValidator | None = None,
+        alert_repository: AlertRepository | None = None,
     ) -> None:
         self.reading_repository = reading_repository
         self.sensor_repository = sensor_repository
         self.validator = validator or ReadingValidator()
+        self.alert_repository = alert_repository
 
     @staticmethod
     def compute_hash(sensor_id: int, value: float, unit: str, timestamp: datetime) -> str:
@@ -59,7 +63,10 @@ class ReadingService:
         if self.reading_repository.by_hash(sensor_id, hash_id):
             raise DuplicateReadingError(sensor_id)
 
-        return self.reading_repository.create(sensor_id, reading_in, hash_id, timestamp)
+        reading = self.reading_repository.create(sensor_id, reading_in, hash_id, timestamp)
+        if self.alert_repository is not None:
+            AlertService(self.alert_repository).process_reading(sensor, reading)
+        return reading
 
     def get_readings(
         self,

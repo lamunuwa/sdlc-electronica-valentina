@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.db import get_db
+from app.repositories.alerts import AlertRepository
 from app.repositories.readings import ReadingSQLAlchemyRepository
 from app.repositories.sensors import SensorSQLAlchemyRepository
 from app.schemas.readings import ReadingCreate, ReadingResponse
@@ -35,7 +36,11 @@ def create_reading(
 
     reading_repo = ReadingSQLAlchemyRepository(db)
     sensor_repo = SensorSQLAlchemyRepository(db)
-    service = ReadingService(reading_repository=reading_repo, sensor_repository=sensor_repo)
+    service = ReadingService(
+        reading_repository=reading_repo,
+        sensor_repository=sensor_repo,
+        alert_repository=AlertRepository(db),
+    )
 
     try:
         reading = service.register_reading(sensor_id, reading_in)
