@@ -53,7 +53,7 @@ def temp_sensor() -> SensorInfo:
     return sensor
 
 
-# Test de US-01 ---------------------------------------
+# Test de US-01: API base -----------------------------
 def test_verificar_estado_activo() -> None:
     # Given: SensorHub esta activo
     # When: envio una solicitud GET /health
@@ -67,7 +67,7 @@ def test_verificar_estado_activo() -> None:
 # -----------------------------------------------------
 
 
-# Test de US-02 ---------------------------------------
+# Test de US-02: Registro de sensores -----------------
 def test_registro_exitoso() -> None:
     # Given: envio datos para un registro
     payload = {"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C"}
@@ -108,7 +108,7 @@ def test_payload_invalido() -> None:
 # -----------------------------------------------------
 
 
-# Test de US-03A --------------------------------------
+# Test de US-03A: Consulta de sensores ----------------
 def test_listar_sensores() -> None:
     client.post("/sensors", json={"name": "TEMP-01", "type": "TEMPERATURE", "unit": "C"})
     client.post("/sensors", json={"name": "TEMP-02", "type": "TEMPERATURE", "unit": "K"})
@@ -154,7 +154,7 @@ def test_desactivar_sensor() -> None:
 # -----------------------------------------------------
 
 
-# Test de US-03B --------------------------------------
+# Test de US-03B: Gestion de errores ------------------
 def test_obtener_ID_inexistente() -> None:
     # When: GET /sensors/9999
     response = client.get("/sensors/9999")
@@ -199,7 +199,7 @@ def test_desactivar_sensor_no_encontrado() -> None:
 # -----------------------------------------------------
 
 
-# Test de US-04 ---------------------------------------
+# Test de US-04: Registro de lecturas -----------------
 def test_lectura_valida(temp_sensor: SensorInfo) -> None:
     # Given: un sensor de tipo "TEMPERATURE"
     # When: {"value": 24.5, "unit": "C"} a /sensors/{id}/readings
@@ -266,7 +266,7 @@ def test_lectura_duplicada_mismo_contenido(temp_sensor: SensorInfo) -> None:
 # -----------------------------------------------------
 
 
-# Test de US-05 ---------------------------------------
+# Test de US-05: Paginación y filtro por fechas -------
 def test_paginacion_y_filtro_fechas(temp_sensor: SensorInfo) -> None:
     db = sessionlocal()
     base_date = datetime(2026, 7, 1, 0, 0, 0)
@@ -349,7 +349,7 @@ def test_validacion_parametros_consulta(temp_sensor: SensorInfo) -> None:
 # -----------------------------------------------------
 
 
-# FIX-02 ----------------------------------------------
+# FIX-02: Tipos o unidades no soportadas --------------
 def test_registro_con_tipo_no_soportado() -> None:
     payload = {"name": "TEMP-01", "type": "INVALID_TYPE", "unit": "C"}
     response = client.post("/sensors", json=payload)
