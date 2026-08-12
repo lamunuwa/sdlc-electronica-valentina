@@ -32,6 +32,10 @@ Me entregó el calendario y esta vez lo revisé y acepté; la IA me propuso un p
 
 ## Semana 5
 
+## Entrada 8 y 9
+
+Las entradas 8 y 9 de la semana 5 son parte del ejercicio de comparacion entre prompts basicos vs estructurados. Se puede encontrar en el archivo [PROMPTING.md](semana5/PROMPTING.md) como "Tarea 3".
+
 ## Entrada 6 y 7
 
 Las entradas 6 y 7 de la semana 5 son parte del ejercicio de comparacion entre prompts basicos vs estructurados. Se puede encontrar en el archivo [PROMPTING.md](semana5/PROMPTING.md) como "Tarea 2".
