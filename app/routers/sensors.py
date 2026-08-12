@@ -9,8 +9,10 @@ from app.services.validators import (
     EmptySensorThresholdError,
     InvalidSensorTypeError,
     InvalidSensorUnitError,
+    LowThreshGreaterThanHighThreshError,
     SensorDuplicateError,
     SensorNotFoundError,
+    SensorThresholdOutOfRangeError,
 )
 
 router = APIRouter(prefix="/sensors", tags=["SENSORS"])
@@ -43,6 +45,8 @@ def create_sensor(sensor_in: SensorCreate, db: Session = dbsession) -> SensorRes
         ) from ue
     except EmptySensorThresholdError as ete:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ete)) from ete
+    except (LowThreshGreaterThanHighThreshError, SensorThresholdOutOfRangeError) as te:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(te)) from te
     except SensorDuplicateError as d:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -108,6 +112,8 @@ def update_sensor(
         ) from ue
     except EmptySensorThresholdError as ete:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ete)) from ete
+    except (LowThreshGreaterThanHighThreshError, SensorThresholdOutOfRangeError) as te:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(te)) from te
     except SensorNotFoundError as nf:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(nf)) from nf
     except SensorDuplicateError as d:

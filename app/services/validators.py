@@ -34,6 +34,17 @@ class EmptySensorThresholdError(Exception):
         super().__init__("Umbral max y/o umbral min no pueden estar vacios")
 
 
+class LowThreshGreaterThanHighThreshError(Exception):
+    def __init__(self) -> None:
+        super().__init__("Umbral minimo no puede ser mayor que el umbral maximo")
+
+
+class SensorThresholdOutOfRangeError(Exception):
+    def __init__(self, unit: str) -> None:
+        self.unit = unit
+        super().__init__(f"Umbral minimo y/o umbral maximo fuera del rango fisico de {unit}")
+
+
 # -----------------------------------------------------
 
 

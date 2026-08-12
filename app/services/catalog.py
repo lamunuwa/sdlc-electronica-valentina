@@ -1,4 +1,4 @@
-from app.core.limits import is_type_supported, is_unit_supported
+from app.core.limits import is_type_supported, is_unit_supported, is_value_valid
 from app.models.sensors import SensorInfo
 from app.repositories.sensors import SensorRepository
 from app.schemas.sensors import SensorCreate, SensorUpdate
@@ -6,8 +6,10 @@ from app.services.validators import (
     EmptySensorThresholdError,
     InvalidSensorTypeError,
     InvalidSensorUnitError,
+    LowThreshGreaterThanHighThreshError,
     SensorDuplicateError,
     SensorNotFoundError,
+    SensorThresholdOutOfRangeError,
 )
 
 
@@ -25,14 +27,26 @@ class SensorService:
         if not is_unit_supported(sensor_type, unit):
             raise InvalidSensorUnitError(sensor_type, unit)
 
+    def validate_sensor_threshold(
+        self, sensor_type: str, unit: str, min_value: float | None, max_value: float | None
+    ) -> None:
+        """Valida que los umbrales min y max sean consistentes y dentro del rango fisico"""
+        if min_value is None or max_value is None:
+            raise EmptySensorThresholdError()
+        if min_value > max_value:
+            raise LowThreshGreaterThanHighThreshError()
+        if not is_value_valid(sensor_type, unit, min_value) or not is_value_valid(
+            sensor_type, unit, max_value
+        ):
+            raise SensorThresholdOutOfRangeError(unit)
+
     # ----------------------------------------------------------
 
     def create_sensor(self, sensor_in: SensorCreate) -> SensorInfo:
         """Crea un nuevo sensor validando duplicidad"""
         self.validate_sensor_configuration(sensor_in.type, sensor_in.unit)
         threshold = sensor_in.sensor_umbral
-        if threshold.min is None or threshold.max is None:
-            raise EmptySensorThresholdError()
+        self.validate_sensor_threshold(sensor_in.type, sensor_in.unit, threshold.min, threshold.max)
         if self.repository.by_name(sensor_in.name):
             raise SensorDuplicateError(sensor_in.name)
         return self.repository.create(sensor_in)
@@ -58,6 +72,14 @@ class SensorService:
         sensor_type = sensor_in.type if sensor_in.type is not None else sensor.type
         sensor_unit = sensor_in.unit if sensor_in.unit is not None else sensor.unit
         self.validate_sensor_configuration(sensor_type, sensor_unit)
+        if sensor_in.sensor_umbral is not None:
+            threshold = sensor_in.sensor_umbral
+            self.validate_sensor_threshold(
+                sensor_type,
+                sensor_unit,
+                threshold.min if threshold.min is not None else sensor.threshold_min,
+                threshold.max if threshold.max is not None else sensor.threshold_max,
+            )
         return self.repository.update(sensor, sensor_in)
 
     def deactivate_sensor(self, sensor_id: int) -> SensorInfo:

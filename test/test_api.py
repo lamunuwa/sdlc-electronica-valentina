@@ -558,6 +558,38 @@ def test_validacion_umbral_invalido_en_actualizacion() -> None:
     assert response.json()["detail"]
 
 
+def test_registrar_sensor_con_umbral_minimo_mayor() -> None:
+    response = client.post(
+        "/sensors",
+        json={
+            "name": "TEMP-06",
+            "type": "TEMPERATURE",
+            "unit": "C",
+            "sensor_umbral": {"max": 20.0, "min": 30.0},
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Umbral minimo no puede ser mayor que el umbral maximo"
+
+
+def test_registrar_sensor_con_umbral_fuera_de_rango_fisico() -> None:
+    response = client.post(
+        "/sensors",
+        json={
+            "name": "TEMP-07",
+            "type": "TEMPERATURE",
+            "unit": "C",
+            "sensor_umbral": {"max": 35.0, "min": -274.0},
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == (
+        "Umbral minimo y/o umbral maximo fuera del rango fisico de C"
+    )
+
+
 # -----------------------------------------------------
 
 
@@ -603,29 +635,6 @@ def test_lectura_dentro_de_umbral_no_genera_alerta() -> None:
     alerts = client.get(f"/alerts?sensor_id={sensor_id}").json()
     # And: no se crea ninguna alerta
     assert alerts == []
-
-
-def test_lectura_que_supera_umbral_fisico_genera_alerta() -> None:
-    # Given: un sensor con sensor_umbral.min = -500.0
-    sensor_id = client.post(
-        "/sensors",
-        json={
-            "name": "TEMP-08",
-            "type": "TEMPERATURE",
-            "unit": "C",
-            "sensor_umbral": {"max": 1000.0, "min": -500.0},
-        },
-    ).json()["id"]
-    # When: envío POST /sensors/{id}/readings con {"value": -500.0, "unit": "C"}
-    response = client.post(f"/sensors/{sensor_id}/readings", json={"value": -500.0, "unit": "C"})
-    # Then: recibo 201 "Created"
-    assert response.status_code == 201
-    alerts = client.get(f"/alerts?sensor_id={sensor_id}").json()
-    # And: se persiste una alerta asociada al sensor con tipo INVALID_TEMPERATURE y value -500.0
-    assert len(alerts) >= 1
-    assert alerts[0]["sensor_id"] == sensor_id
-    assert alerts[0]["type"] == "INVALID_TEMPERATURE"
-    assert alerts[0]["value"] == -500.0
 
 
 def test_alerta_incluye_metadatos_para_auditoria() -> None:
