@@ -12,7 +12,7 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 Organizar mi tiempo de esta semana para tratar de cumplir con la semana 5 y lo más que pueda de la semana 6.
 
-### Prompt
+### Prompt 1
 
 > Estoy en la penultima semana de mi curso. Esta semana la noto un poco mas facil que las anteriores, es uso de IA como copiloto y algunas de las tareas ya las hice. Para esto, la siguiente semana que es el cierre la quiero usar para estudiar, y organizar el pitch final, aparte de ser mi primera semana de clases entonces tendre menos tiempo. Ayudame a organizar las 2 semanas en una sola, cumpliendo todo lo que debo hacer en cada una de las 2 semanas para tener el 100% en las 2, sobretodo en la final de forma organizada y que las tareas congenien entre ellas. Ve proponiendo una organizacion y te voy corrigiendo las secciones poco a poco hasta llegar a un estado base y de ahi partir.
 
@@ -20,7 +20,7 @@ Organizar mi tiempo de esta semana para tratar de cumplir con la semana 5 y lo m
 
 Creo un plan de 5 días, donde no recuerdo (seguro fue porque es en otro chat) todo lo que hemos trabajado. Le tuve que recordar las tareas que ya estaban realizadas para ir ajustando el plan; de ahí nace el prompt 2.
 
-### Prompt
+### Prompt 2
 
 > En este momento mi API ya cuenta con el CRUD completo de sensores y un Append-Only verificado por el ingeniero (no necesito CRUD) para las lecturas, tengo toda la parte de dockerizacion, despliegue en Render, persistencia en SQLAlchemy y en postgreSQL para docker y render, cuento con migraciones con alembic y pipeline CI/CD con github actions, de documentos cuento ya con 2 adr. Como esto ya no se tiene que ejecutar, reestructura el calendario semanal para las tareas restantes, vamos purgando. Otra cosa, me gustaria extender el tiempo, de lunes a sabado, no de lunes a viernes de esta semana.
 
@@ -31,6 +31,35 @@ Me entregó el calendario y esta vez lo revisé y acepté; la IA me propuso un p
 ---
 
 ## Semana 5
+
+## Entrada 10
+
+### Objetivo
+
+En base a un esqueleto funcional en 5 archivos, generar las importaciones y lógica de negocio faltante para cumplir US-02: Detección de anomalías.
+
+### Prompt
+
+> CONTEXTO: Deje una estructura organizada en 5 archivos nuevos:
+> `app/models/alerts.py` `app/schemas/alerts.py` `app/repositories/alerts.py` `app/routers/alerts.py` y `app/services/anomalies.py` con un esqueleto "funcional" (cumple con 1 test).
+> Aqui vamos a cumplir con US-02: Detección de anomalías. Hasta ahora teniamos un sistema que tiene un umbral, tiene restricciones para ese umbral pero no hace nada. En si, debemos hacer un sistema que identifique anomalias en las lecturas de un sensor en base a su umbral y se puedan consultar en un endpoint
+>
+> TAREA: Generar el codigo necesario para cumplir con los 3 test de US-02 + dejar listo el panorama para hacer un update rapido para US-03
+>
+> RESTRICCIONES:
+>
+> - El endpoint solo debe permitir lectura, un GET. No PUT, no POST, etc.
+> - Por cada clase y def que exista debes poner un comentario entre triples comillas de no mas de una linea explicando brevemente que hace esa clase o funcion
+> - Debes dejar la estructura lista para expansion inmediata, el siguiente US se trata de gestionar alertas basico, identificar por ID, listar con > paginacion y busqueda por filtro de fecha
+> - Lo mismo de siempre, no uses imports/librerias que no hayamos usado en el proyecto
+> - Puedes leer los archivos nuevos + `test/test_api.py` + `app/main` + toda la carpeta de services y modificar solo los archivos nuevos (alerts y anomalies) + carpeta services
+>
+> ENTREGA: El codigo minimo funcional para cumplir los test. Debes correr al final en el entorno virtual pytest y deben salir error en 3 test unicamente y mypy y ruff sin errores en app/
+
+### Resultados
+
+Modificó todos los archivos que le solicité + un archivo en routers (+55 -50), que no le había dado permiso explícito, pero se lo concedi después. Esta nueva estructura me parece mucho más consistente en resultados que las que uso comúnmente; al menos en código la usaré siempre o en la mayoría de ocasiones.
+Por el lado de los resultados, entrego un mypy limpio, un ruff limpio y el pytest pasa con solo 3 errores, que son los 3 de US-03. Cumplió con los comentarios y, de hecho, los hizo como los hago yo, es decir, sin acentos (recordar que tengo el teclado en inglés). Todo el código que entrego lo entiendo, evito las librerías externas que no conozco y dejo apertura simple para el update; lo haré sin IA.
 
 ## Entrada 8 y 9
 
