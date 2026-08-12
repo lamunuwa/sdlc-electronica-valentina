@@ -389,3 +389,254 @@ def test_actualizacion_con_unidad_no_soportada() -> None:
 
 
 # -----------------------------------------------------
+
+
+# Test de US-01: Umbrales configurables ---------------
+def test_registrar_sensor_con_umbral() -> None:
+    # Given: envío un payload con un sensor_umbral configurado
+    payload = {
+        "name": "TEMP-01",
+        "type": "TEMPERATURE",
+        "unit": "C",
+        "sensor_umbral": {"max": 35.0, "min": -40.0},
+    }
+    # When: hago POST /sensors
+    response = client.post("/sensors", json=payload)
+    # Then: recibo 201 "Created"
+    assert response.status_code == 201
+    data = response.json()
+    # And: el sensor creado contiene el umbral configurado
+    assert data["sensor_umbral"]["max"] == 35.0
+    assert data["sensor_umbral"]["min"] == -40.0
+
+def test_actualizar_umbral_mediante_put() -> None:
+    # Given: un sensor existente con umbral
+    sensor_id = client.post(
+        "/sensors",
+        json={
+            "name": "TEMP-02",
+            "type": "TEMPERATURE",
+            "unit": "C",
+            "sensor_umbral": {"max": 35.0, "min": -40.0},
+        },
+    ).json()["id"]
+    # When: hago PUT /sensors/{id} con {"sensor_umbral": {"max": 30.0}}
+    response = client.put(f"/sensors/{sensor_id}", json={"sensor_umbral": {"max": 30.0}})
+    # Then: recibo 200 "OK"
+    assert response.status_code == 200
+    data = response.json()
+    # And: el sensor actualizado conserva el nuevo umbral
+    assert data["sensor_umbral"]["max"] == 30.0
+
+def test_registrar_sensor_sin_umbral() -> None:
+    # Given: envío un payload con un sensor_umbral vacío
+    payload = {
+        "name": "TEMP-03",
+        "type": "TEMPERATURE",
+        "unit": "C",
+        "sensor_umbral": {"max": "", "min": ""},
+    }
+    # When: hago POST /sensors
+    response = client.post("/sensors", json=payload)
+    # Then: recibo 400 "Bad Request"
+    assert response.status_code == 400
+
+def test_validacion_umbral_invalido_en_registro() -> None:
+    # Given: intento registrar un sensor con un umbral inválido
+    payload = {
+        "name": "TEMP-04",
+        "type": "TEMPERATURE",
+        "unit": "C",
+        "sensor_umbral": {"max": "alto"},
+    }
+    # When: hago POST /sensors
+    response = client.post("/sensors", json=payload)
+    # Then: recibo 422 "Unprocessable Entity"
+    assert response.status_code == 422
+    # And: el mensaje indica que se requiere un valor numérico
+    assert response.json()["detail"]
+
+def test_validacion_umbral_invalido_en_actualizacion() -> None:
+    # Given: existe un sensor válido
+    sensor_id = client.post(
+        "/sensors",
+        json={"name": "TEMP-05", "type": "TEMPERATURE", "unit": "C"},
+    ).json()["id"]
+    # When: intento actualizar un sensor con un umbral no numérico
+    response = client.put(f"/sensors/{sensor_id}", json={"sensor_umbral": {"max": "alto"}})
+    # Then: recibo 422 "Unprocessable Entity"
+    assert response.status_code == 422
+    # And: el mensaje indica que se requiere un valor numérico
+    assert response.json()["detail"]
+
+
+# -----------------------------------------------------
+
+
+# Test de US-02: Detección de anomalías ---------------
+def test_lectura_que_supera_umbral_genera_alerta() -> None:
+    # Given: un sensor con sensor_umbral.max = 35.0
+    sensor_id = client.post(
+        "/sensors",
+        json={
+            "name": "TEMP-06",
+            "type": "TEMPERATURE",
+            "unit": "C",
+            "sensor_umbral": {"max": 35.0, "min": -40.0},
+        },
+    ).json()["id"]
+    # When: envío POST /sensors/{id}/readings con {"value": 36.5, "unit": "C"}
+    response = client.post(f"/sensors/{sensor_id}/readings", json={"value": 36.5, "unit": "C"})
+    # Then: recibo 201 "Created"
+    assert response.status_code == 201
+    alerts = client.get(f"/alerts?sensor_id={sensor_id}").json()
+    # And: se persiste una alerta asociada al sensor con tipo HIGH_TEMPERATURE y value 36.5
+    assert len(alerts) >= 1
+    assert alerts[0]["sensor_id"] == sensor_id
+    assert alerts[0]["type"] == "HIGH_TEMPERATURE"
+    assert alerts[0]["value"] == 36.5
+
+def test_lectura_dentro_de_umbral_no_genera_alerta() -> None:
+    # Given: un sensor con sensor_umbral.max = 35.0
+    sensor_id = client.post(
+        "/sensors",
+        json={
+            "name": "TEMP-07",
+            "type": "TEMPERATURE",
+            "unit": "C",
+            "sensor_umbral": {"max": 35.0, "min": -40.0},
+        },
+    ).json()["id"]
+    # When: envío POST /sensors/{id}/readings con {"value": 22.0, "unit": "C"}
+    response = client.post(f"/sensors/{sensor_id}/readings", json={"value": 22.0, "unit": "C"})
+    # Then: recibo 201 "Created"
+    assert response.status_code == 201
+    alerts = client.get(f"/alerts?sensor_id={sensor_id}").json()
+    # And: no se crea ninguna alerta
+    assert alerts == []
+
+def test_lectura_que_supera_umbral_fisico_genera_alerta() -> None:
+    # Given: un sensor con sensor_umbral.min = -500.0
+    sensor_id = client.post(
+        "/sensors",
+        json={
+            "name": "TEMP-08",
+            "type": "TEMPERATURE",
+            "unit": "C",
+            "sensor_umbral": {"max": 1000.0, "min": -500.0},
+        },
+    ).json()["id"]
+    # When: envío POST /sensors/{id}/readings con {"value": -500.0, "unit": "C"}
+    response = client.post(f"/sensors/{sensor_id}/readings", json={"value": -500.0, "unit": "C"})
+    # Then: recibo 201 "Created"
+    assert response.status_code == 201
+    alerts = client.get(f"/alerts?sensor_id={sensor_id}").json()
+    # And: se persiste una alerta asociada al sensor con tipo INVALID_TEMPERATURE y value -500.0
+    assert len(alerts) >= 1
+    assert alerts[0]["sensor_id"] == sensor_id
+    assert alerts[0]["type"] == "INVALID_TEMPERATURE"
+    assert alerts[0]["value"] == -500.0
+
+def test_alerta_incluye_metadatos_para_auditoria() -> None:
+    # Given: se genera una alerta por lectura
+    sensor_id = client.post(
+        "/sensors",
+        json={
+            "name": "TEMP-09",
+            "type": "TEMPERATURE",
+            "unit": "C",
+            "sensor_umbral": {"max": 35.0, "min": -40.0},
+        },
+    ).json()["id"]
+    client.post(f"/sensors/{sensor_id}/readings", json={"value": 36.5, "unit": "C"})
+    # When: consulto las alertas del sensor
+    response = client.get(f"/alerts?sensor_id={sensor_id}")
+    # Then: recibo 200 "OK"
+    assert response.status_code == 200
+    data = response.json()[0]
+    # And: la alerta contiene id, sensor_id, type, value, unit, timestamp, reading_id
+    for field in ["id", "sensor_id", "type", "value", "unit", "timestamp", "reading_id"]:
+        assert field in data
+
+# -----------------------------------------------------
+
+
+# Test de US-03: Gestión de alertas -------------------
+def test_listar_alertas_de_un_sensor() -> None:
+    # Given: existen varias alertas asociadas a un sensor
+    sensor_id = client.post(
+        "/sensors",
+        json={
+            "name": "TEMP-10",
+            "type": "TEMPERATURE",
+            "unit": "C",
+            "sensor_umbral": {"max": 35.0, "min": -40.0},
+        },
+    ).json()["id"]
+    client.post(f"/sensors/{sensor_id}/readings", json={"value": 36.5, "unit": "C"})
+    client.post(f"/sensors/{sensor_id}/readings", json={"value": 37.0, "unit": "C"})
+    # When: hago GET /alerts?sensor_id={id}&limit=10&offset=0
+    response = client.get(f"/alerts?sensor_id={sensor_id}&limit=10&offset=0")
+    # Then: recibo 200 "OK"
+    assert response.status_code == 200
+    data = response.json()
+    # And: la respuesta contiene una lista de alertas ordenadas por timestamp descendente
+    assert len(data) >= 2
+    assert all(item["sensor_id"] == sensor_id for item in data)
+    assert data[0]["timestamp"] >= data[-1]["timestamp"]
+
+def test_obtener_alerta_por_id() -> None:
+    # Given: existe una alerta con id 1
+    sensor_id = client.post(
+        "/sensors",
+        json={
+            "name": "TEMP-11",
+            "type": "TEMPERATURE",
+            "unit": "C",
+            "sensor_umbral": {"max": 35.0, "min": -40.0},
+        },
+    ).json()["id"]
+    client.post(f"/sensors/{sensor_id}/readings", json={"value": 36.5, "unit": "C"})
+    alert_id = client.get(f"/alerts?sensor_id={sensor_id}").json()[0]["id"]
+    # When: hago GET /alerts/{id}
+    response = client.get(f"/alerts/{alert_id}")
+    # Then: recibo 200 "OK"
+    assert response.status_code == 200
+    data = response.json()
+    # And: el cuerpo contiene los campos id, sensor_id, type, value, unit, timestamp, reading_id
+    for field in ["id", "sensor_id", "type", "value", "unit", "timestamp", "reading_id"]:
+        assert field in data
+
+def test_filtrado_por_rango_de_fechas() -> None:
+    # Given: existen alertas en un sensor en diferentes fechas
+    sensor_id = client.post(
+        "/sensors",
+        json={
+            "name": "TEMP-12",
+            "type": "TEMPERATURE",
+            "unit": "C",
+            "sensor_umbral": {"max": 35.0, "min": -40.0},
+        },
+    ).json()["id"]
+    first_timestamp = datetime(2026, 7, 10, 12, 0, 0)
+    second_timestamp = datetime(2026, 7, 20, 12, 0, 0)
+    payload_1 = {"value": 36.0, "unit": "C", "timestamp": first_timestamp.isoformat()}
+    payload_2 = {"value": 38.0, "unit": "C", "timestamp": second_timestamp.isoformat()}
+    client.post(f"/sensors/{sensor_id}/readings", json=payload_1)
+    client.post(f"/sensors/{sensor_id}/readings", json=payload_2)
+    # When: hago GET /alerts?from=2026-07-01T00:00:00&to=2026-07-31T23:59:59
+    response = client.get(
+        "/alerts",
+        params={
+            "sensor_id": sensor_id,
+            "from": "2026-07-01T00:00:00",
+            "to": "2026-07-31T23:59:59",
+        },
+    )
+    # Then: recibo 200 "OK"
+    assert response.status_code == 200
+    data = response.json()
+    # And: solo las alertas dentro del rango
+    assert len(data) >= 2
+    for item in data:
+        assert item["sensor_id"] == sensor_id
