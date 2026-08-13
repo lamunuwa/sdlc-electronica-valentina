@@ -559,6 +559,7 @@ def test_validacion_umbral_invalido_en_actualizacion() -> None:
 
 
 def test_registrar_sensor_con_umbral_minimo_mayor() -> None:
+    # Given intento registrar un sensor con {"sensor_umbral":{"max": 20.0, "min": 30.0}}
     response = client.post(
         "/sensors",
         json={
@@ -568,12 +569,15 @@ def test_registrar_sensor_con_umbral_minimo_mayor() -> None:
             "sensor_umbral": {"max": 20.0, "min": 30.0},
         },
     )
-
+    # When hago POST /sensors
+    # Then recibo 400 "Bad Request"
     assert response.status_code == 400
+    # And el detalle indica "Umbral minimo no puede ser mayor que el umbral maximo"
     assert response.json()["detail"] == "Umbral minimo no puede ser mayor que el umbral maximo"
 
 
 def test_registrar_sensor_con_umbral_fuera_de_rango_fisico() -> None:
+    # Given intento registrar un sensor con {"sensor_umbral": {"max": 35.0, "min": -274.0}}
     response = client.post(
         "/sensors",
         json={
@@ -583,8 +587,10 @@ def test_registrar_sensor_con_umbral_fuera_de_rango_fisico() -> None:
             "sensor_umbral": {"max": 35.0, "min": -274.0},
         },
     )
-
+    # When hago POST /sensors
+    # Then recibo 400 "Bad Request"
     assert response.status_code == 400
+    # And el detalle indica "Umbral minimo y/o umbral maximo fuera del rango fisico de C"
     assert response.json()["detail"] == (
         "Umbral minimo y/o umbral maximo fuera del rango fisico de C"
     )
@@ -599,7 +605,7 @@ def test_lectura_que_supera_umbral_genera_alerta() -> None:
     sensor_id = client.post(
         "/sensors",
         json={
-            "name": "TEMP-06",
+            "name": "TEMP-08",
             "type": "TEMPERATURE",
             "unit": "C",
             "sensor_umbral": {"max": 35.0, "min": -40.0},
@@ -622,7 +628,7 @@ def test_lectura_dentro_de_umbral_no_genera_alerta() -> None:
     sensor_id = client.post(
         "/sensors",
         json={
-            "name": "TEMP-07",
+            "name": "TEMP-09",
             "type": "TEMPERATURE",
             "unit": "C",
             "sensor_umbral": {"max": 35.0, "min": -40.0},
@@ -642,7 +648,7 @@ def test_alerta_incluye_metadatos_para_auditoria() -> None:
     sensor_id = client.post(
         "/sensors",
         json={
-            "name": "TEMP-09",
+            "name": "TEMP-10",
             "type": "TEMPERATURE",
             "unit": "C",
             "sensor_umbral": {"max": 35.0, "min": -40.0},
@@ -668,7 +674,7 @@ def test_listar_alertas_de_un_sensor() -> None:
     sensor_id = client.post(
         "/sensors",
         json={
-            "name": "TEMP-10",
+            "name": "TEMP-11",
             "type": "TEMPERATURE",
             "unit": "C",
             "sensor_umbral": {"max": 35.0, "min": -40.0},
@@ -692,7 +698,7 @@ def test_obtener_alerta_por_id() -> None:
     sensor_id = client.post(
         "/sensors",
         json={
-            "name": "TEMP-11",
+            "name": "TEMP-12",
             "type": "TEMPERATURE",
             "unit": "C",
             "sensor_umbral": {"max": 35.0, "min": -40.0},
@@ -715,7 +721,7 @@ def test_filtrado_por_rango_de_fechas() -> None:
     sensor_id = client.post(
         "/sensors",
         json={
-            "name": "TEMP-12",
+            "name": "TEMP-13",
             "type": "TEMPERATURE",
             "unit": "C",
             "sensor_umbral": {"max": 35.0, "min": -40.0},

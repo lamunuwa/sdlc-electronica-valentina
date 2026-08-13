@@ -38,6 +38,18 @@ Scenario: Validación de umbral inválido en actualización
   When intento actualizar un sensor con {"sensor_umbral": {"max": "alto"}}
   Then recibo 422 "Unprocessable Entity"
   And un mensaje de validación indicando tipo numérico requerido
+
+Scenario: Registrar sensor con umbral mínimo mayor al máximo
+  Given intento registrar un sensor con {"sensor_umbral":{"max": 20.0, "min": 30.0}}
+  When hago POST /sensors
+  Then recibo 400 "Bad Request"
+  And el detalle indica "Umbral minimo no puede ser mayor que el umbral maximo"
+
+Scenario: Registrar sensor con umbral fuera de rango físico
+  Given intento registrar un sensor con {"sensor_umbral": {"max": 35.0, "min": -274.0}}
+  When hago POST /sensors
+  Then recibo 400 "Bad Request"
+  And el detalle indica "Umbral minimo y/o umbral maximo fuera del rango fisico de C"
 ```
 
 ## US-02: Detección de anomalías al recibir lecturas
@@ -58,12 +70,6 @@ Scenario: Lectura dentro de umbral no genera alerta
   Given un sensor con sensor_umbral.max = 35.0
   When envío POST /sensors/{id}/readings con {"value": 22.0, "unit": "C"}
   Then recibo 201 "Created"
-
-Scenario: Lectura que supera umbral fisico genera alerta
-  Given un sensor con sensor_umbral.min = -500.0
-  When envío POST /sensors/{id}/readings con {"value": -500.0, "unit": "C"}
-  Then recibo 201 "Created"
-  And se persiste una alerta asociada al sensor con tipo INVALID_TEMPERATURE y value -500.0
 
 Scenario: Alerta incluye metadatos para auditoría
   Given se genera una alerta por lectura
