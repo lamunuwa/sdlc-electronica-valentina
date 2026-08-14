@@ -1,6 +1,14 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class AlertStateUpdate(BaseModel):
+    """Esquema para actualizar el estado de una alerta"""
+
+    state: str | None = Field(
+        None, examples=["open, acknowledged, resolved"], description="Nuevo estado de la alerta"
+    )
 
 
 class AlertResponse(BaseModel):
@@ -16,9 +24,3 @@ class AlertResponse(BaseModel):
     timestamp: datetime
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class AlertStateUpdate(BaseModel):
-    """Esquema para actualizar el estado de una alerta"""
-
-    state: str | None = None

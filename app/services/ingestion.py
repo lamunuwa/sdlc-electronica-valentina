@@ -8,12 +8,12 @@ from app.repositories.readings import ReadingRepository
 from app.repositories.sensors import SensorRepository
 from app.schemas.readings import ReadingCreate
 from app.services.anomalies import AlertService
-from app.services.catalog import SensorService
 from app.services.validators import (
     DuplicateReadingError,
     InvalidDateRangeError,
     ReadingValidator,
     SensorNotFoundError,
+    ValidateSensorParameters,
 )
 
 
@@ -22,7 +22,7 @@ def get_now() -> datetime:
 
 
 class ReadingService:
-    """Coordina las sesiones: buscar sensor, validar, evitar duplicados y guardar"""
+    """Todas las sesiones de la inyeccion de lecturas"""
 
     def __init__(
         self,
@@ -52,12 +52,8 @@ class ReadingService:
         return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
     def register_reading(self, sensor_id: int, reading_in: ReadingCreate) -> ReadingInfo:
-        """
-        1. Confirma existencia del sensor (el sensor_id siempre viene del path)
-        2. Ejecuta validacion con ReadingValidator
-        3. Verifica no duplicidad mediante el hash
-        4. Inserta el registro en la base de datos
-        """
+        """Registra una lectura en la base de datos"""
+
         sensor = self.sensor_repository.by_id(sensor_id)
         if sensor is None:
             raise SensorNotFoundError
@@ -85,8 +81,9 @@ class ReadingService:
     ) -> list[ReadingInfo]:
         """Busca el sensor por ID, nombre o ambos (igual que sensors) y obtiene sus lecturas"""
 
-        sensor_service = SensorService(self.sensor_repository)
-        sensor = sensor_service.get_sensor(sensor_id=sensor_id, name=name)
+        sensor = ValidateSensorParameters.search_sensor(
+            self.sensor_repository, sensor_id=sensor_id, name=name
+        )
 
         if from_date is not None and to_date is not None and from_date > to_date:
             raise InvalidDateRangeError

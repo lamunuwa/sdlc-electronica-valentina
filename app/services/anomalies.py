@@ -5,7 +5,6 @@ from app.models.readings import ReadingInfo
 from app.models.sensors import SensorInfo
 from app.repositories.alerts import AlertRepository
 from app.repositories.sensors import SensorRepository
-from app.services.catalog import SensorService
 from app.services.validators import (
     AlertNotFoundError,
     InvalidAlertStatusError,
@@ -13,10 +12,13 @@ from app.services.validators import (
     MissingAlertStatusError,
     MissingRequiredFieldsError,
     NeededChangesToUpdateAlertError,
+    ValidateSensorParameters,
 )
 
 
 class AlertService:
+    """Todas las sesiones de procesamiento de alertas"""
+
     def __init__(
         self, alert_repo: AlertRepository, sensor_repo: SensorRepository | None = None
     ) -> None:
@@ -24,6 +26,8 @@ class AlertService:
         self.sensor_repo = sensor_repo
 
     def process_reading(self, sensor: SensorInfo, reading: ReadingInfo) -> None:
+        """Procesa una lectura"""
+
         alert_type: str | None = None
         if reading.value > sensor.threshold_max:
             alert_type = f"HIGH_{sensor.type}"
@@ -44,12 +48,15 @@ class AlertService:
             )
 
     def validate_dates(self, from_date: datetime | None, to_date: datetime | None) -> None:
+        """Valida los rangos de fechas"""
+
         if from_date and to_date and from_date > to_date:
             raise InvalidDateRangeError
 
     def get_all_alerts(
         self, from_date: datetime | None, to_date: datetime | None, limit: int, offset: int
     ) -> list[AlertInfo]:
+        """Lista todas las alertas"""
         self.validate_dates(from_date, to_date)
         return self.alert_repo.get_all_alerts(from_date, to_date, limit, offset)
 
@@ -67,20 +74,25 @@ class AlertService:
         if self.sensor_repo is None:
             raise MissingRequiredFieldsError
 
-        sensor_service = SensorService(self.sensor_repo)
-        sensor = sensor_service.get_sensor(sensor_id=sensor_id, name=name)
+        sensor = ValidateSensorParameters.search_sensor(
+            self.sensor_repo, sensor_id=sensor_id, name=name
+        )
 
         self.validate_dates(from_date, to_date)
 
         return self.alert_repo.get_alerts_by_sensor(sensor.id, from_date, to_date, limit, offset)
 
     def get_alert(self, alert_id: int) -> AlertInfo:
+        """Busca el alert por ID"""
+
         alert = self.alert_repo.get_by_id(alert_id)
         if not alert:
             raise AlertNotFoundError
         return alert
 
     def update_alert_state(self, alert_id: int, state: str | None) -> AlertInfo:
+        """Verifica las actualizaciones de las alertas"""
+
         if state is None:
             raise MissingAlertStatusError
 

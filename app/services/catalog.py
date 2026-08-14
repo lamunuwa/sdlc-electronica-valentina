@@ -10,10 +10,9 @@ from app.services.validators import (
     NeddedChangesToUpdateSensorError,
     SensorAlreadyInactiveError,
     SensorNameDuplicateError,
-    SensorNameOrIDDontMatchError,
     SensorNameTooLongError,
-    SensorNotFoundError,
     SensorThresholdOutOfRangeError,
+    ValidateSensorParameters,
 )
 
 
@@ -42,38 +41,6 @@ class SensorService:
         ):
             raise SensorThresholdOutOfRangeError(unit)
 
-    def search_sensor(self, sensor_id: int | None, name: str | None) -> SensorInfo:
-        """Entrega un sensor buscandolo por ID, nombre o ambos"""
-
-        # 1. No se envio ningun parametro
-        if sensor_id is None and name is None:
-            raise MissingRequiredFieldsError
-
-        sensor: SensorInfo | None = None
-
-        # 2. Si se envio el ID
-        if sensor_id is not None:
-            sensor = self.repository.by_id(sensor_id)
-            # El ID directamente no existe
-            if sensor is None:
-                raise SensorNotFoundError
-
-            # Si envio ID + nombre, validamos si coinciden entre si
-            if name is not None and sensor.name != name:
-                raise SensorNameOrIDDontMatchError
-
-            return sensor
-
-        # 3. Si no se envio ID pero si envio Nombre
-        if name is not None:
-            sensor = self.repository.by_name(name)
-            # El nombre directamente no existe
-            if sensor is None:
-                raise SensorNotFoundError
-            return sensor
-
-        raise SensorNotFoundError
-
     # ----------------------------------------------------------
 
     def create_sensor(self, sensor_in: SensorCreate) -> SensorInfo:
@@ -101,7 +68,7 @@ class SensorService:
 
     def get_sensor(self, sensor_id: int | None = None, name: str | None = None) -> SensorInfo:
         """Busca un sensor especifico por ID, nombre o ambos"""
-        return self.search_sensor(sensor_id, name)
+        return ValidateSensorParameters.search_sensor(self.repository, sensor_id, name)
 
     def update_sensor(
         self,
@@ -110,7 +77,7 @@ class SensorService:
         sensor_in: SensorUpdate,
     ) -> SensorInfo:
         """Actualiza la informacion de un sensor. No debe existir ya"""
-        sensor = self.search_sensor(sensor_id, name)
+        sensor = ValidateSensorParameters.search_sensor(self.repository, sensor_id, name)
 
         if not sensor_in.model_dump(exclude_unset=True):
             raise NeddedChangesToUpdateSensorError
@@ -141,7 +108,7 @@ class SensorService:
 
     def deactivate_sensor(self, sensor_id: int | None, name: str | None) -> SensorInfo:
         """Desactiva un sensor (marca inactivo)"""
-        sensor = self.search_sensor(sensor_id, name)
+        sensor = ValidateSensorParameters.search_sensor(self.repository, sensor_id, name)
 
         if not getattr(sensor, "active", True):
             raise SensorAlreadyInactiveError

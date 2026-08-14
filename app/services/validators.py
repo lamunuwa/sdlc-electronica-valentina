@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from app.models.sensors import SensorInfo
+from app.repositories.sensors import SensorRepository
 from app.schemas.readings import ReadingCreate
 
 
@@ -18,6 +19,45 @@ class SensorNameOrIDDontMatchError(Exception):
 class SensorNotFoundError(Exception):
     def __init__(self) -> None:
         super().__init__("Sensor no encontrado")
+
+
+class ValidateSensorParameters:
+    """Valida los parametros para buscar un sensor"""
+
+    @staticmethod
+    def search_sensor(
+        repository: SensorRepository, sensor_id: int | None, name: str | None
+    ) -> SensorInfo:
+        """Entrega un sensor buscandolo por ID, nombre o ambos"""
+
+        # 1. No se envio ningun parametro
+        if sensor_id is None and name is None:
+            raise MissingRequiredFieldsError
+
+        sensor: SensorInfo | None = None
+
+        # 2. Si se envio el ID
+        if sensor_id is not None:
+            sensor = repository.by_id(sensor_id)
+            # El ID directamente no existe
+            if sensor is None:
+                raise SensorNotFoundError
+
+            # Si envio ID + nombre, validamos si coinciden entre si
+            if name is not None and sensor.name != name:
+                raise SensorNameOrIDDontMatchError
+
+            return sensor
+
+        # 3. Si no se envio ID pero si envio Nombre
+        if name is not None:
+            sensor = repository.by_name(name)
+            # El nombre directamente no existe
+            if sensor is None:
+                raise SensorNotFoundError
+            return sensor
+
+        raise SensorNotFoundError
 
 
 # -----------------------------------------------------
