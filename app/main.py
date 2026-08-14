@@ -13,13 +13,17 @@ tags_metadata = [
     },
     {
         "name": "READINGS",
-        "description": "Registro y consultas paginadas de lecturas de sensores.",
+        "description": "Registro y consultas de lecturas de sensores.",
+    },
+    {
+        "name": "ALERTS",
+        "description": "Consultas y status de alertas generadas por sensores.",
     },
 ]
 
 app = FastAPI(
     title="SensorHub API",
-    version="0.4.1",
+    version="0.5.0",
     openapi_tags=tags_metadata,
 )
 

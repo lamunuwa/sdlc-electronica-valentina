@@ -1,5 +1,4 @@
 from datetime import datetime
-from uuid import uuid4
 
 from sqlalchemy import Float, ForeignKey, Index, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
@@ -21,9 +20,7 @@ class ReadingInfo(Base):
     timestamp: Mapped[datetime] = mapped_column(default=lambda: datetime.now(), nullable=False)
     """ Un hash_id es una forma de interpretar lecturas unicas, en la logica de negocios se 
     genera un hash unico para cada lectura, estilo 5d4140... """
-    hash_id: Mapped[str] = mapped_column(
-        String(64), nullable=False, index=True, default=lambda: uuid4().hex + uuid4().hex[:32]
-    )
+    hash_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
 
     __table_args__ = (
         UniqueConstraint("sensor_id", "hash_id", name="unique_hash"),

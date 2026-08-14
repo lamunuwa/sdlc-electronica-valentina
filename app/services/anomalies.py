@@ -5,6 +5,7 @@ from app.models.readings import ReadingInfo
 from app.models.sensors import SensorInfo
 from app.repositories.alerts import AlertRepository
 from app.repositories.sensors import SensorRepository
+from app.services.catalog import SensorService
 from app.services.validators import (
     AlertNotFoundError,
     InvalidAlertStatusError,
@@ -12,8 +13,6 @@ from app.services.validators import (
     MissingAlertStatusError,
     MissingRequiredFieldsError,
     NeededChangesToUpdateAlertError,
-    SensorNameOrIDDontMatchError,
-    SensorNotFoundError,
 )
 
 
@@ -32,7 +31,7 @@ class AlertService:
             alert_type = f"LOW_{sensor.type}"
 
         if alert_type is not None:
-            self.alert_repo.create(
+            self.alert_repo.create_alert(
                 {
                     "sensor_id": sensor.id,
                     "reading_id": reading.id,
@@ -44,26 +43,15 @@ class AlertService:
                 }
             )
 
-    def _validate_dates(self, from_date: datetime | None, to_date: datetime | None) -> None:
+    def validate_dates(self, from_date: datetime | None, to_date: datetime | None) -> None:
         if from_date and to_date and from_date > to_date:
-            raise InvalidDateRangeError()
+            raise InvalidDateRangeError
 
     def get_all_alerts(
         self, from_date: datetime | None, to_date: datetime | None, limit: int, offset: int
     ) -> list[AlertInfo]:
-        self._validate_dates(from_date, to_date)
+        self.validate_dates(from_date, to_date)
         return self.alert_repo.get_all_alerts(from_date, to_date, limit, offset)
-
-    def get_alerts(
-        self,
-        sensor_id: int,
-        from_date: datetime | None,
-        to_date: datetime | None,
-        limit: int,
-        offset: int,
-    ) -> list[AlertInfo]:
-        self._validate_dates(from_date, to_date)
-        return self.alert_repo.get_alerts_by_sensor(sensor_id, from_date, to_date, limit, offset)
 
     def get_alerts_by_sensor(
         self,
@@ -74,60 +62,38 @@ class AlertService:
         limit: int,
         offset: int,
     ) -> list[AlertInfo]:
-        if not sensor_id and not name:
-            raise MissingRequiredFieldsError()
-
-        self._validate_dates(from_date, to_date)
+        """Busca el sensor por ID, nombre o ambos"""
 
         if self.sensor_repo is None:
             raise MissingRequiredFieldsError
 
-        target_sensor_id: int | None = sensor_id
-        if name:
-            # Usando el método by_name() definido en SensorRepository
-            sensor = self.sensor_repo.by_name(name)
-            if not sensor:
-                # Si name no existe pero hay sensor_id, significa mismatch
-                if sensor_id:
-                    raise SensorNameOrIDDontMatchError()
-                # Si solo hay name y no existe, lanzar SensorNotFoundError
-                raise SensorNotFoundError()
-            # Si sensor existe por name y hay sensor_id, verificar que coincidan
-            if sensor_id and sensor.id != sensor_id:
-                raise SensorNameOrIDDontMatchError()
-            target_sensor_id = sensor.id
-        else:
-            # Solo hay sensor_id, búscar por id
-            sensor = self.sensor_repo.by_id(sensor_id or 0)
-            if not sensor:
-                raise SensorNotFoundError()
-            target_sensor_id = sensor_id
+        sensor_service = SensorService(self.sensor_repo)
+        sensor = sensor_service.get_sensor(sensor_id=sensor_id, name=name)
 
-        assert target_sensor_id is not None
-        return self.alert_repo.get_alerts_by_sensor(
-            target_sensor_id, from_date, to_date, limit, offset
-        )
+        self.validate_dates(from_date, to_date)
+
+        return self.alert_repo.get_alerts_by_sensor(sensor.id, from_date, to_date, limit, offset)
 
     def get_alert(self, alert_id: int) -> AlertInfo:
         alert = self.alert_repo.get_by_id(alert_id)
         if not alert:
-            raise AlertNotFoundError()
+            raise AlertNotFoundError
         return alert
 
     def update_alert_state(self, alert_id: int, state: str | None) -> AlertInfo:
         if state is None:
-            raise MissingAlertStatusError()
+            raise MissingAlertStatusError
 
         valid_states = ["open", "acknowledged", "resolved"]
         if state not in valid_states:
-            raise InvalidAlertStatusError()
+            raise InvalidAlertStatusError
 
         alert = self.alert_repo.get_by_id(alert_id)
         if not alert:
-            raise AlertNotFoundError()
+            raise AlertNotFoundError
 
         if alert.state == state:
-            raise NeededChangesToUpdateAlertError()
+            raise NeededChangesToUpdateAlertError
 
         alert.state = state
-        return self.alert_repo.update(alert)
+        return self.alert_repo.update_alert(alert)

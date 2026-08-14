@@ -23,6 +23,8 @@ from app.services.validators import (
 
 router = APIRouter(prefix="/readings", tags=["READINGS"])
 dbsession = Depends(get_db)
+from_date_query = Query(None, description="From")
+to_date_query = Query(None, description="To")
 
 
 @router.post(
@@ -85,13 +87,14 @@ def create_reading(
 @router.get(
     "/search",
     response_model=list[ReadingResponse],
+    status_code=status.HTTP_200_OK,
     summary="Consultar lecturas por sensor id, nombre o ambos",
 )
 def get_readings(
-    sensor_id: int | None = Query(None, description="ID del sensor"),
-    name: str | None = Query(None, description="Nombre del sensor"),
-    from_date: datetime | None = Query(None, description="Fecha inicial del filtro"),
-    to_date: datetime | None = Query(None, description="Fecha final del filtro"),
+    sensor_id: int | None = Query(None, description="Sensor ID"),
+    name: str | None = Query(None, description="Sensor name"),
+    from_date: datetime | None = from_date_query,
+    to_date: datetime | None = to_date_query,
     limit: int = Query(100, ge=1),
     offset: int = Query(0, ge=0),
     db: Session = dbsession,

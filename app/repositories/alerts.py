@@ -12,7 +12,7 @@ class AlertRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def create(self, alert_data: dict) -> AlertInfo:
+    def create_alert(self, alert_data: dict) -> AlertInfo:
         alert = AlertInfo(**alert_data)
         self.db.add(alert)
         self.db.commit()
@@ -57,7 +57,7 @@ class AlertRepository:
     def get_by_id(self, alert_id: int) -> AlertInfo | None:
         return self.db.get(AlertInfo, alert_id)
 
-    def update(self, alert: AlertInfo) -> AlertInfo:
+    def update_alert(self, alert: AlertInfo) -> AlertInfo:
         self.db.commit()
         self.db.refresh(alert)
         return alert

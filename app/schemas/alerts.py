@@ -12,7 +12,7 @@ class AlertResponse(BaseModel):
     type: str
     value: float
     unit: str
-    state: str  # NUEVO
+    state: str
     timestamp: datetime
 
     model_config = ConfigDict(from_attributes=True)

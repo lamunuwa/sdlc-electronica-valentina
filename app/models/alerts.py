@@ -11,7 +11,7 @@ class AlertInfo(Base):
 
     __tablename__ = "alerts"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     sensor_id: Mapped[int] = mapped_column(Integer, ForeignKey("sensors.id"), nullable=False)
     reading_id: Mapped[int] = mapped_column(Integer, ForeignKey("readings.id"), nullable=False)
     type: Mapped[str] = mapped_column(String, nullable=False)

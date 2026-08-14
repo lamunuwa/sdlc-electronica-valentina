@@ -59,6 +59,7 @@ def create_sensor(sensor_in: SensorCreate, db: Session = dbsession) -> SensorRes
 @router.get(
     "/list",
     response_model=list[SensorResponse],
+    status_code=status.HTTP_200_OK,
     summary="Obtener listas de sensores",
 )
 def list_sensors(
@@ -78,11 +79,12 @@ def list_sensors(
 @router.get(
     "/search",
     response_model=SensorResponse,
+    status_code=status.HTTP_200_OK,
     summary="Buscar un sensor por id, nombre o ambos",
 )
 def get_sensor(
-    sensor_id: int | None = Query(None, description="ID del sensor"),
-    name: str | None = Query(None, description="Nombre del sensor"),
+    sensor_id: int | None = Query(None, description="Sensor ID"),
+    name: str | None = Query(None, description="Sensor name"),
     db: Session = dbsession,
 ) -> SensorResponse:
     """Interfaz HTTP para buscar un sensor especifico"""
@@ -103,12 +105,13 @@ def get_sensor(
 @router.put(
     "/update",
     response_model=SensorResponse,
+    status_code=status.HTTP_200_OK,
     summary="Actualizar un sensor",
 )
 def update_sensor(
     sensor_in: SensorUpdate,
-    sensor_id: int | None = Query(None, description="ID del sensor"),
-    name: str | None = Query(None, description="Nombre del sensor"),
+    sensor_id: int | None = Query(None, description="Sensor ID"),
+    name: str | None = Query(None, description="Sensor name"),
     db: Session = dbsession,
 ) -> SensorResponse:
     """Interfaz HTTP para actualizar un sensor"""
@@ -145,8 +148,8 @@ def update_sensor(
     summary="Eliminar un sensor (desactivar)",
 )
 def delete_sensor(
-    sensor_id: int | None = Query(None, description="ID del sensor"),
-    name: str | None = Query(None, description="Nombre del sensor"),
+    sensor_id: int | None = Query(None, description="Sensor ID"),
+    name: str | None = Query(None, description="Sensor name"),
     db: Session = dbsession,
 ) -> None:
     """Interfaz HTTP para desactivar un sensor"""

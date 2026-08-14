@@ -85,13 +85,17 @@ def temp_sensor_inactive() -> SensorInfo:
 def temp_alert(temp_sensor: SensorInfo) -> AlertInfo:
     db = sessionlocal()
 
-    # Creamos una lectura base para la alerta
-    reading = ReadingInfo(sensor_id=temp_sensor.id, value=55.0, unit="C", timestamp=datetime.now())
+    reading = ReadingInfo(
+        sensor_id=temp_sensor.id,
+        value=55.0,
+        unit="C",
+        timestamp=datetime.now(),
+        hash_id="fixture-hash-temp-alert",
+    )
     db.add(reading)
     db.commit()
     db.refresh(reading)
 
-    # Creamos la alerta
     alert = AlertInfo(
         sensor_id=temp_sensor.id,
         reading_id=reading.id,
@@ -461,22 +465,22 @@ def test_name_or_id_dont_match_get_readings(temp_sensor: SensorInfo) -> None:
 # Funcionamiento correcto
 
 
-def test_list_alerts_ok(temp_alert: AlertInfo) -> None:
-    response = client.get("/alerts")
+def test_list_alerts_ok() -> None:
+    response = client.get("/alerts/list")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
 
-def test_get_alert_id_ok(temp_alert: AlertInfo) -> None:
+def test_get_alert_by_sensor_ok(temp_sensor: SensorInfo) -> None:
+    response = client.get(f"/alerts/search?sensor_id={temp_sensor.id}")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+
+
+def test_get_alert_ok(temp_alert: AlertInfo) -> None:
     response = client.get(f"/alerts/{temp_alert.id}")
     assert response.status_code == 200
     assert response.json()["id"] == temp_alert.id
-
-
-def test_get_alert_by_sensor_ok(temp_alert: AlertInfo, temp_sensor: SensorInfo) -> None:
-    response = client.get(f"/alerts/sensor?sensor_id={temp_sensor.id}")
-    assert response.status_code == 200
-    assert isinstance(response.json(), list)
 
 
 def test_update_state_alert_ok(temp_alert: AlertInfo) -> None:
@@ -489,39 +493,39 @@ def test_update_state_alert_ok(temp_alert: AlertInfo) -> None:
 # Funcionamiento incorrecto
 
 
+# GET: list_alerts
+def test_invalid_date_range_list_alerts() -> None:
+    response = client.get("/alerts/list?from_date=2026-12-31T00:00:00&to_date=2026-01-01T00:00:00")
+    assert response.status_code == 400
+
+
 # GET: get_alert_by_sensor
 def test_missing_fields_get_alert_by_sensor() -> None:
-    response = client.get("/alerts/sensor")
+    response = client.get("/alerts/search")
     assert response.status_code == 400
 
 
 def test_not_found_get_alert_by_sensor() -> None:
-    response = client.get("/alerts/sensor?sensor_id=99999")
+    response = client.get("/alerts/search?sensor_id=99999")
     assert response.status_code == 404
 
 
 def test_name_or_id_dont_match_get_alert_by_sensor(temp_sensor: SensorInfo) -> None:
-    response = client.get(f"/alerts/sensor?sensor_id={temp_sensor.id}&name=ANY")
+    response = client.get(f"/alerts/search?sensor_id={temp_sensor.id}&name=ANY")
     assert response.status_code == 400
 
 
 def test_invalid_date_range_get_alert_by_sensor(temp_sensor: SensorInfo) -> None:
     response = client.get(
-        f"/alerts/sensor?sensor_id={temp_sensor.id}&from_date=2026-12-31T00:00:00&to_date=2026-01-01T00:00:00"
+        f"/alerts/search?sensor_id={temp_sensor.id}&from_date=2026-12-31T00:00:00&to_date=2026-01-01T00:00:00"
     )
     assert response.status_code == 400
 
 
-# GET: get_alert_id
-def test_not_found_get_alert_id() -> None:
+# GET: get_alert
+def test_not_found_get_alert() -> None:
     response = client.get("/alerts/99999")
     assert response.status_code == 404
-
-
-# GET: list_alerts
-def test_invalid_date_range_list_alerts() -> None:
-    response = client.get("/alerts?from_date=2026-12-31T00:00:00&to_date=2026-01-01T00:00:00")
-    assert response.status_code == 400
 
 
 # PUT: update_state_alert
@@ -537,7 +541,7 @@ def test_missing_alert_status_update_state_alert(temp_alert: AlertInfo) -> None:
 
 
 def test_invalid_alert_status_update_state_alert(temp_alert: AlertInfo) -> None:
-    payload = {"state": "estado_invalido"}
+    payload = {"state": "invalid"}
     response = client.put(f"/alerts/{temp_alert.id}", json=payload)
     assert response.status_code == 400
 
