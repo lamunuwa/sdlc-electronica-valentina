@@ -32,9 +32,27 @@ Me entregó el calendario y esta vez lo revisé y acepté; la IA me propuso un p
 
 ## Semana 5
 
+## Entrada 16
+
+### Objetivo
+
+Había una función llamada `search_sensor` que vivía en `catalog.py`. Esta función sirve para buscar un sensor por ID, nombre o ambos y verificar congruencia entre ambos; en un principio era solo para la lógica de los sensores, pero creció a todas las lógicas. Esto significaba que ahora debía pasarse a `validators.py` y ya no vivir más en `catalog.py`. La entrada fue para que reconfigurara todo solo.
+
+### Prompt
+
+> Dentro de `app/services/catalog.py` existe una funcion llamada `search_sensor`, es una funcion que permite que en endpoints donde necesito buscar un sensor se pueda hacer por id, nombre o ambos y valida si id y nombre tienen sentido con el sensor registrado. Esa funcion en un inicio era para la logica de los sensores, pero se extendio y ahora se usa en `app/services/(anomalies e ingestion)`. En este momento esta siendo heredada desde catalog lo que en mi estructura y arquitectura esta mal, hay un archivo llamado validators que sirve especificamente para funciones de error o de validacion que se usan en todas services. Necesito que muevas `search_sensor` de catalog a validators y cambies las herencias y de los demas archivos de services para que ahora apunten a esa funcion pero en validators.
+>
+> NO QUIERO QUE CAMBIES NADA DE LA LOGICA DE NINGUN ARCHIVO, solo es mover y ajustar donde esta ahora esta funcion.
+>
+> Por esto mismo solo te permito leer y escribir en app/services, no fuera.
+
+### Resultados
+
+Hizo literalmente lo que pedi, pense que generaria una clase nueva pero no, literal copio y pego. Esta bien es lo que queria pero arregle para hacerlo una clase (cumple SRP).
+
 ## Entradas de refactorizacion
 
-> **En este momento y hasta no tener un nuevo commit de la refactorización, todavía estarán en revisión algunos archivos; sin embargo, la mayoría de la API debería estar estable de nuevo.**
+> **Finalice**
 
 ### Objetivo
 
