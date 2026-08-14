@@ -19,7 +19,7 @@ from app.services.validators import (
     SensorNotFoundError,
 )
 
-router = APIRouter(prefix="/alerts", tags=["Alerts"])
+router = APIRouter(prefix="/alerts", tags=["ALERTS"])
 dbsession = Depends(get_db)
 from_date_query = Query(None, description="From")
 to_date_query = Query(None, description="To")
