@@ -32,6 +32,187 @@ Me entregó el calendario y esta vez lo revisé y acepté; la IA me propuso un p
 
 ## Semana 5
 
+## Entradas de refactorizacion
+
+> **En este momento y hasta no tener un nuevo commit de la refactorización, todavía estarán en revisión algunos archivos; sin embargo, la mayoría de la API debería estar estable de nuevo.**
+
+### Objetivo
+
+Realicé un esquema en Lucid para poder visualizar todo lo que debía hacer la API y las mejoras de usuario con respecto a errores que quería hacer. Esto con el fin de hacer una refactorización de cómo funcionan los errores dentro de la API, extendiendo muchísimo los casos que reviso y mejorando la experiencia del usuario. El diagrama se puede encontrar en: [Diagrama de Lucid](docs/images/ConceptMap.png). Esto fue y es un cambio enorme, no a nivel de estructura, sino a nivel de cuántas líneas de código debo tomar en cuenta y cambiar por nuevos nombres o más verificaciones. Necesitaba ayuda de la IA (no salió nada bien).
+
+### Prompt 1
+
+Este prompt salió TERRIBLE; a pesar de ser el más extenso y específico que escribí, por alguna razón la IA reconfiguró por completo la API. Funcionaba, pero no quedaba prácticamente rastro de mi código. Descarté por completo.
+
+> CONTEXTO: He actualizado la arquitectura y el manejo de excepciones para la API (modulos de Sensores, Lecturas y Alertas). Como ya sabes. actualmente el proyecto cuenta con una base de codigo (`app/`) y una suite de pruebas (`test/`) que necesitan ser refactorizadas para adaptarse a esta nueva extension. Es una refactorizacion no crear todo desde 0.
+>
+> TAREA: Refactoriza y consolida la logica de la API y su suite de pruebas para que coincida exactamente con lo siguiente:
+>
+>Sensores: Es un CRUD
+>
+> - En POST solo se puede registrar si el registro tiene TODOS los campos llenos. Los errores relacionados son:
+>   - SensorNameDuplicateError 
+>   - SensorNameTooLongError 
+>   - InvalidSensorTypeError 
+>   - InvalidSensorUnitError 
+>   - LowThreshGreaterThanHighThreshError 
+>   - SensorThresholdOutOfRangeError 
+>   - MissingRequiredFieldsError
+> - En GET hay 2 endpoint, listar todos los sensores por paginacion o buscar un sensor por id o por nombre o ambos. Los errores relacionados son: 
+>   - Para listar todos los sensores ningun error 
+>   - Para buscar por nombre o id:
+>     - SensorNotFoundError 
+>     - SensorNameOrIDDontMatchError
+>     - MissingRequiredFieldsError 
+> - En PUT solo se puede actualizar un sensor por id o nombre o ambos. Los errores relacionados son los mismos que en GET + POST + NeddedChangesToUpdateSensorError 
+> - En DELETE solo se puede eliminar por id o nombre del sensor o ambos y son los mismos errores que en GET + SensorAlreadyInactiveError
+>
+> Lecturas: Es un Append-Only
+>
+> - En POST solo se puede registrar si el registro tiene valor y unidades llenos, los campos son: valor, unidad y timestamp (es opcional pero si no lo pone el usuario se genera automaticamente). Los errores relacionados son:
+>   - MissingRequiredFieldsError
+>   - SensorNotFoundError
+>   - SensorInactiveError
+>   - InvalidReadingValueError
+>   - ReadingValueTooLongError
+>   - DuplicateReadingError
+>   - SensorCantProcessUnit
+>   - InvalidTimestampError
+>   - FutureTimestampError
+> - En GET solo se puede listar lecturas por nombre o id del sensor o ambos por paginacion y filtro de fechas, los errores relacionados son: 
+>   - SensorNotFounError 
+>   - SensorNameOrIDDontMatch
+>   - MissingRequiredFieldsError
+>
+> Alertas: Es un REST de GET y PUT unicamente
+> 
+> - En GET se pueden buscar alertas por sensor, por nombre o id o ambos con paginacion y filtro de fechas, se pueden listar todas las alertas por paginacion y filtro de fechas, y se pueden buscar alertas por su propio id (alert_id). Los errores relacionados son: 
+>   - Para listar todas las alertas: Ningun error 
+>   - Para buscar por id de alerta:
+>     - AlertNotFound 
+>   - Para buscar por nombre o id de un sensor: 
+>     - SensorNotFound 
+>     - SensorNameOrIDDontMatchError
+>     - MissingRequiredFieldsError
+>
+> - En PUT se pueden actualizar estados de la alerta (por defecto/ acknowledged / resolved). Los errores relacionados son:
+>   - SensorNotFound
+>   - InvalidAlertStatusError
+>   - NeddedChangesToUpdateSensorError
+>   - MissingAlertStatusError
+> Para ejecutarlo debes usar 3 fases:
+> - Pruebas TDD: Reintegra y actualiza `test_api.py`, borra todos los test que hay ahora mismo (NO LO QUE HAYA ANTES) y escribe una prueba que valide el flujo correcto y otro que fuerce el error
+> - Integracion: Actualiza la logica del codigo de `app/` para hacer pasar todas las pruebas nuevas
+> - Verificacion: Corre pytest en el entorno virtual para verficiar que todo funciona
+>
+> RESTRICCION:
+> - Elimina todos los errores y excepciones anteriores (`app/services/validators.py`) que ya no formen parte del nuevo diagrama. Solo deben existir las excepciones definidas en el nuevo modelo.
+> - Priorizar la reutilizacion del codigo existente (modelos, schemas, servicios, capas). No reescribir desde cero lo que ya funciona.
+> - NO agregues nuevas librerias ni herramientas avanzadas que no estén presentes en el codigo actual (por ejemplo, NO usar unittest.mock, pytest-mock, etc). Esto para que entienda todo le codigo que generes
+> - No generes nuevos archivos, solo modifica y lee lo que hay dentro de `app/` `test/`
+> - Respeta cada subcarpeta de `app/`, es decir cada resposabilidad que tiene cada carpeta
+>
+> ENTREGA: Breve resumen de lo que cambiaste. Codigo pasando todas las pruebas del TDD y el cover > 90%
+
+### Prompt 2
+
+Aquí reduje la cantidad de cosas que tenía que hacer; así era menos lo que tenía que revisar a mano y era más fácil de corregir. Error: a pesar de ser bastante específico, el prompt no hizo lo que quería y, de hecho, rompió la base de datos; no funcionaba el Swagger y hubo error en Alembic. Aquí me di cuenta de que hasta ahora estaba trabajando por pedazos de pedazos, es decir, trabajaba def, class, un archivo a lo mucho; ahora estaba intentando trabajar una arquitectura completa. Entonces, a partir de aquí tome la decisión de leer los resúmenes de cambios que hacía la IA y tomar las partes que más me agradaran o entendiera perfectamente e incluirlas; era como armar un lego.
+
+> CONTEXTO:
+> Vamos a refactorizar los modulos de SENSORES por partes para alinearlo con el nuevo diagrama de arquitectura y manejo de errores. Tengo un proyecto funcional existente y NO quiero reescribirlo desde cero ni cambiar la arquitectura. Debes imitar exactamente mi estilo de codigo, mi sintaxis, mi convencion de nombres y el diseño de mis modulos.
+>
+> TAREA:  Refactorizar UNICAMENTE el modulo de Sensores aplicando TDD (Test-Driven Development) estricto. La refactorización debe cubrir únicamente los siguientes endpoints y sus errores:
+>
+> 1. POST /sensores: 1 endpoint
+> Requiere todos los campos: nombre, tipo, unidad, umbral_min, umbral_max, ubicacion. (el id y active se generan automaticamente tal cual esta)
+>
+> - Errores a probar e implementar:
+> - SensorNameDuplicateError
+> - SensorNameTooLongError
+> - InvalidSensorTypeError
+> - InvalidSensorUnitError
+> - LowThreshGreaterThanHighThreshError
+> - SensorThresholdOutOfRangeError
+> - MissingRequiredFieldsError (Si no hay nada en nombre o id)
+>
+> 2. GET /sensores: 2 endpoints
+> Para listar todos (admite paginacion e include_inactive = true/false): Ningun error.
+> Para buscar por nombre o id o ambos (obligatorio uno minimo):
+>
+> - SensorNotFoundError
+> - SensorNameOrIDDontMatchError
+> - MissingRequiredFieldsError (Si no hay nada en nombre o id)
+>
+> 3. PUT /sensores: 1 endpoint
+> Actualizar por id o nombre o ambos (obligatorio uno minimo).
+> Errores a probar e implementar:
+>
+> - SensorNotFoundError,
+> - SensorNameOrIDDontMatchError,
+> - SensorNameDuplicateError,
+> - SensorNameTooLongError,
+> - InvalidSensorTypeError,
+> - InvalidSensorUnitError,
+> - LowThreshGreaterThanHighThreshError,
+> - SensorThresholdOutOfRangeError,
+> - NeddedChangesToUpdateSensorError,
+> - MissingRequiredFieldsError (Si no hay nada en nombre o id)
+>
+> 4. DELETE /sensores: 1 endpoint
+> Pasa de activo a inactivo (soft delete) por id o nombre. o ambos (obligatorio uno minimo).
+> Errores a probar e implementar:
+>
+> - SensorNotFoundError
+> - SensorNameOrIDDontMatchError
+> - SensorAlreadyInactiveError
+> - MissingRequiredFieldsError (Si no hay nada en nombre o id)
+>
+> RESTRICCIONES TECNICAS:
+>
+> - METODOLOGÍA TDD EXCLUSIVA: Primero escribe en un nuevo archivo dentro de `test/`
+>   - a) Test del caso de exito, por ejemplo uno donde al buscar un sensor en GET se haga correctamente.
+>   - b) Test individual por cada error mencionado arriba, por ejemplo uno donde GET no tenga id, nombre o ambos y se tire el error.
+> - NO reescribir ni eliminar la estructura existente: Modifica o añade UNICAMENTE las funciones y líneas de codigo necesarias para integrar esta logica. Preserva la lógica base actual.
+> - NO agregar librerias ni imports externos que no esten ya en el proyecto (prohibido agregar unittest.mock, pytest-mock o frameworks nuevos). Manten los mismos imports de la app.
+> - Elimina cualquier excepcion (dentro de `app/services/validators.py`) antigua del módulo de sensores que ya no esté en la lista anterior.
+> - Manten exactamente mi sintaxis y formato, por ejemplo usar para routers la misma idea de raise ...
+>
+> ENTREGA:
+>
+> 1. Codigo de Pruebas (Tests de Sensores) con casos de exito y casos de error.
+> 2. Codigo de Implementacion del Módulo de Sensores (Schemas, Excepciones, Servicios/Endpoints, etc.) modificado de forma quirurgica.
+
+### Prompt 3
+
+Aquí ya había terminado la refactorización de SENSORS. Empecé con READINGS y cambié de tipo de prompting a lo más habitual, a lo que estoy acostumbrada. Agregándole al final una metodología que vi en TikTok para que planificara antes de empezar.
+
+> Estoy haciendo una refactorizacion bastante agresiva de mi API, en este momento la seccion de registro deberia correr perfectamente, pasa todos los 28 test que le puse como deberia de ser. Ahora mismo estoy completamente trabada en la siguiente seccion que es lecturas, ya genere los test para hacer Test Driven Development pero no importa como inicie siempre sale mal. Lo raro aqui es que la mayoria del codigo ya esta hecho, ya deberia de funcionar por que esto es una refactorizacion no es una generacion de codigo desde 0, solo agrego diferentes situaciones de error que antes no estaban y renombro algunas otras.
+>
+> Necesito que me ayudes a concretar los 14 test que tengo, generando el codigo tal cual como lo necesito. Arma una planificacion, corregimos y empezamos.
+
+### Prompt 4
+
+Empezamos alertas. Y me hizo un breve cuestionario de qué debía hacer alertas.
+
+> Bien aqui es donde entra el ultimo modulo, la gestion de alertas, la que tengo es muy basica, como es algo bastante nuevo, lo haremos por TDD, primero generaras los test tal cual yo lo hago y luego programaras mediante eso, tengo seccionado ya la parte final de test_api.py, revisalo
+
+### Prompt 5
+
+Este es el prompt final de este refactor.
+
+> Que debe hacer alerts? Alerts es un endpoint donde puedes leer alertas por medio de el id o nombre o ambos de un sensor, leer alertas por id de la propia alerta y leer todas las alertas, estos endpoint tienen paginacion y filtros de fechas.
+> Luego puedes actualizar SOLO UN PARAMETRO, que es state, solo lo puedes modificar entre open, acknowledged y resolved y es por medio de unicamente el ID de la alerta, entonces es por PUT.
+> Los errores relacionados son:
+> Para lectura por sensor id, nombre o ambos: SensorNotFoundError, SensorNameOrIDDontMatchError, InvalidDataRangeError y MissingRequiredFieldsError
+> Para lectura por id de la alerta: AlertNotFound(Nuevo!!), InvalidDataRangeError y es en path, no tiene Missin
+> Para leer todas las lecturas: InvalidDataRangeError
+> Para actualizar estados por id de las alertas: AlertNotFound, InvalidAlertStatus (nuevo! Para cuando el usuario ponga algo que no son los 3 estados), NeededChangesToUpdateError (lo mismo que en el put de sensores, se necesitan cambios para haber actualizacion), MissingAlertStatusError (nuevo! Por si el usuario deja en blanco el state)
+> OBVIAMENTE las alertas son en contra de los umbrales seleccionados al crear el sensor, por ejemplo si al crear el sensor metemos umbral de -20 a 30 y mi lectura asociada a ese sensor mide -30 se tira alerta para ese sensor. Espero me comprendas.
+
+### Resultados
+
+Fue toda una odisea; tardé aproximadamente unas 6 horas en esto. Entre frustraciones, breaks y todo, aprendí algo muy importante: la IA no es superpoderosa, y parece una tontería, pero creo que es el motivo de la semana. La IA comete más errores incluso que yo, más que todo en el área de lógica; no se para a pensar realmente si algo está bien o mal, solo lo implementa y arregla hasta que funciona. Es importante dar buenas instrucciones a la IA, es importante el prompting, pero con esto considero que es más importante saber llevar una metodología de trabajo: primero esto, luego esto, luego esto, e incluso poder comunicar ideas con tus propias palabras sin necesidad de tanto "papeleo". También puede ser que yo lo haya hecho mal, pero creo que aprendí bastante.
+
 ## Entrada 10
 
 ### Objetivo
