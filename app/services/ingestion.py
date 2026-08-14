@@ -8,7 +8,13 @@ from app.repositories.readings import ReadingRepository
 from app.repositories.sensors import SensorRepository
 from app.schemas.readings import ReadingCreate
 from app.services.anomalies import AlertService
-from app.services.validators import DuplicateReadingError, ReadingValidator, SensorNotFoundError
+from app.services.catalog import SensorService
+from app.services.validators import (
+    DuplicateReadingError,
+    InvalidDateRangeError,
+    ReadingValidator,
+    SensorNotFoundError,
+)
 
 
 def get_now() -> datetime:
@@ -47,14 +53,14 @@ class ReadingService:
 
     def register_reading(self, sensor_id: int, reading_in: ReadingCreate) -> ReadingInfo:
         """
-        1. Confirma existencia del sensor
+        1. Confirma existencia del sensor (el sensor_id siempre viene del path)
         2. Ejecuta validacion con ReadingValidator
         3. Verifica no duplicidad mediante el hash
         4. Inserta el registro en la base de datos
         """
         sensor = self.sensor_repository.by_id(sensor_id)
         if sensor is None:
-            raise SensorNotFoundError(sensor_id)
+            raise SensorNotFoundError
 
         self.validator.validate(sensor, reading_in)
 
@@ -70,19 +76,23 @@ class ReadingService:
 
     def get_readings(
         self,
-        sensor_id: int,
+        sensor_id: int | None = None,
+        name: str | None = None,
         from_date: datetime | None = None,
         to_date: datetime | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[ReadingInfo]:
-        """Captura lecturas paginadas y filtradas por fecha/valida que el sensor existe"""
+        """Busca el sensor por ID, nombre o ambos (igual que sensors) y obtiene sus lecturas"""
 
-        sensor = self.sensor_repository.by_id(sensor_id)
-        if sensor is None:
-            raise SensorNotFoundError(sensor_id)
+        sensor_service = SensorService(self.sensor_repository)
+        sensor = sensor_service.get_sensor(sensor_id=sensor_id, name=name)
+
+        if from_date is not None and to_date is not None and from_date > to_date:
+            raise InvalidDateRangeError
+
         return self.reading_repository.get_reading(
-            sensor_id=sensor_id,
+            sensor_id=sensor.id,
             from_date=from_date,
             to_date=to_date,
             limit=limit,

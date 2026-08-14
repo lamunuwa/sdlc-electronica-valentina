@@ -11,28 +11,32 @@ from app.schemas.readings import ReadingCreate, ReadingResponse
 from app.services.ingestion import ReadingService
 from app.services.validators import (
     DuplicateReadingError,
+    InvalidDateRangeError,
+    MissingRequiredFieldsError,
+    ReadingValueTooLongError,
+    SensorCantProcessUnitError,
     SensorInactiveError,
+    SensorNameOrIDDontMatchError,
     SensorNotFoundError,
-    UnsupportedUnitError,
-    ValueOutOfRangeError,
+    TimestampInFutureError,
 )
 
-router = APIRouter(prefix="/sensors", tags=["READINGS"])
+router = APIRouter(prefix="/readings", tags=["READINGS"])
 dbsession = Depends(get_db)
 
 
 @router.post(
-    "/{sensor_id}/readings",
+    "/{sensor_id}",
     response_model=ReadingResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Registrar una nueva lectura",
+    summary="Registrar una nueva lectura para un sensor",
 )
 def create_reading(
     sensor_id: int,
     reading_in: ReadingCreate,
     db: Session = dbsession,
 ) -> ReadingResponse:
-    """Interfaz HTTP para registrar una lectura"""
+    """Interfaz HTTP para registrar una lectura. Solo se registra por sensor_id (path)"""
 
     reading_repo = ReadingSQLAlchemyRepository(db)
     sensor_repo = SensorSQLAlchemyRepository(db)
@@ -46,44 +50,54 @@ def create_reading(
         reading = service.register_reading(sensor_id, reading_in)
         return ReadingResponse.model_validate(reading)
 
-    except SensorNotFoundError as error:
+    except SensorNotFoundError as nfe:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Sensor con id {error.sensor_id} no encontrado",
-        ) from error
-
-    except UnsupportedUnitError as error:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(error),
-        ) from error
-
-    except (ValueOutOfRangeError, SensorInactiveError) as error:
+            detail=str(nfe),
+        ) from nfe
+    except SensorInactiveError as sie:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(error),
-        ) from error
-
-    except DuplicateReadingError as error:
+            detail=str(sie),
+        ) from sie
+    except SensorCantProcessUnitError as cpe:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(cpe),
+        ) from cpe
+    except TimestampInFutureError as tfe:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(tfe),
+        ) from tfe
+    except ReadingValueTooLongError as rvle:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(rvle),
+        ) from rvle
+    except DuplicateReadingError as dre:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=str(error),
-        ) from error
+            detail=str(dre),
+        ) from dre
 
 
 @router.get(
-    "/{sensor_id}/readings",
+    "/search",
     response_model=list[ReadingResponse],
-    summary="Consultar lecturas por filtros",
+    summary="Consultar lecturas por sensor id, nombre o ambos",
 )
 def get_readings(
-    sensor_id: int,
-    from_date: datetime | None = None,
-    to_date: datetime | None = None,
+    sensor_id: int | None = Query(None, description="ID del sensor"),
+    name: str | None = Query(None, description="Nombre del sensor"),
+    from_date: datetime | None = Query(None, description="Fecha inicial del filtro"),
+    to_date: datetime | None = Query(None, description="Fecha final del filtro"),
     limit: int = Query(100, ge=1),
     offset: int = Query(0, ge=0),
     db: Session = dbsession,
 ) -> list[ReadingResponse]:
+    """Interfaz HTTP para consultar lecturas, buscando el sensor igual que en sensors"""
+
     reading_repo = ReadingSQLAlchemyRepository(db)
     sensor_repo = SensorSQLAlchemyRepository(db)
     service = ReadingService(reading_repository=reading_repo, sensor_repository=sensor_repo)
@@ -91,15 +105,31 @@ def get_readings(
     try:
         readings = service.get_readings(
             sensor_id=sensor_id,
+            name=name,
             from_date=from_date,
             to_date=to_date,
             limit=limit,
             offset=offset,
         )
-    except SensorNotFoundError as error:
+    except MissingRequiredFieldsError as mrfe:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(mrfe),
+        ) from mrfe
+    except SensorNotFoundError as nfe:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Sensor con id {error.sensor_id} no encontrado",
-        ) from error
+            detail=str(nfe),
+        ) from nfe
+    except SensorNameOrIDDontMatchError as dme:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(dme),
+        ) from dme
+    except InvalidDateRangeError as idre:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(idre),
+        ) from idre
 
     return [ReadingResponse.model_validate(rr) for rr in readings]

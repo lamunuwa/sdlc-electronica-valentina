@@ -15,6 +15,7 @@ class SensorInfo(Base):
     unit: Mapped[str] = mapped_column(String(10), nullable=False)
     threshold_min: Mapped[float] = mapped_column(Float, nullable=False)
     threshold_max: Mapped[float] = mapped_column(Float, nullable=False)
+    ubication: Mapped[str] = mapped_column(String(50), nullable=False)
     active: Mapped[bool] = mapped_column(default=True, nullable=False)
 
     @property

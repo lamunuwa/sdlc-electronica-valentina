@@ -28,6 +28,7 @@ class SensorCreate(BaseModel):
     type: str = Field(..., examples=["TEMPERATURE"], description="Magnitud que mide el sensor")
     unit: str = Field(..., examples=["C"], description="Unidad de medida")
     sensor_umbral: SensorThreshold = Field(..., description="Umbral configurado para el sensor")
+    ubication: str = Field(..., examples=["Bodega Sur"], description="Ubicacion del sensor")
 
 
 class SensorUpdate(BaseModel):
@@ -39,6 +40,9 @@ class SensorUpdate(BaseModel):
     sensor_umbral: SensorThreshold | None = Field(
         None, description="Umbral configurable para actualizar"
     )
+    ubication: str | None = Field(
+        None, examples=["Bodega Sur"], description="Nueva ubicacion del sensor"
+    )
 
 
 class SensorResponse(BaseModel):
@@ -49,6 +53,7 @@ class SensorResponse(BaseModel):
     type: str
     unit: str
     sensor_umbral: SensorThreshold
+    ubication: str
     active: bool
 
     model_config = ConfigDict(from_attributes=True)

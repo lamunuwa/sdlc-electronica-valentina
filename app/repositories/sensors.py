@@ -14,7 +14,9 @@ class SensorRepository(Protocol):
 
     def create(self, sensor_in: SensorCreate) -> SensorInfo: ...
 
-    def list_sensor(self, limit: int = 50, offset: int = 0) -> list[SensorInfo]: ...
+    def list_sensor(
+        self, limit: int = 50, offset: int = 0, show_inactive: bool = False
+    ) -> list[SensorInfo]: ...
 
     def by_id(self, sensor_id: int) -> SensorInfo | None: ...
 
@@ -50,10 +52,16 @@ class SensorSQLAlchemyRepository:
         self.db.refresh(db_sensor)
         return db_sensor
 
-    def list_sensor(self, limit: int = 50, offset: int = 0) -> list[SensorInfo]:
+    def list_sensor(
+        self, limit: int = 50, offset: int = 0, show_inactive: bool = False
+    ) -> list[SensorInfo]:
         """Lista sensores paginados"""
 
-        sen = select(SensorInfo).order_by(SensorInfo.id.asc()).offset(offset).limit(limit)
+        sen = select(SensorInfo)
+        if not show_inactive:
+            sen = sen.where(SensorInfo.active.is_(True))
+
+        sen = sen.order_by(SensorInfo.id.asc()).offset(offset).limit(limit)
         return list(self.db.scalars(sen).all())
 
     def by_id(self, sensor_id: int) -> SensorInfo | None:
@@ -92,11 +100,11 @@ class SensorSQLAlchemyRepository:
 
 
 class RepositoryProtocol(SensorRepository, Protocol):
-    def desactivate(self, sensor: SensorInfo) -> SensorInfo: ...
+    def deactivate(self, sensor: SensorInfo) -> SensorInfo: ...
 
 
 class SQLAlchemyRepository(SensorSQLAlchemyRepository):
-    def desactivate(self, sensor: SensorInfo) -> SensorInfo:
+    def deactivate(self, sensor: SensorInfo) -> SensorInfo:
         return self.deactivate(sensor)  # pragma: no cover
 
 

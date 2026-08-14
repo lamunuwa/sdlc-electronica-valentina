@@ -17,4 +17,5 @@ class AlertInfo(Base):
     type: Mapped[str] = mapped_column(String, nullable=False)
     value: Mapped[float] = mapped_column(Float, nullable=False)
     unit: Mapped[str] = mapped_column(String, nullable=False)
+    state: Mapped[str] = mapped_column(String, default="open", nullable=False)
     timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, nullable=False)

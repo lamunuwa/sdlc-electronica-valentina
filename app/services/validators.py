@@ -1,19 +1,39 @@
-from app.core.limits import limits
+from datetime import datetime
+
 from app.models.sensors import SensorInfo
 from app.schemas.readings import ReadingCreate
 
 
+# Errores compartidos ---------------------------------
+class MissingRequiredFieldsError(Exception):
+    def __init__(self) -> None:
+        super().__init__("Campos obligatorios faltantes")
+
+
+class SensorNameOrIDDontMatchError(Exception):
+    def __init__(self) -> None:
+        super().__init__("El nombre y el ID del sensor no coinciden")
+
+
+class SensorNotFoundError(Exception):
+    def __init__(self) -> None:
+        super().__init__("Sensor no encontrado")
+
+
+# -----------------------------------------------------
+
+
 # Errores de sensores ---------------------------------
-class SensorDuplicateError(Exception):
+class SensorNameDuplicateError(Exception):
     def __init__(self, name: str) -> None:
         self.name = name
         super().__init__(f"El sensor con el nombre '{name}' ya existe")
 
 
-class SensorNotFoundError(Exception):
-    def __init__(self, sensor_id: int) -> None:
-        self.sensor_id = sensor_id
-        super().__init__(f"El sensor con id '{sensor_id}' no encontrado")
+class SensorNameTooLongError(Exception):
+    def __init__(self, name: str) -> None:
+        self.name = name
+        super().__init__(f"El nombre '{name}' excede el límite de caracteres permitido")
 
 
 class InvalidSensorTypeError(Exception):
@@ -29,11 +49,6 @@ class InvalidSensorUnitError(Exception):
         super().__init__(f"Unidad '{unit}' no soportada para sensores de tipo {sensor_type}")
 
 
-class EmptySensorThresholdError(Exception):
-    def __init__(self) -> None:
-        super().__init__("Umbral max y/o umbral min no pueden estar vacios")
-
-
 class LowThreshGreaterThanHighThreshError(Exception):
     def __init__(self) -> None:
         super().__init__("Umbral minimo no puede ser mayor que el umbral maximo")
@@ -42,25 +57,27 @@ class LowThreshGreaterThanHighThreshError(Exception):
 class SensorThresholdOutOfRangeError(Exception):
     def __init__(self, unit: str) -> None:
         self.unit = unit
-        super().__init__(f"Umbral minimo y/o umbral maximo fuera del rango fisico de {unit}")
+        super().__init__(f"Umbral minimo y/o umbral maximo fuera del rango físico de {unit}")
+
+
+class NeddedChangesToUpdateSensorError(Exception):
+    def __init__(self) -> None:
+        super().__init__("No se proporcionaron cambios para actualizar el sensor")
+
+
+class SensorAlreadyInactiveError(Exception):
+    def __init__(self) -> None:
+        super().__init__("El sensor ya se encuentra inactivo")
 
 
 # -----------------------------------------------------
 
 
 # Errores de lecturas ---------------------------------
-class DuplicateReadingError(Exception):
-    def __init__(self, sensor_id: int) -> None:
-        self.sensor_id = sensor_id
-        super().__init__(f"Lectura duplicada detectada para el sensor {sensor_id}")
 
 
-class SensorInactiveError(Exception):
-    def __init__(self, sensor_id: int) -> None:
-        self.sensor_id = sensor_id
-        super().__init__(f"El sensor {sensor_id} está inactivo y no acepta lecturas")
-
-
+# Se conservan por si otros modulos (alerts/anomalies) aun dependen de ellas,
+# aunque el ReadingValidator ya no las usa directamente.
 class UnsupportedSensorTypeError(Exception):
     def __init__(self, sensor_type: str) -> None:
         self.sensor_type = sensor_type
@@ -83,30 +100,101 @@ class ValueOutOfRangeError(Exception):
         )
 
 
+class SensorCantProcessUnitError(Exception):
+    def __init__(self, reading_unit: str, sensor_unit: str) -> None:
+        self.reading_unit = reading_unit
+        self.sensor_unit = sensor_unit
+        super().__init__(
+            f"El sensor no puede procesar la unidad '{reading_unit}', requiere '{sensor_unit}'"
+        )
+
+
+class ReadingValueTooLongError(Exception):
+    def __init__(self, value: float) -> None:
+        self.value = value
+        super().__init__(f"El valor de la lectura {value} excede el rango permitido por el sensor")
+
+
+class InvalidTimestampError(Exception):
+    def __init__(self) -> None:
+        super().__init__("El formato de fecha/hora (timestamp) provisto no es válido")
+
+
+class TimestampInFutureError(Exception):
+    def __init__(self) -> None:
+        super().__init__("La fecha/hora de la lectura no puede estar en el futuro")
+
+
+class SensorInactiveError(Exception):
+    def __init__(self, sensor_id: int) -> None:
+        self.sensor_id = sensor_id
+        super().__init__(f"El sensor {sensor_id} está inactivo y no acepta lecturas")
+
+
+class DuplicateReadingError(Exception):
+    def __init__(self, sensor_id: int) -> None:
+        self.sensor_id = sensor_id
+        super().__init__(f"Lectura duplicada detectada para el sensor {sensor_id}")
+
+
+class InvalidDateRangeError(Exception):
+    def __init__(self) -> None:
+        super().__init__("La fecha de inicio no puede ser mayor que la fecha final")
+
+
 class ReadingValidator:
-    """Evalua de forma si una lectura cumple las condiciones para procesarse"""
+    """Evalua si una lectura cumple las condiciones para procesarse contra un sensor especifico"""
 
     @staticmethod
     def validate(sensor: SensorInfo, reading_in: ReadingCreate) -> None:
+        # 1. Verificar si el sensor esta activo
         if not sensor.active:
             raise SensorInactiveError(sensor.id)
 
-        # 1. Validar si el tipo existe en los límites del sistema
-        if sensor.type not in limits:
-            raise UnsupportedSensorTypeError(sensor.type)
-
-        units_for_type = limits[sensor.type]
-
-        # 2. Validar si la unidad es soportada
-        if reading_in.unit not in units_for_type:
-            raise UnsupportedUnitError(reading_in.unit, sensor.type)
-
-        # 3. Validar el rango de valor
-        limits_for_unit = units_for_type[reading_in.unit]
-        if reading_in.value < limits_for_unit.min_value:
-            raise ValueOutOfRangeError(
-                value=reading_in.value, unit=reading_in.unit, min_value=limits_for_unit.min_value
+        # 2. Validar compatibilidad de unidad entre la lectura y el sensor
+        if reading_in.unit != sensor.unit:
+            raise SensorCantProcessUnitError(
+                reading_unit=reading_in.unit,
+                sensor_unit=sensor.unit,
             )
+
+        # 3. Validar timestamp en el futuro (maneja datetimes tz-aware y naive)
+        if reading_in.timestamp is not None:
+            tz = reading_in.timestamp.tzinfo
+            now = datetime.now(tz=tz)
+            if reading_in.timestamp > now:
+                raise TimestampInFutureError
+
+        # 4. Validar el valor dentro de los umbrales configurados en el sensor
+        if sensor.threshold_min is not None and sensor.threshold_max is not None:
+            if not (sensor.threshold_min <= reading_in.value <= sensor.threshold_max):
+                raise ReadingValueTooLongError(value=reading_in.value)
+
+
+# -----------------------------------------------------
+
+
+# Errores de alertas ----------------------------------
+
+
+class AlertNotFoundError(Exception):
+    def __init__(self) -> None:
+        super().__init__("Alerta no encontrada")
+
+
+class MissingAlertStatusError(Exception):
+    def __init__(self) -> None:
+        super().__init__("Debe proporcionar el campo 'state' para actualizar la alerta")
+
+
+class InvalidAlertStatusError(Exception):
+    def __init__(self) -> None:
+        super().__init__("El estado de la alerta debe ser 'open', 'acknowledged' o 'resolved'")
+
+
+class NeededChangesToUpdateAlertError(Exception):
+    def __init__(self) -> None:
+        super().__init__("La alerta ya se encuentra en el estado solicitado")
 
 
 # -----------------------------------------------------

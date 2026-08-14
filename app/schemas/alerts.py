@@ -12,6 +12,13 @@ class AlertResponse(BaseModel):
     type: str
     value: float
     unit: str
+    state: str  # NUEVO
     timestamp: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class AlertStateUpdate(BaseModel):
+    """Esquema para actualizar el estado de una alerta"""
+
+    state: str | None = None

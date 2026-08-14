@@ -5,38 +5,159 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.repositories.alerts import AlertRepository
-from app.schemas.alerts import AlertResponse
+from app.repositories.sensors import SensorSQLAlchemyRepository
+from app.schemas.alerts import AlertResponse, AlertStateUpdate
 from app.services.anomalies import AlertService
+from app.services.validators import (
+    AlertNotFoundError,
+    InvalidAlertStatusError,
+    InvalidDateRangeError,
+    MissingAlertStatusError,
+    MissingRequiredFieldsError,
+    NeededChangesToUpdateAlertError,
+    SensorNameOrIDDontMatchError,
+    SensorNotFoundError,
+)
 
 router = APIRouter(prefix="/alerts", tags=["Alerts"])
 dbsession = Depends(get_db)
-from_date_query = Query(None, alias="from")
-to_date_query = Query(None, alias="to")
 
 
 @router.get(
     "",
     response_model=list[AlertResponse],
-    summary="Listar alertas por sensor",
+    summary="Listar todas las alertas",
 )
 def list_alerts(
-    sensor_id: int,
-    from_date: datetime | None = from_date_query,
-    to_date: datetime | None = to_date_query,
+    from_date: datetime | None = Query(None, description="Fecha inicial"),
+    to_date: datetime | None = Query(None, description="Fecha final"),
     limit: int = Query(100, ge=1),
     offset: int = Query(0, ge=0),
     db: Session = dbsession,
 ) -> list[AlertResponse]:
-    """Obtiene alertas de un sensor"""
-    service = AlertService(AlertRepository(db))
-    alerts = service.get_alerts(sensor_id, from_date, to_date, limit, offset)
-    return [AlertResponse.model_validate(alert) for alert in alerts]
+    """Interfaz HTTP para listar todas las alertas con filtros opcionales"""
+
+    alert_repo = AlertRepository(db)
+    service = AlertService(alert_repo)
+
+    try:
+        alerts = service.get_all_alerts(from_date, to_date, limit, offset)
+        return [AlertResponse.model_validate(alert) for alert in alerts]
+    except InvalidDateRangeError as idre:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(idre),
+        ) from idre
 
 
-@router.get("/{alert_id}", response_model=AlertResponse, summary="Obtener alerta por id")
+@router.get(
+    "/sensor",
+    response_model=list[AlertResponse],
+    summary="Obtener alertas por sensor",
+)
+def get_alerts_by_sensor(
+    sensor_id: int | None = Query(None, description="ID del sensor"),
+    name: str | None = Query(None, description="Nombre del sensor"),
+    from_date: datetime | None = Query(None, description="Fecha inicial"),
+    to_date: datetime | None = Query(None, description="Fecha final"),
+    limit: int = Query(100, ge=1),
+    offset: int = Query(0, ge=0),
+    db: Session = dbsession,
+) -> list[AlertResponse]:
+    """Interfaz HTTP para obtener alertas de un sensor específico"""
+
+    alert_repo = AlertRepository(db)
+    sensor_repo = SensorSQLAlchemyRepository(db)
+    service = AlertService(alert_repo, sensor_repo)
+
+    try:
+        alerts = service.get_alerts_by_sensor(
+            sensor_id=sensor_id,
+            name=name,
+            from_date=from_date,
+            to_date=to_date,
+            limit=limit,
+            offset=offset,
+        )
+        return [AlertResponse.model_validate(alert) for alert in alerts]
+    except MissingRequiredFieldsError as mrfe:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(mrfe),
+        ) from mrfe
+    except SensorNotFoundError as snfe:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(snfe),
+        ) from snfe
+    except SensorNameOrIDDontMatchError as dme:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(dme),
+        ) from dme
+    except InvalidDateRangeError as idre:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(idre),
+        ) from idre
+
+
+@router.get(
+    "/{alert_id}",
+    response_model=AlertResponse,
+    summary="Obtener alerta por id",
+)
 def get_alert(alert_id: int, db: Session = dbsession) -> AlertResponse:
-    """Obtiene una alerta por su id"""
-    alert = AlertService(AlertRepository(db)).get_alert(alert_id)
-    if alert is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alerta no encontrada")
-    return AlertResponse.model_validate(alert)
+    """Interfaz HTTP para obtener una alerta por su id"""
+
+    alert_repo = AlertRepository(db)
+    service = AlertService(alert_repo)
+
+    try:
+        alert = service.get_alert(alert_id)
+        return AlertResponse.model_validate(alert)
+    except AlertNotFoundError as anfe:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(anfe),
+        ) from anfe
+
+
+@router.put(
+    "/{alert_id}",
+    response_model=AlertResponse,
+    summary="Actualizar estado de una alerta",
+)
+def update_alert(
+    alert_id: int,
+    alert_in: AlertStateUpdate,
+    db: Session = dbsession,
+) -> AlertResponse:
+    """Interfaz HTTP para actualizar el estado de una alerta"""
+
+    alert_repo = AlertRepository(db)
+    service = AlertService(alert_repo)
+
+    try:
+        alert = service.update_alert_state(alert_id, alert_in.state)
+        return AlertResponse.model_validate(alert)
+    except MissingAlertStatusError as mase:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(mase),
+        ) from mase
+    except InvalidAlertStatusError as iase:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(iase),
+        ) from iase
+    except AlertNotFoundError as anfe:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(anfe),
+        ) from anfe
+    except NeededChangesToUpdateAlertError as ncae:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(ncae),
+        ) from ncae

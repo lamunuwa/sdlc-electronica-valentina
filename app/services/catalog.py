@@ -3,11 +3,15 @@ from app.models.sensors import SensorInfo
 from app.repositories.sensors import SensorRepository
 from app.schemas.sensors import SensorCreate, SensorUpdate
 from app.services.validators import (
-    EmptySensorThresholdError,
     InvalidSensorTypeError,
     InvalidSensorUnitError,
     LowThreshGreaterThanHighThreshError,
-    SensorDuplicateError,
+    MissingRequiredFieldsError,
+    NeddedChangesToUpdateSensorError,
+    SensorAlreadyInactiveError,
+    SensorNameDuplicateError,
+    SensorNameOrIDDontMatchError,
+    SensorNameTooLongError,
     SensorNotFoundError,
     SensorThresholdOutOfRangeError,
 )
@@ -28,60 +32,118 @@ class SensorService:
             raise InvalidSensorUnitError(sensor_type, unit)
 
     def validate_sensor_threshold(
-        self, sensor_type: str, unit: str, min_value: float | None, max_value: float | None
+        self, sensor_type: str, unit: str, min_value: float, max_value: float
     ) -> None:
         """Valida que los umbrales min y max sean consistentes y dentro del rango fisico"""
-        if min_value is None or max_value is None:
-            raise EmptySensorThresholdError()
         if min_value > max_value:
-            raise LowThreshGreaterThanHighThreshError()
+            raise LowThreshGreaterThanHighThreshError
         if not is_value_valid(sensor_type, unit, min_value) or not is_value_valid(
             sensor_type, unit, max_value
         ):
             raise SensorThresholdOutOfRangeError(unit)
 
+    def search_sensor(self, sensor_id: int | None, name: str | None) -> SensorInfo:
+        """Entrega un sensor buscandolo por ID, nombre o ambos"""
+
+        # 1. No se envio ningun parametro
+        if sensor_id is None and name is None:
+            raise MissingRequiredFieldsError
+
+        sensor: SensorInfo | None = None
+
+        # 2. Si se envio el ID
+        if sensor_id is not None:
+            sensor = self.repository.by_id(sensor_id)
+            # El ID directamente no existe
+            if sensor is None:
+                raise SensorNotFoundError
+
+            # Si envio ID + nombre, validamos si coinciden entre si
+            if name is not None and sensor.name != name:
+                raise SensorNameOrIDDontMatchError
+
+            return sensor
+
+        # 3. Si no se envio ID pero si envio Nombre
+        if name is not None:
+            sensor = self.repository.by_name(name)
+            # El nombre directamente no existe
+            if sensor is None:
+                raise SensorNotFoundError
+            return sensor
+
+        raise SensorNotFoundError
+
     # ----------------------------------------------------------
 
     def create_sensor(self, sensor_in: SensorCreate) -> SensorInfo:
         """Crea un nuevo sensor validando duplicidad"""
+        if len(sensor_in.name) > 30:
+            raise SensorNameTooLongError(sensor_in.name)
+
         self.validate_sensor_configuration(sensor_in.type, sensor_in.unit)
+
         threshold = sensor_in.sensor_umbral
+        if not threshold or threshold.min is None or threshold.max is None:
+            raise MissingRequiredFieldsError
+
         self.validate_sensor_threshold(sensor_in.type, sensor_in.unit, threshold.min, threshold.max)
+
         if self.repository.by_name(sensor_in.name):
-            raise SensorDuplicateError(sensor_in.name)
+            raise SensorNameDuplicateError(sensor_in.name)
         return self.repository.create(sensor_in)
 
-    def list_sensors(self, limit: int = 50, offset: int = 0) -> list[SensorInfo]:
+    def list_sensors(
+        self, limit: int = 50, offset: int = 0, show_inactive: bool = False
+    ) -> list[SensorInfo]:
         """Obtiene y devuelve la lista de sensores paginados"""
-        return self.repository.list_sensor(limit=limit, offset=offset)
+        return self.repository.list_sensor(limit=limit, offset=offset, show_inactive=show_inactive)
 
-    def get_sensor(self, sensor_id: int) -> SensorInfo:
-        """Busca un sensor por su ID. Lanza SensorNotFoundError si no existe"""
-        sensor = self.repository.by_id(sensor_id)
-        if sensor is None:
-            raise SensorNotFoundError(sensor_id)
-        return sensor
+    def get_sensor(self, sensor_id: int | None = None, name: str | None = None) -> SensorInfo:
+        """Busca un sensor especifico por ID, nombre o ambos"""
+        return self.search_sensor(sensor_id, name)
 
-    def update_sensor(self, sensor_id: int, sensor_in: SensorUpdate) -> SensorInfo:
-        """Actualiza la información de un sensor. No debe existir ya"""
-        sensor = self.get_sensor(sensor_id)
+    def update_sensor(
+        self,
+        sensor_id: int | None,
+        name: str | None,
+        sensor_in: SensorUpdate,
+    ) -> SensorInfo:
+        """Actualiza la informacion de un sensor. No debe existir ya"""
+        sensor = self.search_sensor(sensor_id, name)
+
+        if not sensor_in.model_dump(exclude_unset=True):
+            raise NeddedChangesToUpdateSensorError
+
         new_name = sensor_in.name
-        if new_name is not None and new_name != sensor.name and self.repository.by_name(new_name):
-            raise SensorDuplicateError(new_name)
+        if new_name is not None:
+            if len(new_name) > 30:
+                raise SensorNameTooLongError(new_name)
+            if new_name != sensor.name and self.repository.by_name(new_name):
+                raise SensorNameDuplicateError(new_name)
 
         sensor_type = sensor_in.type if sensor_in.type is not None else sensor.type
         sensor_unit = sensor_in.unit if sensor_in.unit is not None else sensor.unit
         self.validate_sensor_configuration(sensor_type, sensor_unit)
+
         if sensor_in.sensor_umbral is not None:
             threshold = sensor_in.sensor_umbral
-            self.validate_sensor_threshold(
-                sensor_type,
-                sensor_unit,
-                threshold.min if threshold.min is not None else sensor.threshold_min,
-                threshold.max if threshold.max is not None else sensor.threshold_max,
-            )
+
+            min_val = threshold.min if threshold.min is not None else sensor.threshold_min
+            max_val = threshold.max if threshold.max is not None else sensor.threshold_max
+
+            if min_val is None or max_val is None:
+                raise MissingRequiredFieldsError
+
+            self.validate_sensor_threshold(sensor_type, sensor_unit, min_val, max_val)
+
         return self.repository.update(sensor, sensor_in)
 
-    def deactivate_sensor(self, sensor_id: int) -> SensorInfo:
+    def deactivate_sensor(self, sensor_id: int | None, name: str | None) -> SensorInfo:
         """Desactiva un sensor (marca inactivo)"""
-        return self.repository.deactivate(self.get_sensor(sensor_id))
+        sensor = self.search_sensor(sensor_id, name)
+
+        if not getattr(sensor, "active", True):
+            raise SensorAlreadyInactiveError
+
+        return self.repository.deactivate(sensor)
