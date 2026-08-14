@@ -33,7 +33,7 @@ class SensorNameDuplicateError(Exception):
 class SensorNameTooLongError(Exception):
     def __init__(self, name: str) -> None:
         self.name = name
-        super().__init__(f"El nombre '{name}' excede el límite de caracteres permitido")
+        super().__init__(f"El nombre '{name}' excede el limite de caracteres permitido")
 
 
 class InvalidSensorTypeError(Exception):
@@ -57,7 +57,7 @@ class LowThreshGreaterThanHighThreshError(Exception):
 class SensorThresholdOutOfRangeError(Exception):
     def __init__(self, unit: str) -> None:
         self.unit = unit
-        super().__init__(f"Umbral minimo y/o umbral maximo fuera del rango físico de {unit}")
+        super().__init__(f"Umbral minimo y/o umbral maximo fuera del rango fisico de {unit}")
 
 
 class NeddedChangesToUpdateSensorError(Exception):
@@ -76,8 +76,6 @@ class SensorAlreadyInactiveError(Exception):
 # Errores de lecturas ---------------------------------
 
 
-# Se conservan por si otros modulos (alerts/anomalies) aun dependen de ellas,
-# aunque el ReadingValidator ya no las usa directamente.
 class UnsupportedSensorTypeError(Exception):
     def __init__(self, sensor_type: str) -> None:
         self.sensor_type = sensor_type
@@ -96,7 +94,7 @@ class ValueOutOfRangeError(Exception):
         self.value = value
         self.unit = unit
         super().__init__(
-            f"Valor {value} {unit} fuera del rango físico permitido (minimo: {min_value})"
+            f"Valor {value} {unit} fuera del rango fisico permitido (minimo: {min_value})"
         )
 
 
@@ -117,18 +115,18 @@ class ReadingValueTooLongError(Exception):
 
 class InvalidTimestampError(Exception):
     def __init__(self) -> None:
-        super().__init__("El formato de fecha/hora (timestamp) provisto no es válido")
+        super().__init__("El formato de timestamp no es valido, usa 'yyyy-mm-dd hh:mm:ss'")
 
 
 class TimestampInFutureError(Exception):
     def __init__(self) -> None:
-        super().__init__("La fecha/hora de la lectura no puede estar en el futuro")
+        super().__init__("La fecha de la lectura no puede estar en el futuro")
 
 
 class SensorInactiveError(Exception):
     def __init__(self, sensor_id: int) -> None:
         self.sensor_id = sensor_id
-        super().__init__(f"El sensor {sensor_id} está inactivo y no acepta lecturas")
+        super().__init__(f"El sensor {sensor_id} esta inactivo y no acepta lecturas")
 
 
 class DuplicateReadingError(Exception):
@@ -158,7 +156,7 @@ class ReadingValidator:
                 sensor_unit=sensor.unit,
             )
 
-        # 3. Validar timestamp en el futuro (maneja datetimes tz-aware y naive)
+        # 3. Validar timestamp en el futuro
         if reading_in.timestamp is not None:
             tz = reading_in.timestamp.tzinfo
             now = datetime.now(tz=tz)

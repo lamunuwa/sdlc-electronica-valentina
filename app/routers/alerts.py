@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.repositories.alerts import AlertRepository
+from app.repositories.alerts import AlertSQLAlchemyRepository
 from app.repositories.sensors import SensorSQLAlchemyRepository
 from app.schemas.alerts import AlertResponse, AlertStateUpdate
 from app.services.anomalies import AlertService
@@ -40,7 +40,7 @@ def list_alerts(
 ) -> list[AlertResponse]:
     """Interfaz HTTP para listar todas las alertas con filtros opcionales"""
 
-    alert_repo = AlertRepository(db)
+    alert_repo = AlertSQLAlchemyRepository(db)
     service = AlertService(alert_repo)
 
     try:
@@ -70,7 +70,7 @@ def get_alerts_by_sensor(
 ) -> list[AlertResponse]:
     """Interfaz HTTP para obtener alertas de un sensor específico"""
 
-    alert_repo = AlertRepository(db)
+    alert_repo = AlertSQLAlchemyRepository(db)
     sensor_repo = SensorSQLAlchemyRepository(db)
     service = AlertService(alert_repo, sensor_repo)
 
@@ -115,7 +115,7 @@ def get_alerts_by_sensor(
 def get_alert(alert_id: int, db: Session = dbsession) -> AlertResponse:
     """Interfaz HTTP para obtener una alerta por su id"""
 
-    alert_repo = AlertRepository(db)
+    alert_repo = AlertSQLAlchemyRepository(db)
     service = AlertService(alert_repo)
 
     try:
@@ -141,7 +141,7 @@ def update_alert(
 ) -> AlertResponse:
     """Interfaz HTTP para actualizar el estado de una alerta"""
 
-    alert_repo = AlertRepository(db)
+    alert_repo = AlertSQLAlchemyRepository(db)
     service = AlertService(alert_repo)
 
     try:
