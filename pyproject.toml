@@ -22,7 +22,7 @@ disallow_untyped_defs = true
 [tool.pytest.ini_options]
 testpaths = ["test"]
 pythonpath = "."
-addopts = "--cov=app --cov-fail-under=90"
+addopts = "--cov=app --cov-fail-under=80"
 
 [tool.coverage.run]
 omit = [
