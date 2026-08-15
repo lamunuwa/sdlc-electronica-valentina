@@ -32,6 +32,10 @@ Me entregó el calendario y esta vez lo revisé y acepté; la IA me propuso un p
 
 ## Semana 5
 
+## Entrada 17
+
+La entrada 17 de la semana 5 es parte del ejercicio de AI review. Se puede encontrar en el archivo [AI_CODE_REVIEW.md](semana5/AI_CODE_REVIEW.md) como "Tarea 3".
+
 ## Entrada 16
 
 ### Objetivo
