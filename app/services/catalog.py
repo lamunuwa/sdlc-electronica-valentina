@@ -79,7 +79,29 @@ class SensorService:
         """Actualiza la informacion de un sensor. No debe existir ya"""
         sensor = ValidateSensorParameters.search_sensor(self.repository, sensor_id, name)
 
-        if not sensor_in.model_dump(exclude_unset=True):
+        update_data = sensor_in.model_dump(exclude_unset=True)
+        if not update_data:
+            raise NeddedChangesToUpdateSensorError
+
+        was_updated = False
+
+        # Verificamos cambios que no son umbral
+        fields = ["name", "type", "unit", "status", "description"]
+        for field in fields:
+            if field in update_data and getattr(sensor, field, None) != update_data[field]:
+                was_updated = True
+                break
+
+        # Terminamos de verificar con umbrales
+        if "sensor_umbral" in update_data and update_data["sensor_umbral"] is not None:
+            threshold_data = update_data["sensor_umbral"]
+
+            if "min" in threshold_data and threshold_data["min"] != sensor.threshold_min:
+                was_updated = True
+            if "max" in threshold_data and threshold_data["max"] != sensor.threshold_max:
+                was_updated = True
+
+        if not was_updated:
             raise NeddedChangesToUpdateSensorError
 
         new_name = sensor_in.name

@@ -147,12 +147,6 @@ class SensorCantProcessUnitError(Exception):
         )
 
 
-class ReadingValueTooLongError(Exception):
-    def __init__(self, value: float) -> None:
-        self.value = value
-        super().__init__(f"El valor de la lectura {value} excede el rango permitido por el sensor")
-
-
 class InvalidTimestampError(Exception):
     def __init__(self) -> None:
         super().__init__("El formato de timestamp no es valido, usa 'yyyy-mm-dd hh:mm:ss'")
@@ -203,11 +197,6 @@ class ReadingValidator:
             if reading_in.timestamp > now:
                 raise TimestampInFutureError
 
-        # 4. Validar el valor dentro de los umbrales configurados en el sensor
-        if sensor.threshold_min is not None and sensor.threshold_max is not None:
-            if not (sensor.threshold_min <= reading_in.value <= sensor.threshold_max):
-                raise ReadingValueTooLongError(value=reading_in.value)
-
 
 # -----------------------------------------------------
 
@@ -227,7 +216,7 @@ class MissingAlertStatusError(Exception):
 
 class InvalidAlertStatusError(Exception):
     def __init__(self) -> None:
-        super().__init__("El estado de la alerta debe ser 'open', 'acknowledged' o 'resolved'")
+        super().__init__("El estado de la alerta debe ser OPEN, ACKNOWLEDGED, RESOLVED")
 
 
 class NeededChangesToUpdateAlertError(Exception):

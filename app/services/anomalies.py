@@ -96,7 +96,7 @@ class AlertService:
         if state is None:
             raise MissingAlertStatusError
 
-        valid_states = ["open", "acknowledged", "resolved"]
+        valid_states = ["OPEN", "ACKNOWLEDGED", "RESOLVED"]
         if state not in valid_states:
             raise InvalidAlertStatusError
 

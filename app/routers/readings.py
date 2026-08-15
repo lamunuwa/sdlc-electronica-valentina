@@ -13,7 +13,6 @@ from app.services.validators import (
     DuplicateReadingError,
     InvalidDateRangeError,
     MissingRequiredFieldsError,
-    ReadingValueTooLongError,
     SensorCantProcessUnitError,
     SensorInactiveError,
     SensorNameOrIDDontMatchError,
@@ -31,7 +30,7 @@ to_date_query = Query(None, description="To")
     "/{sensor_id}",
     response_model=ReadingResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Registrar una nueva lectura para un sensor",
+    summary="Registrar una nueva lectura",
 )
 def create_reading(
     sensor_id: int,
@@ -74,11 +73,6 @@ def create_reading(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(tfe),
         ) from tfe
-    except ReadingValueTooLongError as rvle:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(rvle),
-        ) from rvle
     except DuplicateReadingError as dre:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -90,7 +84,7 @@ def create_reading(
     "/search",
     response_model=list[ReadingResponse],
     status_code=status.HTTP_200_OK,
-    summary="Consultar lecturas por sensor id, nombre o ambos",
+    summary="Consultar lecturas",
 )
 def get_readings(
     sensor_id: int | None = Query(None, description="Sensor ID"),

@@ -7,12 +7,10 @@ from app.repositories.alerts import AlertRepository
 from app.repositories.readings import ReadingRepository
 from app.repositories.sensors import SensorRepository
 from app.schemas.readings import ReadingCreate
-from app.services.anomalies import AlertService
 from app.services.validators import (
     DuplicateReadingError,
     InvalidDateRangeError,
     ReadingValidator,
-    SensorNotFoundError,
     ValidateSensorParameters,
 )
 
@@ -28,14 +26,13 @@ class ReadingService:
         self,
         reading_repository: ReadingRepository,
         sensor_repository: SensorRepository,
-        validator: ReadingValidator | None = None,
         alert_repository: AlertRepository | None = None,
     ) -> None:
         self.reading_repository = reading_repository
         self.sensor_repository = sensor_repository
-        self.validator = validator or ReadingValidator()
         self.alert_repository = alert_repository
 
+    # funciones de apoyo ---------------------------------------
     @staticmethod
     def compute_hash(sensor_id: int, value: float, unit: str, timestamp: datetime) -> str:
         """Genera un hash unico basado en el contenido de la lectura y su timestamp"""
@@ -51,23 +48,57 @@ class ReadingService:
         )
         return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
+    # ---------------------------------------------------------
+
     def register_reading(self, sensor_id: int, reading_in: ReadingCreate) -> ReadingInfo:
         """Registra una lectura en la base de datos"""
 
-        sensor = self.sensor_repository.by_id(sensor_id)
-        if sensor is None:
-            raise SensorNotFoundError
+        sensor = ValidateSensorParameters.search_sensor(
+            self.sensor_repository, sensor_id=sensor_id, name=None
+        )
+        ReadingValidator.validate(sensor, reading_in)
 
-        self.validator.validate(sensor, reading_in)
+        timestamp = reading_in.timestamp or datetime.now()
+        hash_id = self.compute_hash(
+            sensor_id=sensor.id,
+            value=reading_in.value,
+            unit=reading_in.unit,
+            timestamp=timestamp,
+        )
 
-        timestamp = reading_in.timestamp or get_now()
-        hash_id = self.compute_hash(sensor_id, reading_in.value, reading_in.unit, timestamp)
-        if self.reading_repository.by_hash(sensor_id, hash_id):
+        if self.reading_repository.by_hash(sensor.id, hash_id):
             raise DuplicateReadingError(sensor_id)
 
-        reading = self.reading_repository.create(sensor_id, reading_in, hash_id, timestamp)
-        if self.alert_repository is not None:
-            AlertService(self.alert_repository).process_reading(sensor, reading)
+        reading = self.reading_repository.create(
+            sensor_id=sensor.id,
+            reading_in=reading_in,
+            hash_id=hash_id,
+        )
+
+        # 5. Evaluar Umbrales y Generar Alerta si aplica
+        if (
+            self.alert_repository
+            and sensor.threshold_min is not None
+            and sensor.threshold_max is not None
+        ):
+            if not (sensor.threshold_min <= reading.value <= sensor.threshold_max):
+                # Determinamos si fue superior o inferior al rango permitido
+                if reading.value > sensor.threshold_max:
+                    alert_type = f"HIGH_{sensor.type}"
+                else:
+                    alert_type = f"LOW_{sensor.type}"
+
+                alert_payload = {
+                    "sensor_id": sensor.id,
+                    "reading_id": reading.id,
+                    "type": alert_type,
+                    "value": reading.value,
+                    "unit": reading.unit,
+                    "state": "OPEN",
+                    "timestamp": timestamp,
+                }
+                self.alert_repository.create_alert(alert_payload)
+
         return reading
 
     def get_readings(

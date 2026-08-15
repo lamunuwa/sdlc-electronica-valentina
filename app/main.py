@@ -23,7 +23,7 @@ tags_metadata = [
 
 app = FastAPI(
     title="SensorHub API",
-    version="0.5.1",
+    version="0.5.2",
     openapi_tags=tags_metadata,
 )
 

@@ -102,7 +102,7 @@ def temp_alert(temp_sensor: SensorInfo) -> AlertInfo:
         type="HIGH_TEMPERATURE",
         value=55.0,
         unit="C",
-        state="open",
+        state="OPEN",
         timestamp=datetime.now(),
     )
     db.add(alert)
@@ -393,12 +393,6 @@ def test_sensor_inactive_create_reading(temp_sensor_inactive: SensorInfo) -> Non
     assert response.status_code == 400
 
 
-def test_value_too_long_create_reading(temp_sensor: SensorInfo) -> None:
-    payload = {"value": 123.456789123456789, "unit": "C"}
-    response = client.post(f"/readings/{temp_sensor.id}", json=payload)
-    assert response.status_code == 400
-
-
 def test_duplicate_reading_create_reading(temp_sensor: SensorInfo) -> None:
     time = datetime.now().isoformat()
     payload = {"value": 25.0, "unit": "C", "timestamp": time}
@@ -484,10 +478,10 @@ def test_get_alert_ok(temp_alert: AlertInfo) -> None:
 
 
 def test_update_state_alert_ok(temp_alert: AlertInfo) -> None:
-    payload = {"state": "acknowledged"}
+    payload = {"state": "ACKNOWLEDGED"}
     response = client.put(f"/alerts/{temp_alert.id}", json=payload)
     assert response.status_code == 200
-    assert response.json()["state"] == "acknowledged"
+    assert response.json()["state"] == "ACKNOWLEDGED"
 
 
 # Funcionamiento incorrecto
@@ -530,7 +524,7 @@ def test_not_found_get_alert() -> None:
 
 # PUT: update_state_alert
 def test_not_found_update_state_alert() -> None:
-    payload = {"state": "acknowledged"}
+    payload = {"state": "OPEN"}
     response = client.put("/alerts/99999", json=payload)
     assert response.status_code == 404
 
@@ -547,7 +541,7 @@ def test_invalid_alert_status_update_state_alert(temp_alert: AlertInfo) -> None:
 
 
 def test_needed_changes_update_state_alert(temp_alert: AlertInfo) -> None:
-    payload = {"state": "open"}
+    payload = {"state": "OPEN"}
     response = client.put(f"/alerts/{temp_alert.id}", json=payload)
     assert response.status_code == 400
 

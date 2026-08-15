@@ -7,7 +7,7 @@ class AlertStateUpdate(BaseModel):
     """Esquema para actualizar el estado de una alerta"""
 
     state: str | None = Field(
-        None, examples=["open, acknowledged, resolved"], description="Nuevo estado de la alerta"
+        None, examples=["OPEN, ACKNOWLEDGED, RESOLVED"], description="Nuevo estado de la alerta"
     )
 
 
