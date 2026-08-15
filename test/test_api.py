@@ -113,6 +113,63 @@ def temp_alert(temp_sensor: SensorInfo) -> AlertInfo:
     return alert
 
 
+# Test para AI REVIEW ---------------------------------
+def AI_REVIEW_limit_exceeded_in_sensors() -> None:
+    response = client.get("/sensors/list?limit=100")
+    assert response.status_code == 400
+
+
+def AI_REVIEW_valid_limit_in_sensors() -> None:
+    response = client.get("/sensors/list?limit=20")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+
+
+def AI_REVIEW_limit_exceeded_in_readings() -> None:
+    response = client.get("/readings/search?limit=200")
+    assert response.status_code == 400
+
+
+def AI_REVIEW_valid_limit_in_readings() -> None:
+    response = client.get("/readings/search?limit=20")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+
+
+def AI_REVIEW_duplicate_name_create(temp_sensor: SensorInfo) -> None:
+    payload = {
+        "name": temp_sensor.name,
+        "type": temp_sensor.type,
+        "unit": temp_sensor.unit,
+        "ubication": temp_sensor.ubication,
+        "sensor_umbral": {"min": temp_sensor.threshold_min, "max": temp_sensor.threshold_max},
+    }
+    response = client.post("/sensors", json=payload)
+    if response.status_code == 404:
+        response = client.post("/sensors/", json=payload)
+    assert response.status_code == 400
+
+
+def AI_REVIEW_duplicate_name_update(temp_sensor: SensorInfo) -> None:
+    payload = {
+        "name": "NEW-TEMP",
+        "type": temp_sensor.type,
+        "unit": temp_sensor.unit,
+        "ubication": temp_sensor.ubication,
+        "sensor_umbral": {"min": temp_sensor.threshold_min, "max": temp_sensor.threshold_max},
+    }
+    create_res = client.post("/sensors", json=payload)
+    if create_res.status_code == 404:
+        create_res = client.post("/sensors/", json=payload)
+
+    update_payload = {"name": "NEW-TEMP"}
+    response = client.put(f"/sensors/{temp_sensor.id}", json=update_payload)
+    assert response.status_code == 400
+
+
+# -----------------------------------------------------
+
+
 # Test para SENSORS endpoint --------------------------
 
 
@@ -460,13 +517,13 @@ def test_name_or_id_dont_match_get_readings(temp_sensor: SensorInfo) -> None:
 
 
 def test_list_alerts_ok() -> None:
-    response = client.get("/alerts/list")
+    response = client.get("/alerts/list", params={"limit": 10})
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
 
 def test_get_alert_by_sensor_ok(temp_sensor: SensorInfo) -> None:
-    response = client.get(f"/alerts/search?sensor_id={temp_sensor.id}")
+    response = client.get(f"/alerts/search?sensor_id={temp_sensor.id}&limit=10")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
@@ -489,29 +546,31 @@ def test_update_state_alert_ok(temp_alert: AlertInfo) -> None:
 
 # GET: list_alerts
 def test_invalid_date_range_list_alerts() -> None:
-    response = client.get("/alerts/list?from_date=2026-12-31T00:00:00&to_date=2026-01-01T00:00:00")
+    response = client.get(
+        "/alerts/list?from_date=2026-12-31T00:00:00&to_date=2026-01-01T00:00:00&limit=10"
+    )
     assert response.status_code == 400
 
 
 # GET: get_alert_by_sensor
 def test_missing_fields_get_alert_by_sensor() -> None:
-    response = client.get("/alerts/search")
+    response = client.get("/alerts/search?limit=10")
     assert response.status_code == 400
 
 
 def test_not_found_get_alert_by_sensor() -> None:
-    response = client.get("/alerts/search?sensor_id=99999")
+    response = client.get("/alerts/search?sensor_id=99999&limit=10")
     assert response.status_code == 404
 
 
 def test_name_or_id_dont_match_get_alert_by_sensor(temp_sensor: SensorInfo) -> None:
-    response = client.get(f"/alerts/search?sensor_id={temp_sensor.id}&name=ANY")
+    response = client.get(f"/alerts/search?sensor_id={temp_sensor.id}&name=ANY&limit=10")
     assert response.status_code == 400
 
 
 def test_invalid_date_range_get_alert_by_sensor(temp_sensor: SensorInfo) -> None:
     response = client.get(
-        f"/alerts/search?sensor_id={temp_sensor.id}&from_date=2026-12-31T00:00:00&to_date=2026-01-01T00:00:00"
+        f"/alerts/search?sensor_id={temp_sensor.id}&from_date=2026-12-31T00:00:00&to_date=2026-01-01T00:00:00&limit=10"
     )
     assert response.status_code == 400
 

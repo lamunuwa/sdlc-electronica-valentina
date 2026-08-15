@@ -8,6 +8,7 @@ from app.services.catalog import SensorService
 from app.services.validators import (
     InvalidSensorTypeError,
     InvalidSensorUnitError,
+    LimitExceededError,
     LowThreshGreaterThanHighThreshError,
     MissingRequiredFieldsError,
     NeddedChangesToUpdateSensorError,
@@ -72,8 +73,11 @@ def list_sensors(
 
     repo = SensorSQLAlchemyRepository(db)
     service = SensorService(repo)
-    sensors = service.list_sensors(limit=limit, offset=offset, show_inactive=show_inactive)
-    return [SensorResponse.model_validate(sensor) for sensor in sensors]
+    try:
+        sensors = service.list_sensors(limit=limit, offset=offset, show_inactive=show_inactive)
+        return [SensorResponse.model_validate(sensor) for sensor in sensors]
+    except LimitExceededError as lee:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(lee)) from lee
 
 
 @router.get(

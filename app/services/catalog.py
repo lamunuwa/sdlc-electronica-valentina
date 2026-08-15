@@ -5,11 +5,11 @@ from app.schemas.sensors import SensorCreate, SensorUpdate
 from app.services.validators import (
     InvalidSensorTypeError,
     InvalidSensorUnitError,
+    LimitExceededError,
     LowThreshGreaterThanHighThreshError,
     MissingRequiredFieldsError,
     NeddedChangesToUpdateSensorError,
     SensorAlreadyInactiveError,
-    SensorNameDuplicateError,
     SensorNameTooLongError,
     SensorThresholdOutOfRangeError,
     ValidateSensorParameters,
@@ -56,14 +56,15 @@ class SensorService:
 
         self.validate_sensor_threshold(sensor_in.type, sensor_in.unit, threshold.min, threshold.max)
 
-        if self.repository.by_name(sensor_in.name):
-            raise SensorNameDuplicateError(sensor_in.name)
         return self.repository.create(sensor_in)
 
     def list_sensors(
         self, limit: int = 50, offset: int = 0, show_inactive: bool = False
     ) -> list[SensorInfo]:
         """Obtiene y devuelve la lista de sensores paginados"""
+        if limit > 50:
+            raise LimitExceededError
+
         return self.repository.list_sensor(limit=limit, offset=offset, show_inactive=show_inactive)
 
     def get_sensor(self, sensor_id: int | None = None, name: str | None = None) -> SensorInfo:
@@ -108,8 +109,6 @@ class SensorService:
         if new_name is not None:
             if len(new_name) > 30:
                 raise SensorNameTooLongError(new_name)
-            if new_name != sensor.name and self.repository.by_name(new_name):
-                raise SensorNameDuplicateError(new_name)
 
         sensor_type = sensor_in.type if sensor_in.type is not None else sensor.type
         sensor_unit = sensor_in.unit if sensor_in.unit is not None else sensor.unit

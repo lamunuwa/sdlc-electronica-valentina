@@ -1,8 +1,11 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from app.models.sensors import SensorInfo
-from app.repositories.sensors import SensorRepository
 from app.schemas.readings import ReadingCreate
+
+if TYPE_CHECKING:
+    from app.repositories.sensors import SensorRepository
 
 
 # Errores compartidos ---------------------------------
@@ -21,12 +24,17 @@ class SensorNotFoundError(Exception):
         super().__init__("Sensor no encontrado")
 
 
+class LimitExceededError(Exception):
+    def __init__(self) -> None:
+        super().__init__("Se ha excedido el limite en paginacion")
+
+
 class ValidateSensorParameters:
     """Valida los parametros para buscar un sensor"""
 
     @staticmethod
     def search_sensor(
-        repository: SensorRepository, sensor_id: int | None, name: str | None
+        repository: "SensorRepository", sensor_id: int | None, name: str | None
     ) -> SensorInfo:
         """Entrega un sensor buscandolo por ID, nombre o ambos"""
 

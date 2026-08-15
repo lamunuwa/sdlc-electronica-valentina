@@ -1,10 +1,12 @@
 from typing import Protocol
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.sensors import SensorInfo
 from app.schemas.sensors import SensorCreate, SensorUpdate
+from app.services.validators import SensorNameDuplicateError
 
 
 class SensorRepository(Protocol):
@@ -38,7 +40,7 @@ class SensorSQLAlchemyRepository:
         return self.db.scalars(sen).first()
 
     def create(self, sensor_in: SensorCreate) -> SensorInfo:
-        """Crea una entidad (sensor) con los datos validados"""
+        """Crea un sensor con los datos validados"""
 
         sensor_data = sensor_in.model_dump(exclude={"sensor_umbral"})
         threshold_data = sensor_in.sensor_umbral
@@ -48,9 +50,13 @@ class SensorSQLAlchemyRepository:
             threshold_max=threshold_data.max,
         )
         self.db.add(db_sensor)
-        self.db.commit()
-        self.db.refresh(db_sensor)
-        return db_sensor
+        try:
+            self.db.commit()
+            self.db.refresh(db_sensor)
+            return db_sensor
+        except IntegrityError:
+            self.db.rollback()
+        raise SensorNameDuplicateError(sensor_in.name)
 
     def list_sensor(
         self, limit: int = 50, offset: int = 0, show_inactive: bool = False
@@ -82,9 +88,13 @@ class SensorSQLAlchemyRepository:
 
         for field, value in changes.items():
             setattr(sensor, field, value)
-        self.db.commit()
-        self.db.refresh(sensor)
-        return sensor
+        try:
+            self.db.commit()
+            self.db.refresh(sensor)
+            return sensor
+        except IntegrityError:
+            self.db.rollback()
+        raise SensorNameDuplicateError(sensor_in.name or sensor.name)
 
     def deactivate(self, sensor: SensorInfo) -> SensorInfo:
         """Desactiva sensores"""

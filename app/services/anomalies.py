@@ -9,6 +9,7 @@ from app.services.validators import (
     AlertNotFoundError,
     InvalidAlertStatusError,
     InvalidDateRangeError,
+    LimitExceededError,
     MissingAlertStatusError,
     MissingRequiredFieldsError,
     NeededChangesToUpdateAlertError,
@@ -54,9 +55,16 @@ class AlertService:
             raise InvalidDateRangeError
 
     def get_all_alerts(
-        self, from_date: datetime | None, to_date: datetime | None, limit: int, offset: int
+        self,
+        from_date: datetime | None,
+        to_date: datetime | None,
+        limit: int = 50,
+        offset: int = 0,
     ) -> list[AlertInfo]:
         """Lista todas las alertas"""
+        if limit > 50:
+            raise LimitExceededError
+
         self.validate_dates(from_date, to_date)
         return self.alert_repo.get_all_alerts(from_date, to_date, limit, offset)
 
@@ -66,10 +74,12 @@ class AlertService:
         name: str | None,
         from_date: datetime | None,
         to_date: datetime | None,
-        limit: int,
-        offset: int,
+        limit: int = 50,
+        offset: int = 0,
     ) -> list[AlertInfo]:
         """Busca el sensor por ID, nombre o ambos"""
+        if limit > 50:
+            raise LimitExceededError
 
         if self.sensor_repo is None:
             raise MissingRequiredFieldsError

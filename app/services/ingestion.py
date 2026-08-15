@@ -10,6 +10,7 @@ from app.schemas.readings import ReadingCreate
 from app.services.validators import (
     DuplicateReadingError,
     InvalidDateRangeError,
+    LimitExceededError,
     ReadingValidator,
     ValidateSensorParameters,
 )
@@ -110,7 +111,9 @@ class ReadingService:
         limit: int = 100,
         offset: int = 0,
     ) -> list[ReadingInfo]:
-        """Busca el sensor por ID, nombre o ambos (igual que sensors) y obtiene sus lecturas"""
+        """Busca el sensor por ID, nombre o ambos y obtiene sus lecturas"""
+        if limit > 100:
+            raise LimitExceededError
 
         sensor = ValidateSensorParameters.search_sensor(
             self.sensor_repository, sensor_id=sensor_id, name=name

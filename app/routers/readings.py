@@ -12,6 +12,7 @@ from app.services.ingestion import ReadingService
 from app.services.validators import (
     DuplicateReadingError,
     InvalidDateRangeError,
+    LimitExceededError,
     MissingRequiredFieldsError,
     SensorCantProcessUnitError,
     SensorInactiveError,
@@ -130,5 +131,7 @@ def get_readings(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(idre),
         ) from idre
+    except LimitExceededError as lee:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(lee)) from lee
 
     return [ReadingResponse.model_validate(rr) for rr in readings]

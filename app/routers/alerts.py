@@ -12,6 +12,7 @@ from app.services.validators import (
     AlertNotFoundError,
     InvalidAlertStatusError,
     InvalidDateRangeError,
+    LimitExceededError,
     MissingAlertStatusError,
     MissingRequiredFieldsError,
     NeededChangesToUpdateAlertError,
@@ -51,6 +52,8 @@ def list_alerts(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(idre),
         ) from idre
+    except LimitExceededError as lee:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(lee)) from lee
 
 
 @router.get(
@@ -104,6 +107,8 @@ def get_alerts_by_sensor(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(idre),
         ) from idre
+    except LimitExceededError as lee:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(lee)) from lee
 
 
 @router.get(
