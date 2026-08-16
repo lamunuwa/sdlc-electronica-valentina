@@ -76,14 +76,14 @@ class ReadingService:
             hash_id=hash_id,
         )
 
-        # 5. Evaluar Umbrales y Generar Alerta si aplica
+        """Se tiene que procesar la anomalia al registrar para ayudar a tener 
+        menor latencia. Se generara un ADR especifico para esta decision"""
         if (
             self.alert_repository
             and sensor.threshold_min is not None
             and sensor.threshold_max is not None
         ):
             if not (sensor.threshold_min <= reading.value <= sensor.threshold_max):
-                # Determinamos si fue superior o inferior al rango permitido
                 if reading.value > sensor.threshold_max:
                     alert_type = f"HIGH_{sensor.type}"
                 else:
