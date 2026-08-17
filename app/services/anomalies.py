@@ -2,7 +2,6 @@ from datetime import datetime
 
 from app.models.alerts import AlertInfo
 from app.models.readings import ReadingInfo
-from app.models.sensors import SensorInfo
 from app.repositories.alerts import AlertRepository
 from app.repositories.sensors import SensorRepository
 from app.services.validators import (
@@ -26,8 +25,15 @@ class AlertService:
         self.alert_repo = alert_repo
         self.sensor_repo = sensor_repo
 
-    def process_reading(self, sensor: SensorInfo, reading: ReadingInfo) -> None:
-        """Procesa una lectura"""
+    def process_reading(self, reading: ReadingInfo) -> None:
+        """Procesa una lectura persistida y crea una alerta si excede sus umbrales."""
+
+        if self.sensor_repo is None:
+            raise MissingRequiredFieldsError
+
+        sensor = self.sensor_repo.by_id(reading.sensor_id)
+        if sensor is None:
+            return
 
         alert_type: str | None = None
         if reading.value > sensor.threshold_max:
@@ -43,7 +49,7 @@ class AlertService:
                     "type": alert_type,
                     "value": reading.value,
                     "unit": reading.unit,
-                    "state": "open",
+                    "state": "OPEN",
                     "timestamp": reading.timestamp,
                 }
             )

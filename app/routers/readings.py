@@ -8,6 +8,7 @@ from app.repositories.alerts import AlertSQLAlchemyRepository
 from app.repositories.readings import ReadingSQLAlchemyRepository
 from app.repositories.sensors import SensorSQLAlchemyRepository
 from app.schemas.readings import ReadingCreate, ReadingResponse
+from app.services.anomalies import AlertService
 from app.services.ingestion import ReadingService
 from app.services.validators import (
     DuplicateReadingError,
@@ -44,14 +45,12 @@ def create_reading(
     sensor_repo = SensorSQLAlchemyRepository(db)
     alert_repo = AlertSQLAlchemyRepository(db)
 
-    service = ReadingService(
-        sensor_repository=sensor_repo,
-        reading_repository=reading_repo,
-        alert_repository=alert_repo,
-    )
+    service = ReadingService(sensor_repository=sensor_repo, reading_repository=reading_repo)
+    alert_service = AlertService(alert_repo, sensor_repo)
 
     try:
         reading = service.register_reading(sensor_id, reading_in)
+        alert_service.process_reading(reading)
         return ReadingResponse.model_validate(reading)
 
     except SensorNotFoundError as nfe:

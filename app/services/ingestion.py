@@ -3,7 +3,6 @@ import json
 from datetime import datetime
 
 from app.models.readings import ReadingInfo
-from app.repositories.alerts import AlertRepository
 from app.repositories.readings import ReadingRepository
 from app.repositories.sensors import SensorRepository
 from app.schemas.readings import ReadingCreate
@@ -27,11 +26,9 @@ class ReadingService:
         self,
         reading_repository: ReadingRepository,
         sensor_repository: SensorRepository,
-        alert_repository: AlertRepository | None = None,
     ) -> None:
         self.reading_repository = reading_repository
         self.sensor_repository = sensor_repository
-        self.alert_repository = alert_repository
 
     # funciones de apoyo ---------------------------------------
     @staticmethod
@@ -75,30 +72,6 @@ class ReadingService:
             reading_in=reading_in,
             hash_id=hash_id,
         )
-
-        """Se tiene que procesar la anomalia al registrar para ayudar a tener 
-        menor latencia. Se generara un ADR especifico para esta decision"""
-        if (
-            self.alert_repository
-            and sensor.threshold_min is not None
-            and sensor.threshold_max is not None
-        ):
-            if not (sensor.threshold_min <= reading.value <= sensor.threshold_max):
-                if reading.value > sensor.threshold_max:
-                    alert_type = f"HIGH_{sensor.type}"
-                else:
-                    alert_type = f"LOW_{sensor.type}"
-
-                alert_payload = {
-                    "sensor_id": sensor.id,
-                    "reading_id": reading.id,
-                    "type": alert_type,
-                    "value": reading.value,
-                    "unit": reading.unit,
-                    "state": "OPEN",
-                    "timestamp": timestamp,
-                }
-                self.alert_repository.create_alert(alert_payload)
 
         return reading
 

@@ -516,6 +516,21 @@ def test_name_or_id_dont_match_get_readings(temp_sensor: SensorInfo) -> None:
 # Funcionamiento correcto
 
 
+def test_reading_processes_anomaly(temp_sensor: SensorInfo) -> None:
+    response = client.post(
+        f"/readings/{temp_sensor.id}",
+        json={"value": 50.0, "unit": "C", "timestamp": datetime.now().isoformat()},
+    )
+
+    assert response.status_code == 201
+
+    alerts = client.get(f"/alerts/search?sensor_id={temp_sensor.id}&limit=10")
+    assert alerts.status_code == 200
+    assert len(alerts.json()) == 1
+    assert alerts.json()[0]["type"] == "HIGH_TEMPERATURE"
+    assert alerts.json()[0]["state"] == "OPEN"
+
+
 def test_list_alerts_ok() -> None:
     response = client.get("/alerts/list", params={"limit": 10})
     assert response.status_code == 200

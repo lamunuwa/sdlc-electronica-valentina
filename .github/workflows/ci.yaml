@@ -32,4 +32,4 @@ jobs:
         run: mypy app test
 
       - name: Run Pytest
-        run: pytest --cov=app --cov-fail-under=80
+        run: pytest --cov=app --cov-fail-under=90
