@@ -6,31 +6,69 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 ---
 
-## Planificacion final
+## Semana 5
+
+## Entrada 18
 
 ### Objetivo
 
-Organizar mi tiempo de esta semana para tratar de cumplir con la semana 5 y lo más que pueda de la semana 6.
+Encontrar errores usando la checklist de peer review con IA.
 
-### Prompt 1
+### Prompt
 
-> Estoy en la penultima semana de mi curso. Esta semana la noto un poco mas facil que las anteriores, es uso de IA como copiloto y algunas de las tareas ya las hice. Para esto, la siguiente semana que es el cierre la quiero usar para estudiar, y organizar el pitch final, aparte de ser mi primera semana de clases entonces tendre menos tiempo. Ayudame a organizar las 2 semanas en una sola, cumpliendo todo lo que debo hacer en cada una de las 2 semanas para tener el 100% en las 2, sobretodo en la final de forma organizada y que las tareas congenien entre ellas. Ve proponiendo una organizacion y te voy corrigiendo las secciones poco a poco hasta llegar a un estado base y de ahi partir.
+> Tengo una checklist que aprobo mi par para la revision por pares, sin embargo me gustaria pulir mas esa peer con errores objetivos o que no cumplen con la siguiente checklist que el no vio:
+>
+> - El PR se entiende y se puede probar sin preguntar.
+> - La estructura oficial del repositorio se respeta.
+> - Cada capa hace solo lo suyo.
+> - verbos, las rutas y los códigos de estado son los de la tabla.
+> - Hay paginación y filtros, y funcionan de verdad.
+> - Pydantic valida entrada y salida, con física real.
+> - Los errores usan HTTPException y el código correcto.
+> - La persistencia usa SQLAlchemy 2.x y el patrón repositorio.
+> - El DIP se sostiene y la sesión se cierra.
+> - pruebas de integración prueban, y el repositorio está limpio.
+>
+> Tienes acceso a app/ y a test, a todas las carpetas y archivos interiores, solo verifica, no hagas NINGUN CAMBIO, dame un resumen de que esta bien, que esta mal y que es mejorable pero cumple.
 
 ### Resultados
 
-Creo un plan de 5 días, donde no recuerdo (seguro fue porque es en otro chat) todo lo que hemos trabajado. Le tuve que recordar las tareas que ya estaban realizadas para ir ajustando el plan; de ahí nace el prompt 2.
+En general, menciona que mi repositorio y mi API cumplen con la mayoría de puntos y que, con los que no, son cambios menores que no rompen con la funcionalidad ni la integridad de mi API, con excepción de uno; cito a la IA:
 
-### Prompt 2
+```text
+Está bien
 
-> En este momento mi API ya cuenta con el CRUD completo de sensores y un Append-Only verificado por el ingeniero (no necesito CRUD) para las lecturas, tengo toda la parte de dockerizacion, despliegue en Render, persistencia en SQLAlchemy y en postgreSQL para docker y render, cuento con migraciones con alembic y pipeline CI/CD con github actions, de documentos cuento ya con 2 adr. Como esto ya no se tiene que ejecutar, reestructura el calendario semanal para las tareas restantes, vamos purgando. Otra cosa, me gustaria extender el tiempo, de lunes a sabado, no de lunes a viernes de esta semana.
+- La estructura coincide con la documentada: routers, services, repositories, models, schemas, migraciones y tests.
+- Hay separación funcional razonable: los servicios dependen de Protocol de repositorios, y los repositorios usan
+SQLAlchemy 2.x (Mapped, mapped_column, select, scalars).
+- La sesión se cierra correctamente mediante yield y finally
+- Existen esquemas Pydantic de entrada y salida, con response_model y from_attributes.
+- Lecturas y alertas implementan filtros de fecha, orden determinista y limit/offset en la consulta SQL.
+- Los errores de dominio previstos se traducen consistentemente a HTTPException; hay 404, 409, 400 y los 422 nativos
+de Pydantic.
+- Las pruebas son integración HTTP reales contra FastAPI y una SQLite en memoria, no meros mocks.
 
-### Resultados
+Esta mal
 
-Me entregó el calendario y esta vez lo revisé y acepté; la IA me propuso un plan extensible y totalmente modificable de 6 días para asegurar que el proyecto quedara terminado con todo incluido. La IA me planteó el calendario como un proceso claro por etapas; lo mejor y más útil fue que no me dio una lista genérica, sino una guía para cada día, con actividades concretas y links directos al pdf de la guía de estudios para que revise los requisitos reales.
+- Las migraciones no levantan una base nueva. La migración inicial crea sensors y readings, pero ninguna crea alerts;
+una migración posterior intenta agregarle state, por lo que alembic upgrade head fallaría desde cero. 
+Base.metadata.create_all() en arranque puede ocultar este error, pero no reemplaza las migraciones.
 
----
+Mejorable pero cumple
 
-## Semana 5
+- El DIP se cumple dentro de servicios mediante Protocol, pero los routers construyen repositorios concretos directamente.
+Mover ese ensamblado a dependencias facilitaría sustituir infraestructura y testear.
+- Los filtros y la paginación existen y están aplicados en SQL, pero las pruebas no demuestran una página posterior
+(offset), el filtrado exitoso por fechas, ni el orden de resultados. Solo prueban límites o rangos inválidos.
+- Los sensores admiten paginación, pero limit y offset no usan restricciones FastAPI (ge=1, ge=0) como sí lecturas y
+alertas; valores negativos o cero no quedan uniformemente validados.
+- Pydantic está presente, pero los schemas permiten campos extra por defecto y varias reglas de dominio quedan fuera del
+esquema. Es válido, aunque menos estricto para una API.
+- Cada persistencia hace commit propio. Al crear una lectura y su alerta, si falla la alerta la lectura ya quedó confirmada:
+convendría una transacción única.
+```
+
+Como urgente, revisaré 2 cuestiones, una que encontró mi peer, acerca de cómo uso PUT y PATCH en mi repositorio y las migraciones con Alembic, por cómo lo he probado en dockers, funciona correctamente. Sin embargo, tengo que darle una revisada, ya que solo ejecuto los comandos de Alembic para migraciones, pero no reviso a detalle qué sucede.
 
 ## Entrada 17
 
