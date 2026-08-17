@@ -114,57 +114,59 @@ def temp_alert(temp_sensor: SensorInfo) -> AlertInfo:
 
 
 # Test para AI REVIEW ---------------------------------
-def AI_REVIEW_limit_exceeded_in_sensors() -> None:
+def test_AI_REVIEW_limit_exceeded_in_sensors() -> None:
     response = client.get("/sensors/list?limit=100")
     assert response.status_code == 400
 
 
-def AI_REVIEW_valid_limit_in_sensors() -> None:
+def test_AI_REVIEW_valid_limit_in_sensors() -> None:
     response = client.get("/sensors/list?limit=20")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
 
-def AI_REVIEW_limit_exceeded_in_readings() -> None:
+def test_AI_REVIEW_limit_exceeded_in_readings() -> None:
     response = client.get("/readings/search?limit=200")
     assert response.status_code == 400
 
 
-def AI_REVIEW_valid_limit_in_readings() -> None:
+def test_AI_REVIEW_valid_limit_in_readings() -> None:
     response = client.get("/readings/search?limit=20")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
 
-def AI_REVIEW_duplicate_name_create(temp_sensor: SensorInfo) -> None:
+def test_AI_REVIEW_duplicate_name_create(temp_sensor: SensorInfo) -> None:
     payload = {
         "name": temp_sensor.name,
         "type": temp_sensor.type,
         "unit": temp_sensor.unit,
         "ubication": temp_sensor.ubication,
-        "sensor_umbral": {"min": temp_sensor.threshold_min, "max": temp_sensor.threshold_max},
+        "sensor_umbral": {
+            "min": temp_sensor.threshold_min,
+            "max": temp_sensor.threshold_max,
+        },
     }
-    response = client.post("/sensors", json=payload)
-    if response.status_code == 404:
-        response = client.post("/sensors/", json=payload)
-    assert response.status_code == 400
+    response = client.post("/sensors/create", json=payload)
+    assert response.status_code == 409
 
 
-def AI_REVIEW_duplicate_name_update(temp_sensor: SensorInfo) -> None:
+def test_AI_REVIEW_duplicate_name_update(temp_sensor: SensorInfo) -> None:
     payload = {
         "name": "NEW-TEMP",
         "type": temp_sensor.type,
         "unit": temp_sensor.unit,
         "ubication": temp_sensor.ubication,
-        "sensor_umbral": {"min": temp_sensor.threshold_min, "max": temp_sensor.threshold_max},
+        "sensor_umbral": {
+            "min": temp_sensor.threshold_min,
+            "max": temp_sensor.threshold_max,
+        },
     }
-    create_res = client.post("/sensors", json=payload)
-    if create_res.status_code == 404:
-        create_res = client.post("/sensors/", json=payload)
-
+    client.post("/sensors/create", json=payload)
     update_payload = {"name": "NEW-TEMP"}
-    response = client.put(f"/sensors/{temp_sensor.id}", json=update_payload)
-    assert response.status_code == 400
+    response = client.put(f"/sensors/update?sensor_id={temp_sensor.id}", json=update_payload)
+
+    assert response.status_code == 409
 
 
 # -----------------------------------------------------

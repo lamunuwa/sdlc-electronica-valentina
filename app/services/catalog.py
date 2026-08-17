@@ -10,6 +10,7 @@ from app.services.validators import (
     MissingRequiredFieldsError,
     NeddedChangesToUpdateSensorError,
     SensorAlreadyInactiveError,
+    SensorNameDuplicateError,
     SensorNameTooLongError,
     SensorThresholdOutOfRangeError,
     ValidateSensorParameters,
@@ -47,6 +48,9 @@ class SensorService:
         """Crea un nuevo sensor validando duplicidad"""
         if len(sensor_in.name) > 30:
             raise SensorNameTooLongError(sensor_in.name)
+
+        if self.repository.by_name(sensor_in.name) is not None:
+            raise SensorNameDuplicateError(sensor_in.name)
 
         self.validate_sensor_configuration(sensor_in.type, sensor_in.unit)
 
@@ -109,6 +113,9 @@ class SensorService:
         if new_name is not None:
             if len(new_name) > 30:
                 raise SensorNameTooLongError(new_name)
+            existing_sensor = self.repository.by_name(new_name)
+            if existing_sensor is not None and existing_sensor.id != sensor.id:
+                raise SensorNameDuplicateError(new_name)
 
         sensor_type = sensor_in.type if sensor_in.type is not None else sensor.type
         sensor_unit = sensor_in.unit if sensor_in.unit is not None else sensor.unit

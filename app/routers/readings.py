@@ -91,7 +91,7 @@ def get_readings(
     name: str | None = Query(None, description="Sensor name"),
     from_date: datetime | None = from_date_query,
     to_date: datetime | None = to_date_query,
-    limit: int = Query(100, ge=1),
+    limit: int | None = Query(None, ge=1),
     offset: int = Query(0, ge=0),
     db: Session = dbsession,
 ) -> list[ReadingResponse]:

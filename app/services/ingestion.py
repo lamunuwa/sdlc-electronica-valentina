@@ -10,6 +10,7 @@ from app.services.validators import (
     DuplicateReadingError,
     InvalidDateRangeError,
     LimitExceededError,
+    MissingRequiredFieldsError,
     ReadingValidator,
     ValidateSensorParameters,
 )
@@ -81,24 +82,36 @@ class ReadingService:
         name: str | None = None,
         from_date: datetime | None = None,
         to_date: datetime | None = None,
-        limit: int = 100,
+        limit: int | None = None,
         offset: int = 0,
     ) -> list[ReadingInfo]:
         """Busca el sensor por ID, nombre o ambos y obtiene sus lecturas"""
-        if limit > 100:
+        effective_limit = 100 if limit is None else limit
+        if effective_limit > 100:
             raise LimitExceededError
+
+        if from_date is not None and to_date is not None and from_date > to_date:
+            raise InvalidDateRangeError
+
+        if sensor_id is None and name is None:
+            if limit is None:
+                raise MissingRequiredFieldsError
+            return self.reading_repository.get_reading(
+                sensor_id=None,
+                from_date=from_date,
+                to_date=to_date,
+                limit=effective_limit,
+                offset=offset,
+            )
 
         sensor = ValidateSensorParameters.search_sensor(
             self.sensor_repository, sensor_id=sensor_id, name=name
         )
 
-        if from_date is not None and to_date is not None and from_date > to_date:
-            raise InvalidDateRangeError
-
         return self.reading_repository.get_reading(
             sensor_id=sensor.id,
             from_date=from_date,
             to_date=to_date,
-            limit=limit,
+            limit=effective_limit,
             offset=offset,
         )

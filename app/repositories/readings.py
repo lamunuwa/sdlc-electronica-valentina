@@ -23,7 +23,7 @@ class ReadingRepository(Protocol):
 
     def get_reading(
         self,
-        sensor_id: int,
+        sensor_id: int | None,
         from_date: datetime | None = None,
         to_date: datetime | None = None,
         limit: int | None = None,
@@ -72,7 +72,7 @@ class ReadingSQLAlchemyRepository:
 
     def get_reading(
         self,
-        sensor_id: int,
+        sensor_id: int | None,
         from_date: datetime | None = None,
         to_date: datetime | None = None,
         limit: int | None = None,
@@ -80,7 +80,9 @@ class ReadingSQLAlchemyRepository:
     ) -> list[ReadingInfo]:
         """Obtiene lecturas con filtros de fechas y paginacion"""
 
-        sen = select(ReadingInfo).where(ReadingInfo.sensor_id == sensor_id)
+        sen = select(ReadingInfo)
+        if sensor_id is not None:
+            sen = sen.where(ReadingInfo.sensor_id == sensor_id)
 
         if from_date is not None:
             sen = sen.where(ReadingInfo.timestamp >= from_date)
