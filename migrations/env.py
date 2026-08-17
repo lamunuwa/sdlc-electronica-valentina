@@ -3,7 +3,9 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-import app.models  # noqa: F401
+import app.models.alerts  # noqa: F401
+import app.models.readings  # noqa: F401
+import app.models.sensors  # noqa: F401
 from app.db import Base
 
 # this is the Alembic Config object, which provides

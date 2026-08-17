@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 
 from app.db import Base, engine
-from app.routers import health, readings, sensors
+from app.routers import alerts, health, readings, sensors
 
 Base.metadata.create_all(bind=engine)
 
@@ -13,19 +13,24 @@ tags_metadata = [
     },
     {
         "name": "READINGS",
-        "description": "Registro y consultas paginadas de lecturas de sensores.",
+        "description": "Registro y consultas de lecturas de sensores.",
+    },
+    {
+        "name": "ALERTS",
+        "description": "Consultas y status de alertas generadas por sensores.",
     },
 ]
 
 app = FastAPI(
     title="SensorHub API",
-    version="0.4.1",
+    version="0.5.2",
     openapi_tags=tags_metadata,
 )
 
 app.include_router(health.router)
 app.include_router(sensors.router)
 app.include_router(readings.router)
+app.include_router(alerts.router)
 
 
 @app.get("/", include_in_schema=False)

@@ -6,6 +6,329 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 ---
 
+## Planificacion final
+
+### Objetivo
+
+Organizar mi tiempo de esta semana para tratar de cumplir con la semana 5 y lo más que pueda de la semana 6.
+
+### Prompt 1
+
+> Estoy en la penultima semana de mi curso. Esta semana la noto un poco mas facil que las anteriores, es uso de IA como copiloto y algunas de las tareas ya las hice. Para esto, la siguiente semana que es el cierre la quiero usar para estudiar, y organizar el pitch final, aparte de ser mi primera semana de clases entonces tendre menos tiempo. Ayudame a organizar las 2 semanas en una sola, cumpliendo todo lo que debo hacer en cada una de las 2 semanas para tener el 100% en las 2, sobretodo en la final de forma organizada y que las tareas congenien entre ellas. Ve proponiendo una organizacion y te voy corrigiendo las secciones poco a poco hasta llegar a un estado base y de ahi partir.
+
+### Resultados
+
+Creo un plan de 5 días, donde no recuerdo (seguro fue porque es en otro chat) todo lo que hemos trabajado. Le tuve que recordar las tareas que ya estaban realizadas para ir ajustando el plan; de ahí nace el prompt 2.
+
+### Prompt 2
+
+> En este momento mi API ya cuenta con el CRUD completo de sensores y un Append-Only verificado por el ingeniero (no necesito CRUD) para las lecturas, tengo toda la parte de dockerizacion, despliegue en Render, persistencia en SQLAlchemy y en postgreSQL para docker y render, cuento con migraciones con alembic y pipeline CI/CD con github actions, de documentos cuento ya con 2 adr. Como esto ya no se tiene que ejecutar, reestructura el calendario semanal para las tareas restantes, vamos purgando. Otra cosa, me gustaria extender el tiempo, de lunes a sabado, no de lunes a viernes de esta semana.
+
+### Resultados
+
+Me entregó el calendario y esta vez lo revisé y acepté; la IA me propuso un plan extensible y totalmente modificable de 6 días para asegurar que el proyecto quedara terminado con todo incluido. La IA me planteó el calendario como un proceso claro por etapas; lo mejor y más útil fue que no me dio una lista genérica, sino una guía para cada día, con actividades concretas y links directos al pdf de la guía de estudios para que revise los requisitos reales.
+
+---
+
+## Semana 5
+
+## Entrada 17
+
+La entrada 17 de la semana 5 es parte del ejercicio de AI review. Se puede encontrar en el archivo [AI_CODE_REVIEW.md](semana5/AI_CODE_REVIEW.md) como "Tarea 3".
+
+## Entrada 16
+
+### Objetivo
+
+Había una función llamada `search_sensor` que vivía en `catalog.py`. Esta función sirve para buscar un sensor por ID, nombre o ambos y verificar congruencia entre ambos; en un principio era solo para la lógica de los sensores, pero creció a todas las lógicas. Esto significaba que ahora debía pasarse a `validators.py` y ya no vivir más en `catalog.py`. La entrada fue para que reconfigurara todo solo.
+
+### Prompt
+
+> Dentro de `app/services/catalog.py` existe una funcion llamada `search_sensor`, es una funcion que permite que en endpoints donde necesito buscar un sensor se pueda hacer por id, nombre o ambos y valida si id y nombre tienen sentido con el sensor registrado. Esa funcion en un inicio era para la logica de los sensores, pero se extendio y ahora se usa en `app/services/(anomalies e ingestion)`. En este momento esta siendo heredada desde catalog lo que en mi estructura y arquitectura esta mal, hay un archivo llamado validators que sirve especificamente para funciones de error o de validacion que se usan en todas services. Necesito que muevas `search_sensor` de catalog a validators y cambies las herencias y de los demas archivos de services para que ahora apunten a esa funcion pero en validators.
+>
+> NO QUIERO QUE CAMBIES NADA DE LA LOGICA DE NINGUN ARCHIVO, solo es mover y ajustar donde esta ahora esta funcion.
+>
+> Por esto mismo solo te permito leer y escribir en app/services, no fuera.
+
+### Resultados
+
+Hizo literalmente lo que pedi, pense que generaria una clase nueva pero no, literal copio y pego. Esta bien es lo que queria pero arregle para hacerlo una clase (cumple SRP).
+
+## Entradas de refactorizacion
+
+> **Finalice**
+
+### Objetivo
+
+Realicé un esquema en Lucid para poder visualizar todo lo que debía hacer la API y las mejoras de usuario con respecto a errores que quería hacer. Esto con el fin de hacer una refactorización de cómo funcionan los errores dentro de la API, extendiendo muchísimo los casos que reviso y mejorando la experiencia del usuario. El diagrama se puede encontrar en: [Diagrama de Lucid](docs/images/ConceptMap.png). Esto fue y es un cambio enorme, no a nivel de estructura, sino a nivel de cuántas líneas de código debo tomar en cuenta y cambiar por nuevos nombres o más verificaciones. Necesitaba ayuda de la IA (no salió nada bien).
+
+### Prompt 1
+
+Este prompt salió TERRIBLE; a pesar de ser el más extenso y específico que escribí, por alguna razón la IA reconfiguró por completo la API. Funcionaba, pero no quedaba prácticamente rastro de mi código. Descarté por completo.
+
+> CONTEXTO: He actualizado la arquitectura y el manejo de excepciones para la API (modulos de Sensores, Lecturas y Alertas). Como ya sabes. actualmente el proyecto cuenta con una base de codigo (`app/`) y una suite de pruebas (`test/`) que necesitan ser refactorizadas para adaptarse a esta nueva extension. Es una refactorizacion no crear todo desde 0.
+>
+> TAREA: Refactoriza y consolida la logica de la API y su suite de pruebas para que coincida exactamente con lo siguiente:
+>
+>Sensores: Es un CRUD
+>
+> - En POST solo se puede registrar si el registro tiene TODOS los campos llenos. Los errores relacionados son:
+>   - SensorNameDuplicateError 
+>   - SensorNameTooLongError 
+>   - InvalidSensorTypeError 
+>   - InvalidSensorUnitError 
+>   - LowThreshGreaterThanHighThreshError 
+>   - SensorThresholdOutOfRangeError 
+>   - MissingRequiredFieldsError
+> - En GET hay 2 endpoint, listar todos los sensores por paginacion o buscar un sensor por id o por nombre o ambos. Los errores relacionados son: 
+>   - Para listar todos los sensores ningun error 
+>   - Para buscar por nombre o id:
+>     - SensorNotFoundError 
+>     - SensorNameOrIDDontMatchError
+>     - MissingRequiredFieldsError 
+> - En PUT solo se puede actualizar un sensor por id o nombre o ambos. Los errores relacionados son los mismos que en GET + POST + NeddedChangesToUpdateSensorError 
+> - En DELETE solo se puede eliminar por id o nombre del sensor o ambos y son los mismos errores que en GET + SensorAlreadyInactiveError
+>
+> Lecturas: Es un Append-Only
+>
+> - En POST solo se puede registrar si el registro tiene valor y unidades llenos, los campos son: valor, unidad y timestamp (es opcional pero si no lo pone el usuario se genera automaticamente). Los errores relacionados son:
+>   - MissingRequiredFieldsError
+>   - SensorNotFoundError
+>   - SensorInactiveError
+>   - InvalidReadingValueError
+>   - ReadingValueTooLongError
+>   - DuplicateReadingError
+>   - SensorCantProcessUnit
+>   - InvalidTimestampError
+>   - FutureTimestampError
+> - En GET solo se puede listar lecturas por nombre o id del sensor o ambos por paginacion y filtro de fechas, los errores relacionados son: 
+>   - SensorNotFounError 
+>   - SensorNameOrIDDontMatch
+>   - MissingRequiredFieldsError
+>
+> Alertas: Es un REST de GET y PUT unicamente
+> 
+> - En GET se pueden buscar alertas por sensor, por nombre o id o ambos con paginacion y filtro de fechas, se pueden listar todas las alertas por paginacion y filtro de fechas, y se pueden buscar alertas por su propio id (alert_id). Los errores relacionados son: 
+>   - Para listar todas las alertas: Ningun error 
+>   - Para buscar por id de alerta:
+>     - AlertNotFound 
+>   - Para buscar por nombre o id de un sensor: 
+>     - SensorNotFound 
+>     - SensorNameOrIDDontMatchError
+>     - MissingRequiredFieldsError
+>
+> - En PUT se pueden actualizar estados de la alerta (por defecto/ acknowledged / resolved). Los errores relacionados son:
+>   - SensorNotFound
+>   - InvalidAlertStatusError
+>   - NeddedChangesToUpdateSensorError
+>   - MissingAlertStatusError
+> Para ejecutarlo debes usar 3 fases:
+> - Pruebas TDD: Reintegra y actualiza `test_api.py`, borra todos los test que hay ahora mismo (NO LO QUE HAYA ANTES) y escribe una prueba que valide el flujo correcto y otro que fuerce el error
+> - Integracion: Actualiza la logica del codigo de `app/` para hacer pasar todas las pruebas nuevas
+> - Verificacion: Corre pytest en el entorno virtual para verficiar que todo funciona
+>
+> RESTRICCION:
+> - Elimina todos los errores y excepciones anteriores (`app/services/validators.py`) que ya no formen parte del nuevo diagrama. Solo deben existir las excepciones definidas en el nuevo modelo.
+> - Priorizar la reutilizacion del codigo existente (modelos, schemas, servicios, capas). No reescribir desde cero lo que ya funciona.
+> - NO agregues nuevas librerias ni herramientas avanzadas que no estén presentes en el codigo actual (por ejemplo, NO usar unittest.mock, pytest-mock, etc). Esto para que entienda todo le codigo que generes
+> - No generes nuevos archivos, solo modifica y lee lo que hay dentro de `app/` `test/`
+> - Respeta cada subcarpeta de `app/`, es decir cada resposabilidad que tiene cada carpeta
+>
+> ENTREGA: Breve resumen de lo que cambiaste. Codigo pasando todas las pruebas del TDD y el cover > 90%
+
+### Prompt 2
+
+Aquí reduje la cantidad de cosas que tenía que hacer; así era menos lo que tenía que revisar a mano y era más fácil de corregir. Error: a pesar de ser bastante específico, el prompt no hizo lo que quería y, de hecho, rompió la base de datos; no funcionaba el Swagger y hubo error en Alembic. Aquí me di cuenta de que hasta ahora estaba trabajando por pedazos de pedazos, es decir, trabajaba def, class, un archivo a lo mucho; ahora estaba intentando trabajar una arquitectura completa. Entonces, a partir de aquí tome la decisión de leer los resúmenes de cambios que hacía la IA y tomar las partes que más me agradaran o entendiera perfectamente e incluirlas; era como armar un lego.
+
+> CONTEXTO:
+> Vamos a refactorizar los modulos de SENSORES por partes para alinearlo con el nuevo diagrama de arquitectura y manejo de errores. Tengo un proyecto funcional existente y NO quiero reescribirlo desde cero ni cambiar la arquitectura. Debes imitar exactamente mi estilo de codigo, mi sintaxis, mi convencion de nombres y el diseño de mis modulos.
+>
+> TAREA:  Refactorizar UNICAMENTE el modulo de Sensores aplicando TDD (Test-Driven Development) estricto. La refactorización debe cubrir únicamente los siguientes endpoints y sus errores:
+>
+> 1. POST /sensores: 1 endpoint
+> Requiere todos los campos: nombre, tipo, unidad, umbral_min, umbral_max, ubicacion. (el id y active se generan automaticamente tal cual esta)
+>
+> - Errores a probar e implementar:
+> - SensorNameDuplicateError
+> - SensorNameTooLongError
+> - InvalidSensorTypeError
+> - InvalidSensorUnitError
+> - LowThreshGreaterThanHighThreshError
+> - SensorThresholdOutOfRangeError
+> - MissingRequiredFieldsError (Si no hay nada en nombre o id)
+>
+> 2. GET /sensores: 2 endpoints
+> Para listar todos (admite paginacion e include_inactive = true/false): Ningun error.
+> Para buscar por nombre o id o ambos (obligatorio uno minimo):
+>
+> - SensorNotFoundError
+> - SensorNameOrIDDontMatchError
+> - MissingRequiredFieldsError (Si no hay nada en nombre o id)
+>
+> 3. PUT /sensores: 1 endpoint
+> Actualizar por id o nombre o ambos (obligatorio uno minimo).
+> Errores a probar e implementar:
+>
+> - SensorNotFoundError,
+> - SensorNameOrIDDontMatchError,
+> - SensorNameDuplicateError,
+> - SensorNameTooLongError,
+> - InvalidSensorTypeError,
+> - InvalidSensorUnitError,
+> - LowThreshGreaterThanHighThreshError,
+> - SensorThresholdOutOfRangeError,
+> - NeddedChangesToUpdateSensorError,
+> - MissingRequiredFieldsError (Si no hay nada en nombre o id)
+>
+> 4. DELETE /sensores: 1 endpoint
+> Pasa de activo a inactivo (soft delete) por id o nombre. o ambos (obligatorio uno minimo).
+> Errores a probar e implementar:
+>
+> - SensorNotFoundError
+> - SensorNameOrIDDontMatchError
+> - SensorAlreadyInactiveError
+> - MissingRequiredFieldsError (Si no hay nada en nombre o id)
+>
+> RESTRICCIONES TECNICAS:
+>
+> - METODOLOGÍA TDD EXCLUSIVA: Primero escribe en un nuevo archivo dentro de `test/`
+>   - a) Test del caso de exito, por ejemplo uno donde al buscar un sensor en GET se haga correctamente.
+>   - b) Test individual por cada error mencionado arriba, por ejemplo uno donde GET no tenga id, nombre o ambos y se tire el error.
+> - NO reescribir ni eliminar la estructura existente: Modifica o añade UNICAMENTE las funciones y líneas de codigo necesarias para integrar esta logica. Preserva la lógica base actual.
+> - NO agregar librerias ni imports externos que no esten ya en el proyecto (prohibido agregar unittest.mock, pytest-mock o frameworks nuevos). Manten los mismos imports de la app.
+> - Elimina cualquier excepcion (dentro de `app/services/validators.py`) antigua del módulo de sensores que ya no esté en la lista anterior.
+> - Manten exactamente mi sintaxis y formato, por ejemplo usar para routers la misma idea de raise ...
+>
+> ENTREGA:
+>
+> 1. Codigo de Pruebas (Tests de Sensores) con casos de exito y casos de error.
+> 2. Codigo de Implementacion del Módulo de Sensores (Schemas, Excepciones, Servicios/Endpoints, etc.) modificado de forma quirurgica.
+
+### Prompt 3
+
+Aquí ya había terminado la refactorización de SENSORS. Empecé con READINGS y cambié de tipo de prompting a lo más habitual, a lo que estoy acostumbrada. Agregándole al final una metodología que vi en TikTok para que planificara antes de empezar.
+
+> Estoy haciendo una refactorizacion bastante agresiva de mi API, en este momento la seccion de registro deberia correr perfectamente, pasa todos los 28 test que le puse como deberia de ser. Ahora mismo estoy completamente trabada en la siguiente seccion que es lecturas, ya genere los test para hacer Test Driven Development pero no importa como inicie siempre sale mal. Lo raro aqui es que la mayoria del codigo ya esta hecho, ya deberia de funcionar por que esto es una refactorizacion no es una generacion de codigo desde 0, solo agrego diferentes situaciones de error que antes no estaban y renombro algunas otras.
+>
+> Necesito que me ayudes a concretar los 14 test que tengo, generando el codigo tal cual como lo necesito. Arma una planificacion, corregimos y empezamos.
+
+### Prompt 4
+
+Empezamos alertas. Y me hizo un breve cuestionario de qué debía hacer alertas.
+
+> Bien aqui es donde entra el ultimo modulo, la gestion de alertas, la que tengo es muy basica, como es algo bastante nuevo, lo haremos por TDD, primero generaras los test tal cual yo lo hago y luego programaras mediante eso, tengo seccionado ya la parte final de test_api.py, revisalo
+
+### Prompt 5
+
+Este es el prompt final de este refactor.
+
+> Que debe hacer alerts? Alerts es un endpoint donde puedes leer alertas por medio de el id o nombre o ambos de un sensor, leer alertas por id de la propia alerta y leer todas las alertas, estos endpoint tienen paginacion y filtros de fechas.
+> Luego puedes actualizar SOLO UN PARAMETRO, que es state, solo lo puedes modificar entre open, acknowledged y resolved y es por medio de unicamente el ID de la alerta, entonces es por PUT.
+> Los errores relacionados son:
+> Para lectura por sensor id, nombre o ambos: SensorNotFoundError, SensorNameOrIDDontMatchError, InvalidDataRangeError y MissingRequiredFieldsError
+> Para lectura por id de la alerta: AlertNotFound(Nuevo!!), InvalidDataRangeError y es en path, no tiene Missin
+> Para leer todas las lecturas: InvalidDataRangeError
+> Para actualizar estados por id de las alertas: AlertNotFound, InvalidAlertStatus (nuevo! Para cuando el usuario ponga algo que no son los 3 estados), NeededChangesToUpdateError (lo mismo que en el put de sensores, se necesitan cambios para haber actualizacion), MissingAlertStatusError (nuevo! Por si el usuario deja en blanco el state)
+> OBVIAMENTE las alertas son en contra de los umbrales seleccionados al crear el sensor, por ejemplo si al crear el sensor metemos umbral de -20 a 30 y mi lectura asociada a ese sensor mide -30 se tira alerta para ese sensor. Espero me comprendas.
+
+### Resultados
+
+Fue toda una odisea; tardé aproximadamente unas 6 horas en esto. Entre frustraciones, breaks y todo, aprendí algo muy importante: la IA no es superpoderosa, y parece una tontería, pero creo que es el motivo de la semana. La IA comete más errores incluso que yo, más que todo en el área de lógica; no se para a pensar realmente si algo está bien o mal, solo lo implementa y arregla hasta que funciona. Es importante dar buenas instrucciones a la IA, es importante el prompting, pero con esto considero que es más importante saber llevar una metodología de trabajo: primero esto, luego esto, luego esto, e incluso poder comunicar ideas con tus propias palabras sin necesidad de tanto "papeleo". También puede ser que yo lo haya hecho mal, pero creo que aprendí bastante.
+
+## Entrada 10
+
+### Objetivo
+
+En base a un esqueleto funcional en 5 archivos, generar las importaciones y lógica de negocio faltante para cumplir US-02: Detección de anomalías.
+
+### Prompt
+
+> CONTEXTO: Deje una estructura organizada en 5 archivos nuevos:
+> `app/models/alerts.py` `app/schemas/alerts.py` `app/repositories/alerts.py` `app/routers/alerts.py` y `app/services/anomalies.py` con un esqueleto "funcional" (cumple con 1 test).
+> Aqui vamos a cumplir con US-02: Detección de anomalías. Hasta ahora teniamos un sistema que tiene un umbral, tiene restricciones para ese umbral pero no hace nada. En si, debemos hacer un sistema que identifique anomalias en las lecturas de un sensor en base a su umbral y se puedan consultar en un endpoint
+>
+> TAREA: Generar el codigo necesario para cumplir con los 3 test de US-02 + dejar listo el panorama para hacer un update rapido para US-03
+>
+> RESTRICCIONES:
+>
+> - El endpoint solo debe permitir lectura, un GET. No PUT, no POST, etc.
+> - Por cada clase y def que exista debes poner un comentario entre triples comillas de no mas de una linea explicando brevemente que hace esa clase o funcion
+> - Debes dejar la estructura lista para expansion inmediata, el siguiente US se trata de gestionar alertas basico, identificar por ID, listar con > paginacion y busqueda por filtro de fecha
+> - Lo mismo de siempre, no uses imports/librerias que no hayamos usado en el proyecto
+> - Puedes leer los archivos nuevos + `test/test_api.py` + `app/main` + toda la carpeta de services y modificar solo los archivos nuevos (alerts y anomalies) + carpeta services
+>
+> ENTREGA: El codigo minimo funcional para cumplir los test. Debes correr al final en el entorno virtual pytest y deben salir error en 3 test unicamente y mypy y ruff sin errores en app/
+
+### Resultados
+
+Modificó todos los archivos que le solicité + un archivo en routers (+55 -50), que no le había dado permiso explícito, pero se lo concedi después. Esta nueva estructura me parece mucho más consistente en resultados que las que uso comúnmente; al menos en código la usaré siempre o en la mayoría de ocasiones.
+Por el lado de los resultados, entrego un mypy limpio, un ruff limpio y el pytest pasa con solo 3 errores, que son los 3 de US-03. Cumplió con los comentarios y, de hecho, los hizo como los hago yo, es decir, sin acentos (recordar que tengo el teclado en inglés). Todo el código que entrego lo entiendo, evito las librerías externas que no conozco y dejo apertura simple para el update; lo haré sin IA.
+
+## Entrada 8 y 9
+
+Las entradas 8 y 9 de la semana 5 son parte del ejercicio de comparacion entre prompts basicos vs estructurados. Se puede encontrar en el archivo [PROMPTING.md](semana5/PROMPTING.md) como "Tarea 3".
+
+## Entrada 6 y 7
+
+Las entradas 6 y 7 de la semana 5 son parte del ejercicio de comparacion entre prompts basicos vs estructurados. Se puede encontrar en el archivo [PROMPTING.md](semana5/PROMPTING.md) como "Tarea 2".
+
+## Entrada 3, 4 y 5
+
+### Objetivo
+
+Arreglar la instalación de Aider.
+
+### Prompt 1
+
+> Acabo de instalar Aider para hacer automatizar revisiones y commits en git, lo hice desde mi Ollama usando Qwen 2.5-coder: 7B-base. Mi Ollama esta corriendo en windows no lo tengo en el WSL2 pero tampoco veo necesario instalarlo doble, pero Aider encuentra un problema y no logra conectar bien con Ollama. Me tira este error:
+>
+> ```bash
+>  You can skip this check with --no-gitignore
+>
+> Add .aider* to .gitignore (recommended)? (Y)es/(N)o [Yes]: y
+>
+> Added .aider* to .gitignore
+>
+> OllamaError: Error getting model info for qwen2.5-coder:7b. Set Ollama API Base via `OLLAMA_API_BASE` environment variable. Error: [Errno 111] Connection refused
+>
+> Warning for ollama/qwen2.5-coder:7b: Unknown context window size and costs, using sane defaults.
+> ```
+>
+> Como puedo solucionarlo?
+
+### Prompt 2
+
+> Bien, funciona, ya no me tira el error, pero me di cuenta de otro error, si lo intento ejecutar en el entorno virtual no me lo permite, me tira directamente aider command not found, sin embargo por como vi la instalacion de Aider se instalo con uv y si ejecuto pip list en el entorno virtual y el global no aparece Aider, es decir se instalo en una carpeta externa pero aun asi funciona, como soluciono eso?
+
+### Prompt 3
+
+> Ya funciona automaticamente, esta todo perfecto. Para finalizar con Aider (creo) tengo que hacer un archivo `conversions.py`, supongo que este debe ser automatico, se configura de alguna manera o le digo a Aider en cada prompt que agregue el contexto, el prompt que hizo y el commit final en dicho archivo?
+
+### Resultados
+
+Para la primera solución, me mencionó que esto ocurre porque estamos en entornos aislados; tanto Windows como WSL2 de forma nativa no se pueden hablar; había que hacer unas configuraciones para que pudieran comunicarse sin errores. La solución fue agregar Ollama como variables de entorno de Windows para mi usuario y ejecutar Ollama en el mismo puerto que Aider.
+
+```bash
+set OLLAMA_HOST=0.0.0.0
+set OLLAMA_ORIGINS=*
+ollama serve
+```
+
+```bash
+curl http://$(ip route show | grep default | awk '{print $3}'):11434/api/tags
+run-aider
+```
+
+Para la segunda solución, fue un poco más simple; teníamos que agregar Aider a una ruta PATH para que el .venv pudiera hablar con Aider, que estaba instalado en una carpeta de Debian externa al proyecto. El comando se ve así: `export PATH="$HOME/.local/bin:$PATH"`
+
+Para la última solución, me mencionó que si necesitaba el archivo conversation.py, se lo podía pedir manualmente, ya que, y como había pensado, Aider genera su propio archivo llamado .aider.chat.history donde guarda todo el chat; entonces era innecesario. A todo esto, revisé el checklist para la entrega semanal y no se menciona este archivo como un requisito, entonces pasaré de él.
+
+## Entrada 1 y 2
+
+Las entradas 1 y 2 de la semana 5 son parte del ejercicio de comparacion entre prompts basicos vs estructurados. Se puede encontrar en el archivo [PROMPTING.md](semana5/PROMPTING.md) como "Tarea 1".
+
+---
+
 ## Semana 4
 
 ## Entrada 3

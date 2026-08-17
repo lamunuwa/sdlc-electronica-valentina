@@ -1,4 +1,4 @@
-from sqlalchemy import String
+from sqlalchemy import Float, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -13,4 +13,11 @@ class SensorInfo(Base):
     name: Mapped[str] = mapped_column(String(30), unique=True, index=True, nullable=False)
     type: Mapped[str] = mapped_column(String(30), nullable=False)
     unit: Mapped[str] = mapped_column(String(10), nullable=False)
+    threshold_min: Mapped[float] = mapped_column(Float, nullable=False)
+    threshold_max: Mapped[float] = mapped_column(Float, nullable=False)
+    ubication: Mapped[str] = mapped_column(String(50), nullable=False)
     active: Mapped[bool] = mapped_column(default=True, nullable=False)
+
+    @property
+    def sensor_umbral(self) -> dict[str, float]:
+        return {"min": self.threshold_min, "max": self.threshold_max}

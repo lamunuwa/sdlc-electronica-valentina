@@ -1,10 +1,12 @@
 from typing import Protocol
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.sensors import SensorInfo
 from app.schemas.sensors import SensorCreate, SensorUpdate
+from app.services.validators import SensorNameDuplicateError
 
 
 class SensorRepository(Protocol):
@@ -14,7 +16,9 @@ class SensorRepository(Protocol):
 
     def create(self, sensor_in: SensorCreate) -> SensorInfo: ...
 
-    def list_sensor(self, limit: int = 50, offset: int = 0) -> list[SensorInfo]: ...
+    def list_sensor(
+        self, limit: int = 50, offset: int = 0, show_inactive: bool = False
+    ) -> list[SensorInfo]: ...
 
     def by_id(self, sensor_id: int) -> SensorInfo | None: ...
 
@@ -36,18 +40,34 @@ class SensorSQLAlchemyRepository:
         return self.db.scalars(sen).first()
 
     def create(self, sensor_in: SensorCreate) -> SensorInfo:
-        """Crea una entidad (sensor) con los datos validados"""
+        """Crea un sensor con los datos validados"""
 
-        db_sensor = SensorInfo(**sensor_in.model_dump())
+        sensor_data = sensor_in.model_dump(exclude={"sensor_umbral"})
+        threshold_data = sensor_in.sensor_umbral
+        db_sensor = SensorInfo(
+            **sensor_data,
+            threshold_min=threshold_data.min,
+            threshold_max=threshold_data.max,
+        )
         self.db.add(db_sensor)
-        self.db.commit()
-        self.db.refresh(db_sensor)
-        return db_sensor
+        try:
+            self.db.commit()
+            self.db.refresh(db_sensor)
+            return db_sensor
+        except IntegrityError:
+            self.db.rollback()
+        raise SensorNameDuplicateError(sensor_in.name)
 
-    def list_sensor(self, limit: int = 50, offset: int = 0) -> list[SensorInfo]:
+    def list_sensor(
+        self, limit: int = 50, offset: int = 0, show_inactive: bool = False
+    ) -> list[SensorInfo]:
         """Lista sensores paginados"""
 
-        sen = select(SensorInfo).order_by(SensorInfo.id.asc()).offset(offset).limit(limit)
+        sen = select(SensorInfo)
+        if not show_inactive:
+            sen = sen.where(SensorInfo.active.is_(True))
+
+        sen = sen.order_by(SensorInfo.id.asc()).offset(offset).limit(limit)
         return list(self.db.scalars(sen).all())
 
     def by_id(self, sensor_id: int) -> SensorInfo | None:
@@ -59,11 +79,22 @@ class SensorSQLAlchemyRepository:
         """Cambia informacion en base a un ID de un sensor y lo guarda"""
 
         changes = sensor_in.model_dump(exclude_unset=True)
+        threshold_data = changes.pop("sensor_umbral", None)
+        if threshold_data is not None:
+            if threshold_data.get("min") is not None:
+                changes["threshold_min"] = threshold_data["min"]
+            if threshold_data.get("max") is not None:
+                changes["threshold_max"] = threshold_data["max"]
+
         for field, value in changes.items():
             setattr(sensor, field, value)
-        self.db.commit()
-        self.db.refresh(sensor)
-        return sensor
+        try:
+            self.db.commit()
+            self.db.refresh(sensor)
+            return sensor
+        except IntegrityError:
+            self.db.rollback()
+        raise SensorNameDuplicateError(sensor_in.name or sensor.name)
 
     def deactivate(self, sensor: SensorInfo) -> SensorInfo:
         """Desactiva sensores"""
@@ -79,11 +110,11 @@ class SensorSQLAlchemyRepository:
 
 
 class RepositoryProtocol(SensorRepository, Protocol):
-    def desactivate(self, sensor: SensorInfo) -> SensorInfo: ...
+    def deactivate(self, sensor: SensorInfo) -> SensorInfo: ...
 
 
 class SQLAlchemyRepository(SensorSQLAlchemyRepository):
-    def desactivate(self, sensor: SensorInfo) -> SensorInfo:
+    def deactivate(self, sensor: SensorInfo) -> SensorInfo:
         return self.deactivate(sensor)  # pragma: no cover
 
 

@@ -6,14 +6,14 @@ from app.models.readings import ReadingInfo
 from app.repositories.readings import ReadingRepository
 from app.repositories.sensors import SensorRepository
 from app.schemas.readings import ReadingCreate
-from app.services.catalog import SensorNotFoundError
-from app.services.validators import ReadingValidator
-
-
-class DuplicateReadingError(Exception):
-    def __init__(self, sensor_id: int) -> None:
-        self.sensor_id = sensor_id
-        super().__init__(f"Lectura duplicada detectada para el sensor {sensor_id}")
+from app.services.validators import (
+    DuplicateReadingError,
+    InvalidDateRangeError,
+    LimitExceededError,
+    MissingRequiredFieldsError,
+    ReadingValidator,
+    ValidateSensorParameters,
+)
 
 
 def get_now() -> datetime:
@@ -21,18 +21,17 @@ def get_now() -> datetime:
 
 
 class ReadingService:
-    """Coordina las sesiones: buscar sensor, validar, evitar duplicados y guardar"""
+    """Todas las sesiones de la inyeccion de lecturas"""
 
     def __init__(
         self,
         reading_repository: ReadingRepository,
         sensor_repository: SensorRepository,
-        validator: ReadingValidator | None = None,
     ) -> None:
         self.reading_repository = reading_repository
         self.sensor_repository = sensor_repository
-        self.validator = validator or ReadingValidator()
 
+    # funciones de apoyo ---------------------------------------
     @staticmethod
     def compute_hash(sensor_id: int, value: float, unit: str, timestamp: datetime) -> str:
         """Genera un hash unico basado en el contenido de la lectura y su timestamp"""
@@ -48,43 +47,71 @@ class ReadingService:
         )
         return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
+    # ---------------------------------------------------------
+
     def register_reading(self, sensor_id: int, reading_in: ReadingCreate) -> ReadingInfo:
-        """
-        1. Confirma existencia del sensor
-        2. Ejecuta validacion con ReadingValidator
-        3. Verifica no duplicidad mediante el hash
-        4. Inserta el registro en la base de datos
-        """
-        sensor = self.sensor_repository.by_id(sensor_id)
-        if sensor is None:
-            raise SensorNotFoundError(sensor_id)
+        """Registra una lectura en la base de datos"""
 
-        self.validator.validate(sensor, reading_in)
+        sensor = ValidateSensorParameters.search_sensor(
+            self.sensor_repository, sensor_id=sensor_id, name=None
+        )
+        ReadingValidator.validate(sensor, reading_in)
 
-        timestamp = reading_in.timestamp or get_now()
-        hash_id = self.compute_hash(sensor_id, reading_in.value, reading_in.unit, timestamp)
-        if self.reading_repository.by_hash(sensor_id, hash_id):
+        timestamp = reading_in.timestamp or datetime.now()
+        hash_id = self.compute_hash(
+            sensor_id=sensor.id,
+            value=reading_in.value,
+            unit=reading_in.unit,
+            timestamp=timestamp,
+        )
+
+        if self.reading_repository.by_hash(sensor.id, hash_id):
             raise DuplicateReadingError(sensor_id)
 
-        return self.reading_repository.create(sensor_id, reading_in, hash_id, timestamp)
+        reading = self.reading_repository.create(
+            sensor_id=sensor.id,
+            reading_in=reading_in,
+            hash_id=hash_id,
+        )
+
+        return reading
 
     def get_readings(
         self,
-        sensor_id: int,
+        sensor_id: int | None = None,
+        name: str | None = None,
         from_date: datetime | None = None,
         to_date: datetime | None = None,
-        limit: int = 100,
+        limit: int | None = None,
         offset: int = 0,
     ) -> list[ReadingInfo]:
-        """Captura lecturas paginadas y filtradas por fecha/valida que el sensor existe"""
+        """Busca el sensor por ID, nombre o ambos y obtiene sus lecturas"""
+        effective_limit = 100 if limit is None else limit
+        if effective_limit > 100:
+            raise LimitExceededError
 
-        sensor = self.sensor_repository.by_id(sensor_id)
-        if sensor is None:
-            raise SensorNotFoundError(sensor_id)
+        if from_date is not None and to_date is not None and from_date > to_date:
+            raise InvalidDateRangeError
+
+        if sensor_id is None and name is None:
+            if limit is None:
+                raise MissingRequiredFieldsError
+            return self.reading_repository.get_reading(
+                sensor_id=None,
+                from_date=from_date,
+                to_date=to_date,
+                limit=effective_limit,
+                offset=offset,
+            )
+
+        sensor = ValidateSensorParameters.search_sensor(
+            self.sensor_repository, sensor_id=sensor_id, name=name
+        )
+
         return self.reading_repository.get_reading(
-            sensor_id=sensor_id,
+            sensor_id=sensor.id,
             from_date=from_date,
             to_date=to_date,
-            limit=limit,
+            limit=effective_limit,
             offset=offset,
         )
