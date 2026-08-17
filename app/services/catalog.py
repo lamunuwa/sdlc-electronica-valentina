@@ -87,7 +87,7 @@ class SensorService:
         was_updated = False
 
         # Verificamos cambios que no son umbral
-        fields = ["name", "type", "unit", "status", "description"]
+        fields = ["name", "type", "unit", "status", "ubication"]
         for field in fields:
             if field in update_data and getattr(sensor, field, None) != update_data[field]:
                 was_updated = True
