@@ -1,10 +1,7 @@
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 
-from app.db import Base, engine
 from app.routers import alerts, health, readings, sensors
-
-Base.metadata.create_all(bind=engine)
 
 tags_metadata = [
     {
