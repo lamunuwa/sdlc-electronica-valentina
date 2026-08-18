@@ -131,8 +131,6 @@ def update_sensor(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(dme)) from dme
     except MissingRequiredFieldsError as mrfe:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(mrfe)) from mrfe
-    except NeddedChangesToUpdateSensorError as nce:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(nce)) from nce
     except SensorNameTooLongError as ntle:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ntle)) from ntle
     except (InvalidSensorTypeError, InvalidSensorUnitError) as ie:
@@ -144,6 +142,8 @@ def update_sensor(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(te)) from te
     except SensorNameDuplicateError as de:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(de)) from de
+    except NeddedChangesToUpdateSensorError as ncue:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ncue)) from ncue
 
 
 @router.delete(
