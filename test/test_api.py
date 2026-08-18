@@ -113,6 +113,17 @@ def temp_alert(temp_sensor: SensorInfo) -> AlertInfo:
     return alert
 
 
+# Test para HEALTH endpoint ---------------------------
+
+
+def test_HEALTH() -> None:
+    response = client.get("/health")
+    assert response.status_code == 200
+
+
+# -----------------------------------------------------
+
+
 # Test para AI REVIEW ---------------------------------
 def test_AI_REVIEW_limit_exceeded_in_sensors() -> None:
     response = client.get("/sensors/list?limit=100")

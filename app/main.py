@@ -16,11 +16,15 @@ tags_metadata = [
         "name": "ALERTS",
         "description": "Consultas y status de alertas generadas por sensores.",
     },
+    {
+        "name": "HEALTH",
+        "description": "Verifica la salud del servicio",
+    },
 ]
 
 app = FastAPI(
     title="SensorHub API",
-    version="0.5.2",
+    version="0.6.0",
     openapi_tags=tags_metadata,
 )
 
