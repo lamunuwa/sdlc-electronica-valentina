@@ -6,6 +6,24 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 ---
 
+## Semana 6
+
+## Entrada 1
+
+### Objetivo
+
+Identificar cuales son las metricas basicas de health en una API REST.
+
+### Prompt
+
+> Como parte de las funcionalidades restantes que debo agregar a mi API REST, tengo que poner mi router health con metricas basicas. Que son estas mketricas basicas? Debo crear todo el ecosistema (esquemas, servicios) para estas metricas?
+
+### Resultados
+
+Menciono que en una API REST como SensorHub existen varios esquemas de trabajo para el endpoint de health; el que tengo ahora mismo es un esquema del tipo Liveness Probe, es decir, solo prueba si Python corre y si la API recibe peticiones. Para un health básico de producción, se debe usar Readiness Probe; aquí health funciona para decirnos el estado de las dependencias clave (bases de datos) con consultas triviales como SELECT 1, la latencia de las peticiones en ms, cuánto tiempo lleva la aplicación corriendo, timestamp, versionado; algunos esquemas también consideran CPU y RAM.
+
+---
+
 ## Semana 5
 
 ## Entrada 18
