@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Protocol
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.readings import ReadingInfo
@@ -29,6 +29,13 @@ class ReadingRepository(Protocol):
         limit: int | None = None,
         offset: int | None = None,
     ) -> list[ReadingInfo]: ...
+
+    def get_statistics(
+        self,
+        sensor_id: int | None,
+        from_date: datetime | None = None,
+        to_date: datetime | None = None,
+    ) -> tuple[int, float | None, float | None, float | None]: ...
 
 
 class ReadingSQLAlchemyRepository:
@@ -100,3 +107,26 @@ class ReadingSQLAlchemyRepository:
             sen = sen.limit(limit)
 
         return list(self.db.scalars(sen).all())
+
+    def get_statistics(
+        self,
+        sensor_id: int | None,
+        from_date: datetime | None = None,
+        to_date: datetime | None = None,
+    ) -> tuple[int, float | None, float | None, float | None]:
+        """Calcula total, minimo, maximo y promedio de lecturas para un sensor y periodo"""
+
+        sen = select(
+            func.count(ReadingInfo.id),
+            func.min(ReadingInfo.value),
+            func.max(ReadingInfo.value),
+            func.avg(ReadingInfo.value),
+        ).where(ReadingInfo.sensor_id == sensor_id)
+
+        if from_date is not None:
+            sen = sen.where(ReadingInfo.timestamp >= from_date)
+        if to_date is not None:
+            sen = sen.where(ReadingInfo.timestamp <= to_date)
+
+        total, min_value, max_value, avg_value = self.db.execute(sen).one()
+        return total, min_value, max_value, avg_value

@@ -1,8 +1,12 @@
+from datetime import datetime
+
 from app.core.limits import is_type_supported, is_unit_supported, is_value_valid
 from app.models.sensors import SensorInfo
+from app.repositories.readings import ReadingRepository
 from app.repositories.sensors import SensorRepository
-from app.schemas.sensors import SensorCreate, SensorUpdate
+from app.schemas.sensors import SensorCreate, SensorStatisticsResponse, SensorUpdate
 from app.services.validators import (
+    InvalidDateRangeError,
     InvalidSensorTypeError,
     InvalidSensorUnitError,
     LimitExceededError,
@@ -12,6 +16,7 @@ from app.services.validators import (
     SensorAlreadyInactiveError,
     SensorNameDuplicateError,
     SensorNameTooLongError,
+    SensorNoHaveReadingsError,
     SensorThresholdOutOfRangeError,
     ValidateSensorParameters,
 )
@@ -119,3 +124,33 @@ class SensorService:
             raise SensorAlreadyInactiveError
 
         return self.repository.deactivate(sensor)
+
+    def get_sensor_statistics(
+        self,
+        reading_repository: ReadingRepository,
+        sensor_id: int | None,
+        name: str | None,
+        from_date: datetime | None,
+        to_date: datetime | None,
+    ) -> SensorStatisticsResponse:
+        """Calcula estadisticas de lecturas para un sensor localizado por id, nombre o ambos"""
+        sensor = ValidateSensorParameters.search_sensor(self.repository, sensor_id, name)
+
+        if from_date and to_date and from_date > to_date:
+            raise InvalidDateRangeError
+
+        total, min_value, max_value, avg_value = reading_repository.get_statistics(
+            sensor.id, from_date=from_date, to_date=to_date
+        )
+
+        if total == 0 or min_value is None or max_value is None or avg_value is None:
+            raise SensorNoHaveReadingsError
+
+        return SensorStatisticsResponse(
+            sensor_id=sensor.id,
+            sensor_name=sensor.name,
+            total_readings=total,
+            min_value=min_value or 0.0,
+            max_value=max_value or 0.0,
+            avg_value=avg_value or 0.0,
+        )

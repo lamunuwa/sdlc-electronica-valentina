@@ -1,11 +1,15 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.db import get_db
+from app.repositories.readings import ReadingSQLAlchemyRepository
 from app.repositories.sensors import SensorSQLAlchemyRepository
-from app.schemas.sensors import SensorCreate, SensorResponse, SensorUpdate
+from app.schemas.sensors import SensorCreate, SensorResponse, SensorStatisticsResponse, SensorUpdate
 from app.services.catalog import SensorService
 from app.services.validators import (
+    InvalidDateRangeError,
     InvalidSensorTypeError,
     InvalidSensorUnitError,
     LimitExceededError,
@@ -16,12 +20,15 @@ from app.services.validators import (
     SensorNameDuplicateError,
     SensorNameOrIDDontMatchError,
     SensorNameTooLongError,
+    SensorNoHaveReadingsError,
     SensorNotFoundError,
     SensorThresholdOutOfRangeError,
 )
 
 router = APIRouter(prefix="/sensors", tags=["SENSORS"])
 dbsession = Depends(get_db)
+from_date_query = Query(None, description="From")
+to_date_query = Query(None, description="To")
 
 
 @router.post(
@@ -104,6 +111,44 @@ def get_sensor(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(dme)) from dme
     except MissingRequiredFieldsError as mrfe:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(mrfe)) from mrfe
+
+
+@router.get(
+    "/statistics",
+    response_model=SensorStatisticsResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Obtener estadisticas de lecturas de un sensor en un periodo",
+)
+def get_sensor_statistics(
+    sensor_id: int | None = Query(None, description="Sensor ID"),
+    name: str | None = Query(None, description="Sensor name"),
+    from_date: datetime | None = from_date_query,
+    to_date: datetime | None = to_date_query,
+    db: Session = dbsession,
+) -> SensorStatisticsResponse:
+    """Interfaz HTTP para obtener estadisticas de un sensor especifico"""
+
+    sensor_repo = SensorSQLAlchemyRepository(db)
+    reading_repo = ReadingSQLAlchemyRepository(db)
+    service = SensorService(sensor_repo)
+    try:
+        return service.get_sensor_statistics(
+            reading_repository=reading_repo,
+            sensor_id=sensor_id,
+            name=name,
+            from_date=from_date,
+            to_date=to_date,
+        )
+    except SensorNotFoundError as nfe:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(nfe)) from nfe
+    except SensorNameOrIDDontMatchError as dme:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(dme)) from dme
+    except MissingRequiredFieldsError as mrfe:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(mrfe)) from mrfe
+    except InvalidDateRangeError as idre:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(idre)) from idre
+    except SensorNoHaveReadingsError as snhre:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(snhre)) from snhre
 
 
 @router.put(

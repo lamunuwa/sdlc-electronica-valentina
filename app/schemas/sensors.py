@@ -48,3 +48,14 @@ class SensorResponse(BaseModel):
     active: bool
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class SensorStatisticsResponse(BaseModel):
+    """Muestra las estadisticas de lecturas de un sensor en un periodo"""
+
+    sensor_id: int
+    sensor_name: str
+    total_readings: int
+    min_value: float
+    max_value: float
+    avg_value: float

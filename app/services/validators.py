@@ -118,6 +118,11 @@ class SensorAlreadyInactiveError(Exception):
         super().__init__("El sensor ya se encuentra inactivo")
 
 
+class SensorNoHaveReadingsError(Exception):
+    def __init__(self) -> None:
+        super().__init__("No se han registrado lecturas para este sensor")
+
+
 # -----------------------------------------------------
 
 
