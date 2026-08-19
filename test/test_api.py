@@ -216,6 +216,20 @@ def test_get_sensor_ok(temp_sensor: SensorInfo) -> None:
     assert data["name"] == temp_sensor.name
 
 
+def test_get_sensor_statistics_ok(temp_sensor: SensorInfo) -> None:
+    payload = {"value": 20.5, "unit": "C", "timestamp": datetime.now().isoformat()}
+    read_response = client.post(f"/readings/{temp_sensor.id}", json=payload)
+    assert read_response.status_code == 201
+
+    response = client.get(f"/sensors/statistics?sensor_id={temp_sensor.id}")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["sensor_id"]
+    assert data["min_value"]
+    assert data["max_value"]
+    assert data["avg_value"]
+
+
 def test_update_sensor_ok(temp_sensor: SensorInfo) -> None:
     payload = {
         "name": temp_sensor.name,
@@ -457,6 +471,52 @@ def test_nedded_changes_update_sensor(temp_sensor: SensorInfo) -> None:
     }
     response = client.put(f"/sensors/update?sensor_id={temp_sensor.id}", json=payload)
     assert response.status_code == 409
+
+
+# GET: get_sensor_statistics
+
+
+def test_not_found_statistics(temp_sensor: SensorInfo) -> None:
+    payload = {"value": 20.5, "unit": "C", "timestamp": datetime.now().isoformat()}
+    read_response = client.post(f"/readings/{temp_sensor.id}", json=payload)
+    assert read_response.status_code == 201
+
+    response = client.get("/sensors/statistics?sensor_id=99999")
+    assert response.status_code == 404
+
+
+def test_name_or_id_dont_match_statistics(temp_sensor: SensorInfo) -> None:
+    payload = {"value": 20.5, "unit": "C", "timestamp": datetime.now().isoformat()}
+    read_response = client.post(f"/readings/{temp_sensor.id}", json=payload)
+    assert read_response.status_code == 201
+
+    response = client.get(f"/sensors/statistics?sensor_id={temp_sensor.id}&name=ANY")
+    assert response.status_code == 400
+
+
+def test_missing_fields_statistics(temp_sensor: SensorInfo) -> None:
+    payload = {"value": 20.5, "unit": "C", "timestamp": datetime.now().isoformat()}
+    read_response = client.post(f"/readings/{temp_sensor.id}", json=payload)
+    assert read_response.status_code == 201
+
+    response = client.get("/sensors/statistics")
+    assert response.status_code == 400
+
+
+def test_invalid_date_statistics(temp_sensor: SensorInfo) -> None:
+    payload = {"value": 20.5, "unit": "C", "timestamp": datetime.now().isoformat()}
+    read_response = client.post(f"/readings/{temp_sensor.id}", json=payload)
+    assert read_response.status_code == 201
+
+    response = client.get(
+        f"/sensors/statistics?sensor_id={temp_sensor.id}&from_date=2026-12-31T00:00:00&to_date=2026-01-01T00:00:00"
+    )
+    assert response.status_code == 400
+
+
+def test_no_have_readings_statistics(temp_sensor: SensorInfo) -> None:
+    response = client.get(f"/sensors/statistics?sensor_id={temp_sensor.id}")
+    assert response.status_code == 404
 
 
 # DELETE: delete_sensor
