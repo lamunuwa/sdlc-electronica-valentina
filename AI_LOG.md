@@ -8,6 +8,33 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 ## Semana 6
 
+## Entrada 2
+
+### Objetivo
+
+Valorar mi idea de que hay que hacer para la ultima funcionalidad de SensorHub.
+
+### Prompt
+
+> Para finalizar con SensorHub me queda una tarea, un nuevo endpoint, probablemente en la seccion de sensores, seria un get, esta es lo que me piden:
+> RF-6: "Estadísticas por sensor y periodo: mínimo, máximo, promedio"
+> Por como lo veo tengo que mostrar un body como esto:
+>
+> ```python
+> sensor_id: int
+> sensor_name: str
+> total_readings: int
+> min_value: float | None
+> max_value: float | None
+> avg_value: float | None
+> ```
+>
+> Por como tengo la idea, seria agregar un nuevo esquema llamado statisticsresponse en el archivo de esquemas de sensores. Podemos procesar las el min, max y avg en el repositorio de las lecturas y mandarlo directamente a un router (pasando por un servicio propio) dentro de los routers de sensores no? Tienes una mejor idea?
+
+### Resultados
+
+Me comentó que tenía una idea acertada de qué tenía que hacer, pero que, como es una funcionalidad que tiene que ver con el catálogo de sensores, mejor metiera la lógica como una nueva función dentro de catalog.py en vez de crear algo nuevo.
+
 ## Entrada 1
 
 ### Objetivo
