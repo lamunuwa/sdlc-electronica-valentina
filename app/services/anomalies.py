@@ -6,8 +6,8 @@ from app.repositories.alerts import AlertRepository
 from app.repositories.sensors import SensorRepository
 from app.services.validators import (
     AlertNotFoundError,
+    DateValidator,
     InvalidAlertStatusError,
-    InvalidDateRangeError,
     LimitExceededError,
     MissingAlertStatusError,
     MissingRequiredFieldsError,
@@ -54,12 +54,6 @@ class AlertService:
                 }
             )
 
-    def validate_dates(self, from_date: datetime | None, to_date: datetime | None) -> None:
-        """Valida los rangos de fechas"""
-
-        if from_date and to_date and from_date > to_date:
-            raise InvalidDateRangeError
-
     def get_all_alerts(
         self,
         from_date: datetime | None,
@@ -71,7 +65,7 @@ class AlertService:
         if limit > 50:
             raise LimitExceededError
 
-        self.validate_dates(from_date, to_date)
+        DateValidator.validate_dates(from_date, to_date)
         return self.alert_repo.get_all_alerts(from_date, to_date, limit, offset)
 
     def get_alerts_by_sensor(
@@ -94,7 +88,7 @@ class AlertService:
             self.sensor_repo, sensor_id=sensor_id, name=name
         )
 
-        self.validate_dates(from_date, to_date)
+        DateValidator.validate_dates(from_date, to_date)
 
         return self.alert_repo.get_alerts_by_sensor(sensor.id, from_date, to_date, limit, offset)
 
