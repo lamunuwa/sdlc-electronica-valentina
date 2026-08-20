@@ -8,6 +8,246 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 ## Semana 6
 
+## Entrada 5
+
+### Objetivo
+
+Investigando y leyendo un poco más de información de la página oficial de Mermaid, encontré un modelo de esquema que llamó mucho mi atención por lo simple que es, pero no por eso menos valioso. Me parece que es muy útil para conceptualizar los datos, tiene una primera vista más clara; a mi parecer, es más fácil mapear esquemas de datos o entidades. Sin embargo, no lo seleccioné como principal, ya que siento que no era el óptimo para demostrar el flujo completo y los flujos específicos, que a mi parecer era lo que se solicitaba como diagrama de Mermaid. De todas formas, le pedí que convirtiera los diagramas secuenciales en diagramas estilo entidad-relación.
+
+### Prompt
+
+> Convierte esta misma logica de los 3 mermaid secuenciales en 3 diagramas mermaid pero estilo entidad-relacion, seleccionare cual me gusta mas si secuencia o entidad relacion.
+
+### Resultados
+
+Aquí dejo los Mermaid que entrego; terminé por seleccionar los diagramas secuenciales por su alto nivel explicativo, pero eran buena idea también.
+
+#### Sensores
+
+```mermaid
+erDiagram
+    SENSORS {
+        int id PK
+        varchar_30 name UK "unico, obligatorio"
+        varchar_30 type "TEMPERATURE, etc."
+        varchar_10 unit "unidad de medida"
+        float threshold_min "limite inferior de alarma"
+        float threshold_max "limite superior de alarma"
+        varchar_50 ubication
+        boolean active "default true, desactivable via DELETE"
+    }
+
+    READINGS {
+        int id PK
+        int sensor_id FK "ON DELETE CASCADE"
+    }
+
+    ALERTS {
+        int id PK
+        int sensor_id FK
+    }
+
+    SENSORS ||--o{ READINGS : "recibe (1 sensor : N lecturas)"
+    SENSORS ||--o{ ALERTS : "genera (1 sensor : N alertas)"
+```
+
+#### Lecturas
+
+```mermaid
+erDiagram
+    SENSORS {
+        int id PK
+        varchar_30 name UK
+        boolean active
+    }
+
+    READINGS {
+        int id PK
+        int sensor_id FK "ON DELETE CASCADE"
+        float value "valor medido"
+        varchar_10 unit "debe coincidir con la unidad del sensor"
+        timestamp timestamp "no puede ser fecha futura"
+        varchar_64 hash_id "SHA-256 de sensor+valor+unidad+timestamp"
+    }
+
+    ALERTS {
+        int id PK
+        int sensor_id FK
+        int reading_id FK "lectura que disparo la alerta"
+    }
+
+    SENSORS ||--o{ READINGS : "recibe (1 sensor : N lecturas)"
+    READINGS ||--o| ALERTS : "puede disparar (1 lectura : 0..1 alerta)"
+```
+
+#### Alertas
+
+```mermaid
+erDiagram
+    SENSORS {
+        int id PK
+        varchar_30 name UK
+        float threshold_min
+        float threshold_max
+    }
+
+    READINGS {
+        int id PK
+        int sensor_id FK
+        float value
+        timestamp timestamp
+    }
+
+    ALERTS {
+        int id PK
+        int sensor_id FK "sensor que origino la alerta"
+        int reading_id FK "lectura que disparo la alerta"
+        varchar type "HIGH_<tipo> o LOW_<tipo>"
+        float value "valor de la lectura que la genero"
+        varchar unit
+        varchar state "OPEN, ACKNOWLEDGED, RESOLVED (default OPEN)"
+        timestamp timestamp
+    }
+
+    SENSORS ||--o{ ALERTS : "puede generar (1 sensor : N alertas)"
+    READINGS ||--o| ALERTS : "origina (1 lectura : 0..1 alerta)"
+```
+
+## Entrada 4
+
+### Objetivo
+
+Corregir el diagrama de Mermaid.
+
+### Prompt
+
+> Encontre 2 errores y 1 correccion que quiero que hagas:
+>
+> Generaste un solo diagrama monolitico, el cual tiene algunas falla enormes en la sección de anomalias (alertas):
+>
+> - Las validaciones de ID/nombre no aplica a 2 de los 5 endpoints.
+> - Las validaciones de fechas no aplica a 2 de los 5 endpoints.
+> - PUT tiene su propia forma de validacion de estado que no se parece en nada a "agregar estadísticas". Esta es la más critica, puesto que meterlos en un solo alt generico no es un error menor, borra justo el tipo de detalles que demuestran que no solo copie y pegue de la IA, si no que pense la arquitectura con cuidado.
+>
+> Tambien me tome un tiempo para leerlo a pesar de haber hecho un diagrama en mi pizarron, dividelo en diferentes codigos Mermaid, uno por feat (sensors, readings, alerts), quizas sea mas legible.
+
+### Resultados
+
+Implemento tal y como necesitaba los diagramas; tanto la lógica es correcta como los 3 bloques separados. El resultado está visible en el README.
+
+## Entrada 3
+
+### Objetivo
+
+Generar el diagrama de Mermaid en base a mi app/.
+
+### Prompt
+
+> CONTEXTO: Realiza un analisis de la carpeta app/ para comprender la arquitectura backend de SensorHub (patrones de diseño, capas de servicio, modelos de datos y flujos de datos principales).
+>
+> TAREA: Con base en el analisis previo y en el contexto acumulado, diseña un diagrama de secuencia en Mermaid (de tipo sequenceDiagram) que documente de manera clara el ciclo de vida completo de las peticiones HTTP y la interaccion entre puntos al consumir la API (como cliente o usuario.
+>
+> RESTRICCIONES:
+>
+> - Solo puedes crearlo como un sequenceDiagram
+>
+> ENTREGA: Actualiza el archivo README.md incluyendo al final una nueva seccion estructurada que contenga el bloque de código Mermaid generado.
+
+### Resultados
+
+Genero un solo diagrama monolítico, al cual le encontré una falla enorme en la sección de anomalías (alertas):
+
+- Validar ID/nombre no aplica a 2 de los 5 endpoints.
+- Validar fechas no aplica a 2 de los 5 endpoints.
+- PUT tiene su propia forma de validación de estado que no se parece en nada a "agregar estadísticas". Esta es la más crítica, puesto que meterlos en un solo alt genérico no es un error menor; borra justo el tipo de detalle que quiero demostrar, que no solo copié y pegué de la IA, sino que pensé la arquitectura con cuidado.
+
+Este era el diagrama:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Cliente as Cliente IoT / consumidor API
+    participant API as FastAPI y router
+    participant Servicio as Servicio de dominio
+    participant Validador as Validadores / límites
+    participant Repo as Repositorio SQLAlchemy
+    participant DB as Base de datos
+
+    Note over Cliente,DB: Catálogo de sensores
+    Cliente->>API: POST /sensors/create o PUT /sensors/update
+    API->>Servicio: SensorService (datos validados por Pydantic)
+    Servicio->>Repo: buscar sensor por nombre o ID
+    Repo->>DB: SELECT sensors
+    DB-->>Repo: sensor o ausencia
+    Repo-->>Servicio: resultado de búsqueda
+    Servicio->>Validador: validar tipo, unidad y umbrales físicos
+    alt Configuración inválida o nombre duplicado
+        Validador-->>Servicio: error de dominio
+        Servicio-->>API: error
+        API-->>Cliente: 400, 409 o 422
+    else Configuración válida
+        Servicio->>Repo: crear o actualizar sensor
+        Repo->>DB: INSERT o UPDATE sensors + COMMIT
+        DB-->>Repo: sensor persistido
+        Repo-->>Servicio: SensorInfo
+        Servicio-->>API: SensorResponse
+        API-->>Cliente: 201 Created o 200 OK
+    end
+
+    Note over Cliente,DB: Ingesta y detección de anomalías
+    Cliente->>API: POST /readings/{sensor_id}
+    API->>Servicio: ReadingService.register_reading(...)
+    Servicio->>Repo: buscar sensor por ID
+    Repo->>DB: SELECT sensors
+    DB-->>Repo: sensor
+    Repo-->>Servicio: SensorInfo
+    Servicio->>Validador: validar activo, unidad y timestamp
+    alt Sensor inexistente, inactivo, unidad inválida o fecha futura
+        Validador-->>Servicio: error de dominio
+        Servicio-->>API: error
+        API-->>Cliente: 404 o 400
+    else Lectura válida
+        Servicio->>Servicio: generar SHA-256 de sensor, valor, unidad y fecha
+        Servicio->>Repo: comprobar hash de lectura
+        Repo->>DB: SELECT readings por sensor_id y hash_id
+        DB-->>Repo: existe o no existe
+        Repo-->>Servicio: resultado
+        alt Lectura duplicada
+            Servicio-->>API: DuplicateReadingError
+            API-->>Cliente: 409 Conflict
+        else Lectura nueva
+            Servicio->>Repo: guardar lectura
+            Repo->>DB: INSERT readings + COMMIT
+            DB-->>Repo: ReadingInfo persistida
+            Repo-->>Servicio: ReadingInfo
+            Servicio-->>API: lectura persistida
+            API->>Servicio: AlertService.process_reading(lectura)
+            Servicio->>Repo: obtener sensor y comparar umbrales
+            Repo->>DB: SELECT sensors
+            DB-->>Repo: límites configurados
+            alt Valor mayor al máximo o menor al mínimo
+                Servicio->>Repo: crear alerta OPEN (HIGH_* o LOW_*)
+                Repo->>DB: INSERT alerts + COMMIT
+                DB-->>Repo: alerta persistida
+            else Valor dentro de los umbrales
+                Note over Servicio,DB: No se crea alerta
+            end
+            API-->>Cliente: 201 Created con la lectura
+        end
+    end
+
+    Note over Cliente,DB: Consultas, estadísticas y gestión de alertas
+    Cliente->>API: GET de consultas o PUT /alerts/{alert_id}
+    API->>Servicio: servicio correspondiente y filtros
+    Servicio->>Validador: validar ID/nombre, fechas y límite
+    Servicio->>Repo: consultar, agregar estadísticas o actualizar estado
+    Repo->>DB: SELECT, agregación SQL o UPDATE + COMMIT
+    DB-->>Repo: entidades o resultados
+    Repo-->>Servicio: datos de dominio
+    Servicio-->>API: esquema de respuesta
+    API-->>Cliente: 200 OK
+```
+
 ## Entrada 2
 
 ### Objetivo
