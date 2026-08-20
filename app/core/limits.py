@@ -14,9 +14,15 @@ limits: dict[str, dict[str, SensorLimits]] = {
         "C": SensorLimits(min_value=-273.15, max_value=1.416808e32),
         "K": SensorLimits(min_value=0.0, max_value=1.416808e32),
         "F": SensorLimits(min_value=-459.67, max_value=2.550254e32),
-    }
-    # "HUMIDITY": SensorLimits(...)
-    # "PRESSURE": SensorLimits(...)
+    },
+    "HUMIDITY": {
+        "%": SensorLimits(min_value=0.0, max_value=100),
+    },
+    "DISTANCE": {
+        "KM": SensorLimits(min_value=0.0, max_value=4.40e23),
+        "M": SensorLimits(min_value=0.0, max_value=4.40e26),
+        "CM": SensorLimits(min_value=0.0, max_value=4.40e26),
+    },
 }
 
 
