@@ -358,4 +358,4 @@ sequenceDiagram
   <img src="docs/images/VideoMiniDemo.gif" alt="Demo de SensorHub API" width="700">
 </p>
 
-Para ver una explicación detallada del proyecto y su funcionamiento, puedes consultar el video de demostración completo aquí:
+Para ver una explicación detallada del proyecto y su funcionamiento, puedes consultar el video de demostración completo aquí: [Demo_SensorHub_by_LaMunuwa](https://drive.google.com/drive/folders/1mCWfCgbDT0YYZ7WQYYk8snp_XL5XrqF0?usp=drive_link)
