@@ -12,7 +12,7 @@ from app.db import get_db
 router = APIRouter(tags=["HEALTH"])
 
 START = time.time()
-VERSION = os.getenv("SensorHub", "0.6.0")
+VERSION = os.getenv("SensorHub", "1.0.0")
 
 
 @router.get("/health", status_code=status.HTTP_200_OK)
