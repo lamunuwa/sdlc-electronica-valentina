@@ -8,6 +8,24 @@ Este documento registra las interacciones con Inteligencia Artificial generativa
 
 ## Semana 6
 
+## Entrada 6
+
+### Objetivo
+
+Solucionar el problema de `500 internal server error` que corria en Render pero no en los contenedores.
+
+### Prompt
+
+> Al darle una segunda vuelta a la API encontre un error interno del servidor pero en el Render, lo raro es que es el mismo repositorio exactamente que si corre en los contenedores, tengo este log en render:
+>
+> [Aqui pegue el log de render]
+
+### Resultados
+
+Me mencionó que eran las migraciones, lo cual era cierto. Me ayudó a corregir el `env.py` de las migraciones y a crear un archivo para mantener el repositorio estable en cada despliegue. `start.sh` es el archivo, el cual nos apoya a hacer lo mismo que haría Compose en Docker, pero para Render; es decir, revisa y ejecuta la última migración antes del despliegue
+
+En el proceso de esta entrada tuve otro error breve en el Dockerfile, lo cual me llevó a que revisara qué pasaba, pero no lo cuento como entrada porque fue extremadamente breve; solo se le habia olvidado decirme que tambien tenia que hacer este check en el docker file.
+
 ## Entrada 5
 
 ### Objetivo

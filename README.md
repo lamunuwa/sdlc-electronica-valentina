@@ -4,7 +4,7 @@
 
 ---
 <p align="center">
-  <a href="https://github.com/lamunuwa/sdlc-electronica-valentina/actions/workflows/ci.yaml"><img src="https://img.shields.io/badge/CI-CHECK-brightgreen?style=flat&logo=githubactions&logoColor=white" alt="CI Status"></a> <a href="https://sensorhub-api-odm7.onrender.com/docs"><img src="https://img.shields.io/badge/Render-DOCS-46E3B7?style=flat&logo=render&logoColor=white" alt="Render Docs"></a> <a href="https://sensorhub-api-odm7.onrender.com/health"><img src="https://img.shields.io/badge/Render-HEALTH-0F5257?style=flat&logo=render&logoColor=white" alt="Render Health"></a> <img src="https://img.shields.io/badge/Python-3.12-3776AB?style=flat&logo=python&logoColor=white" alt="Python Version"> <img src="https://img.shields.io/badge/FastAPI-v0.139.0-586F7C?style=flat&logo=fastapi&logoColor=white" alt="FastAPI Version">
+  <a href="https://github.com/lamunuwa/sdlc-electronica-valentina/actions/workflows/ci.yaml"><img src="https://img.shields.io/badge/CI-CHECK-brightgreen?style=flat&logo=githubactions&logoColor=white" alt="CI Status"></a> <a href="https://sensorhub-api-wzmj.onrender.com/docs"><img src="https://img.shields.io/badge/Render-DOCS-46E3B7?style=flat&logo=render&logoColor=white" alt="Render Docs"></a> <a href="https://sensorhub-api-wzmj.onrender.com/health"><img src="https://img.shields.io/badge/Render-HEALTH-0F5257?style=flat&logo=render&logoColor=white" alt="Render Health"></a> <img src="https://img.shields.io/badge/Python-3.12-3776AB?style=flat&logo=python&logoColor=white" alt="Python Version"> <img src="https://img.shields.io/badge/FastAPI-v0.139.0-586F7C?style=flat&logo=fastapi&logoColor=white" alt="FastAPI Version">
 </p>
 
 **SensorHub** es un sistema de backend robusto para telemetría IoT industrial. Basado en **FastAPI** y diseñado para la ingesta, almacenamiento y análisis de datos provenientes de sensores en entornos críticos.
@@ -80,7 +80,7 @@ Una vez levantado el servidor, la API estará disponible en `http://localhost:80
 - **Documentación Interactiva (Swagger):** http://localhost:8000/docs
 - **Health Check:** http://localhost:8000/health
 
-También puedes probar la instancia desplegada en la nube sin levantar contenedores: https://sensorhub-api-odm7.onrender.com
+También puedes probar la instancia desplegada en la nube sin levantar contenedores: https://sensorhub-api-wzmj.onrender.com/docs
 
 ## Testing
 
