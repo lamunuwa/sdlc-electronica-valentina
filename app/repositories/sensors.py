@@ -76,25 +76,23 @@ class SensorSQLAlchemyRepository:
         return self.db.get(SensorInfo, sensor_id)
 
     def update(self, sensor: SensorInfo, sensor_in: SensorUpdate) -> SensorInfo:
-        """Cambia informacion en base a un ID de un sensor y lo guarda"""
+        """Reemplaza por completo la informacion de un sensor y la guarda"""
 
-        changes = sensor_in.model_dump(exclude_unset=True)
-        threshold_data = changes.pop("sensor_umbral", None)
-        if threshold_data is not None:
-            if threshold_data.get("min") is not None:
-                changes["threshold_min"] = threshold_data["min"]
-            if threshold_data.get("max") is not None:
-                changes["threshold_max"] = threshold_data["max"]
+        data = sensor_in.model_dump(exclude={"sensor_umbral"})
+        threshold_data = sensor_in.sensor_umbral
 
-        for field, value in changes.items():
+        for field, value in data.items():
             setattr(sensor, field, value)
+        sensor.threshold_min = threshold_data.min
+        sensor.threshold_max = threshold_data.max
+
         try:
             self.db.commit()
             self.db.refresh(sensor)
             return sensor
         except IntegrityError:
             self.db.rollback()
-        raise SensorNameDuplicateError(sensor_in.name or sensor.name)
+        raise SensorNameDuplicateError(sensor_in.name)
 
     def deactivate(self, sensor: SensorInfo) -> SensorInfo:
         """Desactiva sensores"""

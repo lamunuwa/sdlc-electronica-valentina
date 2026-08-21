@@ -7,8 +7,8 @@ from app.repositories.readings import ReadingRepository
 from app.repositories.sensors import SensorRepository
 from app.schemas.readings import ReadingCreate
 from app.services.validators import (
+    DateValidator,
     DuplicateReadingError,
-    InvalidDateRangeError,
     LimitExceededError,
     MissingRequiredFieldsError,
     ReadingValidator,
@@ -90,8 +90,7 @@ class ReadingService:
         if effective_limit > 100:
             raise LimitExceededError
 
-        if from_date is not None and to_date is not None and from_date > to_date:
-            raise InvalidDateRangeError
+        DateValidator.validate_dates(from_date, to_date)
 
         if sensor_id is None and name is None:
             if limit is None:

@@ -1,24 +1,19 @@
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SensorThreshold(BaseModel):
     """Representa los datos de umbral configurables de un sensor"""
 
-    min: float | None = Field(
-        None,
+    min: float = Field(
+        ...,
         examples=[-20.0],
         description="Valor minimo para activar la alarma",
     )
-    max: float | None = Field(
-        None,
+    max: float = Field(
+        ...,
         examples=[40.0],
         description="Valor maximo para activar la alarma",
     )
-
-    @field_validator("min", "max", mode="before")
-    @classmethod
-    def empty_value_as_none(cls, value: object) -> object:
-        return None if value == "" else value
 
 
 class SensorCreate(BaseModel):
@@ -32,17 +27,13 @@ class SensorCreate(BaseModel):
 
 
 class SensorUpdate(BaseModel):
-    """Representa los cambios opcionales que pueden aplicarse a un sensor"""
+    """Representa el cuerpo completo requerido para actualizar un sensor (PUT)"""
 
-    name: str | None = Field(None, examples=["TEMP-01"], description="Nombre unico del sensor")
-    type: str | None = Field(None, examples=["TEMPERATURE"], description="Nueva magnitud")
-    unit: str | None = Field(None, examples=["C"], description="Nueva unidad de medida")
-    sensor_umbral: SensorThreshold | None = Field(
-        None, description="Umbral configurable para actualizar"
-    )
-    ubication: str | None = Field(
-        None, examples=["Bodega Sur"], description="Nueva ubicacion del sensor"
-    )
+    name: str = Field(..., examples=["TEMP-01"], description="Nombre unico del sensor")
+    type: str = Field(..., examples=["TEMPERATURE"], description="Magnitud que mide el sensor")
+    unit: str = Field(..., examples=["C"], description="Unidad de medida")
+    sensor_umbral: SensorThreshold = Field(..., description="Umbral configurado para el sensor")
+    ubication: str = Field(..., examples=["Bodega Sur"], description="Ubicacion del sensor")
 
 
 class SensorResponse(BaseModel):
@@ -57,3 +48,14 @@ class SensorResponse(BaseModel):
     active: bool
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class SensorStatisticsResponse(BaseModel):
+    """Muestra las estadisticas de lecturas de un sensor en un periodo"""
+
+    sensor_id: int
+    sensor_name: str
+    total_readings: int
+    min_value: float
+    max_value: float
+    avg_value: float

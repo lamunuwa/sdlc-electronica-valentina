@@ -8,6 +8,18 @@ services:
     volumes:
       - .:/app
     depends_on:
+      migrations:
+        condition: service_completed_successfully
+    restart: on-failure
+
+  migrations:
+    build: .
+    command: alembic upgrade head
+    environment:
+      - DATABASE_URL=postgresql+psycopg://sensor:secretdb@db:5432/sensordb
+    volumes:
+      - .:/app
+    depends_on:
       db:
         condition: service_healthy
     restart: on-failure

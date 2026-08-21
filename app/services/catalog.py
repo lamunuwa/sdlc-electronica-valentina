@@ -1,8 +1,12 @@
+from datetime import datetime
+
 from app.core.limits import is_type_supported, is_unit_supported, is_value_valid
 from app.models.sensors import SensorInfo
+from app.repositories.readings import ReadingRepository
 from app.repositories.sensors import SensorRepository
-from app.schemas.sensors import SensorCreate, SensorUpdate
+from app.schemas.sensors import SensorCreate, SensorStatisticsResponse, SensorUpdate
 from app.services.validators import (
+    InvalidDateRangeError,
     InvalidSensorTypeError,
     InvalidSensorUnitError,
     LimitExceededError,
@@ -12,6 +16,7 @@ from app.services.validators import (
     SensorAlreadyInactiveError,
     SensorNameDuplicateError,
     SensorNameTooLongError,
+    SensorNoHaveReadingsError,
     SensorThresholdOutOfRangeError,
     ValidateSensorParameters,
 )
@@ -81,56 +86,33 @@ class SensorService:
         name: str | None,
         sensor_in: SensorUpdate,
     ) -> SensorInfo:
-        """Actualiza la informacion de un sensor. No debe existir ya"""
+        """Reemplaza la informacion completa de un sensor ya existente"""
         sensor = ValidateSensorParameters.search_sensor(self.repository, sensor_id, name)
 
-        update_data = sensor_in.model_dump(exclude_unset=True)
-        if not update_data:
+        if len(sensor_in.name) > 30:
+            raise SensorNameTooLongError(sensor_in.name)
+
+        existing_sensor = self.repository.by_name(sensor_in.name)
+        if existing_sensor is not None and existing_sensor.id != sensor.id:
+            raise SensorNameDuplicateError(sensor_in.name)
+
+        self.validate_sensor_configuration(sensor_in.type, sensor_in.unit)
+
+        threshold = sensor_in.sensor_umbral
+        if threshold is None or threshold.min is None or threshold.max is None:
+            raise MissingRequiredFieldsError
+
+        self.validate_sensor_threshold(sensor_in.type, sensor_in.unit, threshold.min, threshold.max)
+
+        if (
+            sensor_in.name == sensor.name
+            and sensor_in.type == sensor.type
+            and sensor_in.unit == sensor.unit
+            and sensor_in.ubication == sensor.ubication
+            and threshold.min == sensor.threshold_min
+            and threshold.max == sensor.threshold_max
+        ):
             raise NeddedChangesToUpdateSensorError
-
-        was_updated = False
-
-        # Verificamos cambios que no son umbral
-        fields = ["name", "type", "unit", "status", "ubication"]
-        for field in fields:
-            if field in update_data and getattr(sensor, field, None) != update_data[field]:
-                was_updated = True
-                break
-
-        # Terminamos de verificar con umbrales
-        if "sensor_umbral" in update_data and update_data["sensor_umbral"] is not None:
-            threshold_data = update_data["sensor_umbral"]
-
-            if "min" in threshold_data and threshold_data["min"] != sensor.threshold_min:
-                was_updated = True
-            if "max" in threshold_data and threshold_data["max"] != sensor.threshold_max:
-                was_updated = True
-
-        if not was_updated:
-            raise NeddedChangesToUpdateSensorError
-
-        new_name = sensor_in.name
-        if new_name is not None:
-            if len(new_name) > 30:
-                raise SensorNameTooLongError(new_name)
-            existing_sensor = self.repository.by_name(new_name)
-            if existing_sensor is not None and existing_sensor.id != sensor.id:
-                raise SensorNameDuplicateError(new_name)
-
-        sensor_type = sensor_in.type if sensor_in.type is not None else sensor.type
-        sensor_unit = sensor_in.unit if sensor_in.unit is not None else sensor.unit
-        self.validate_sensor_configuration(sensor_type, sensor_unit)
-
-        if sensor_in.sensor_umbral is not None:
-            threshold = sensor_in.sensor_umbral
-
-            min_val = threshold.min if threshold.min is not None else sensor.threshold_min
-            max_val = threshold.max if threshold.max is not None else sensor.threshold_max
-
-            if min_val is None or max_val is None:
-                raise MissingRequiredFieldsError
-
-            self.validate_sensor_threshold(sensor_type, sensor_unit, min_val, max_val)
 
         return self.repository.update(sensor, sensor_in)
 
@@ -142,3 +124,33 @@ class SensorService:
             raise SensorAlreadyInactiveError
 
         return self.repository.deactivate(sensor)
+
+    def get_sensor_statistics(
+        self,
+        reading_repository: ReadingRepository,
+        sensor_id: int | None,
+        name: str | None,
+        from_date: datetime | None,
+        to_date: datetime | None,
+    ) -> SensorStatisticsResponse:
+        """Calcula estadisticas de lecturas para un sensor localizado por id, nombre o ambos"""
+        sensor = ValidateSensorParameters.search_sensor(self.repository, sensor_id, name)
+
+        if from_date and to_date and from_date > to_date:
+            raise InvalidDateRangeError
+
+        total, min_value, max_value, avg_value = reading_repository.get_statistics(
+            sensor.id, from_date=from_date, to_date=to_date
+        )
+
+        if total == 0 or min_value is None or max_value is None or avg_value is None:
+            raise SensorNoHaveReadingsError
+
+        return SensorStatisticsResponse(
+            sensor_id=sensor.id,
+            sensor_name=sensor.name,
+            total_readings=total,
+            min_value=min_value or 0.0,
+            max_value=max_value or 0.0,
+            avg_value=avg_value or 0.0,
+        )

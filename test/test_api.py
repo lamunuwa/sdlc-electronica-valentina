@@ -113,6 +113,17 @@ def temp_alert(temp_sensor: SensorInfo) -> AlertInfo:
     return alert
 
 
+# Test para HEALTH endpoint ---------------------------
+
+
+def test_HEALTH() -> None:
+    response = client.get("/health")
+    assert response.status_code == 200
+
+
+# -----------------------------------------------------
+
+
 # Test para AI REVIEW ---------------------------------
 def test_AI_REVIEW_limit_exceeded_in_sensors() -> None:
     response = client.get("/sensors/list?limit=100")
@@ -163,7 +174,16 @@ def test_AI_REVIEW_duplicate_name_update(temp_sensor: SensorInfo) -> None:
         },
     }
     client.post("/sensors/create", json=payload)
-    update_payload = {"name": "NEW-TEMP"}
+    update_payload = {
+        "name": "NEW-TEMP",
+        "type": temp_sensor.type,
+        "unit": temp_sensor.unit,
+        "ubication": temp_sensor.ubication,
+        "sensor_umbral": {
+            "min": temp_sensor.threshold_min,
+            "max": temp_sensor.threshold_max,
+        },
+    }
     response = client.put(f"/sensors/update?sensor_id={temp_sensor.id}", json=update_payload)
 
     assert response.status_code == 409
@@ -196,8 +216,31 @@ def test_get_sensor_ok(temp_sensor: SensorInfo) -> None:
     assert data["name"] == temp_sensor.name
 
 
+def test_get_sensor_statistics_ok(temp_sensor: SensorInfo) -> None:
+    payload = {"value": 20.5, "unit": "C", "timestamp": datetime.now().isoformat()}
+    read_response = client.post(f"/readings/{temp_sensor.id}", json=payload)
+    assert read_response.status_code == 201
+
+    response = client.get(f"/sensors/statistics?sensor_id={temp_sensor.id}")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["sensor_id"]
+    assert data["min_value"]
+    assert data["max_value"]
+    assert data["avg_value"]
+
+
 def test_update_sensor_ok(temp_sensor: SensorInfo) -> None:
-    payload = {"unit": "F"}
+    payload = {
+        "name": temp_sensor.name,
+        "type": temp_sensor.type,
+        "unit": "F",
+        "ubication": temp_sensor.ubication,
+        "sensor_umbral": {
+            "min": temp_sensor.threshold_min,
+            "max": temp_sensor.threshold_max,
+        },
+    }
     response = client.put(f"/sensors/update?sensor_id={temp_sensor.id}", json=payload)
     assert response.status_code == 200
     assert response.json()["unit"] == "F"
@@ -221,7 +264,7 @@ def test_missing_fields_create_sensor() -> None:
         "ubication": "Bodega A",
     }
     response = client.post("/sensors/create", json=payload)
-    assert response.status_code == 400
+    assert response.status_code == 422
 
 
 def test_name_too_long_create_sensor() -> None:
@@ -315,28 +358,54 @@ def test_missing_fields_get_sensor() -> None:
 
 # PUT: update_sensor
 def test_not_found_update_sensor() -> None:
-    response = client.put("/sensors/update?sensor_id=99999", json={"unit": "F"})
+    payload = {
+        "name": temp_sensor.name,
+        "type": "TEMPERATURE",
+        "unit": "C",
+        "sensor_umbral": {"min": 0.0, "max": 10.0},
+        "ubication": "Bodega A",
+    }
+    response = client.put("/sensors/update?sensor_id=99999", json=payload)
     assert response.status_code == 404
 
 
 def test_name_or_id_dont_match_update_sensor(temp_sensor: SensorInfo) -> None:
-    payload = {"unit": "F"}
+    payload = {
+        "name": temp_sensor.name,
+        "type": "TEMPERATURE",
+        "unit": "C",
+        "sensor_umbral": {"min": 0.0, "max": 10.0},
+        "ubication": "Bodega A",
+    }
     response = client.put(f"/sensors/update?sensor_id={temp_sensor.id}&name=ANY", json=payload)
     assert response.status_code == 400
 
 
 def test_missing_fields_update_sensor() -> None:
-    response = client.put("/sensors/update", json={"unit": ""})
-    assert response.status_code == 400
-
-
-def test_nedded_changes_update_sensor(temp_sensor: SensorInfo) -> None:
-    response = client.put(f"/sensors/update?sensor_id={temp_sensor.id}", json={})
+    payload = {
+        "name": temp_sensor.name,
+        "type": "TEMPERATURE",
+        "unit": "",
+        "sensor_umbral": {"min": 0.0, "max": 10.0},
+        "ubication": "Bodega A",
+    }
+    response = client.put("/sensors/update", json=payload)
     assert response.status_code == 400
 
 
 def test_name_too_long_update_sensor(temp_sensor: SensorInfo) -> None:
-    response = client.put(f"/sensors/update?sensor_id={temp_sensor.id}", json={"name": "B" * 31})
+    name = "A" * 31
+    payload = {
+        "name": name,
+        "type": temp_sensor.type,
+        "unit": temp_sensor.unit,
+        "ubication": temp_sensor.ubication,
+        "sensor_umbral": {
+            "min": temp_sensor.threshold_min,
+            "max": temp_sensor.threshold_max,
+        },
+    }
+    response = client.put(f"/sensors/update?sensor_id={temp_sensor.id}", json=payload)
     assert response.status_code == 400
 
 
@@ -353,18 +422,36 @@ def test_invalid_unit_update_sensor(temp_sensor: SensorInfo) -> None:
 
 
 def test_threshold_min_greater_than_max_update_sensor(temp_sensor: SensorInfo) -> None:
-    payload = {"sensor_umbral": {"min": 60.0, "max": 50.0}}
+    payload = {
+        "name": temp_sensor.name,
+        "type": temp_sensor.type,
+        "unit": temp_sensor.unit,
+        "ubication": temp_sensor.ubication,
+        "sensor_umbral": {
+            "min": 30.0,
+            "max": 20.0,
+        },
+    }
     response = client.put(f"/sensors/update?sensor_id={temp_sensor.id}", json=payload)
     assert response.status_code == 400
 
 
 def test_threshold_out_of_range_update_sensor(temp_sensor: SensorInfo) -> None:
-    payload = {"sensor_umbral": {"min": -300.0, "max": 50.0}}
+    payload = {
+        "name": temp_sensor.name,
+        "type": temp_sensor.type,
+        "unit": temp_sensor.unit,
+        "ubication": temp_sensor.ubication,
+        "sensor_umbral": {
+            "min": -400.0,
+            "max": 20.0,
+        },
+    }
     response = client.put(f"/sensors/update?sensor_id={temp_sensor.id}", json=payload)
     assert response.status_code == 400
 
 
-def test_duplicate_name_update_sensor(temp_sensor: SensorInfo) -> None:
+def test_nedded_changes_update_sensor(temp_sensor: SensorInfo) -> None:
     client.post(
         "/sensors/create",
         json={
@@ -375,9 +462,61 @@ def test_duplicate_name_update_sensor(temp_sensor: SensorInfo) -> None:
             "ubication": "Bodega A",
         },
     )
-
-    response = client.put(f"/sensors/update?sensor_id={temp_sensor.id}", json={"name": "TEMP-02"})
+    payload = {
+        "name": "TEMP-02",
+        "type": "TEMPERATURE",
+        "unit": "C",
+        "sensor_umbral": {"min": -10.0, "max": 50.0},
+        "ubication": "Bodega A",
+    }
+    response = client.put(f"/sensors/update?sensor_id={temp_sensor.id}", json=payload)
     assert response.status_code == 409
+
+
+# GET: get_sensor_statistics
+
+
+def test_not_found_statistics(temp_sensor: SensorInfo) -> None:
+    payload = {"value": 20.5, "unit": "C", "timestamp": datetime.now().isoformat()}
+    read_response = client.post(f"/readings/{temp_sensor.id}", json=payload)
+    assert read_response.status_code == 201
+
+    response = client.get("/sensors/statistics?sensor_id=99999")
+    assert response.status_code == 404
+
+
+def test_name_or_id_dont_match_statistics(temp_sensor: SensorInfo) -> None:
+    payload = {"value": 20.5, "unit": "C", "timestamp": datetime.now().isoformat()}
+    read_response = client.post(f"/readings/{temp_sensor.id}", json=payload)
+    assert read_response.status_code == 201
+
+    response = client.get(f"/sensors/statistics?sensor_id={temp_sensor.id}&name=ANY")
+    assert response.status_code == 400
+
+
+def test_missing_fields_statistics(temp_sensor: SensorInfo) -> None:
+    payload = {"value": 20.5, "unit": "C", "timestamp": datetime.now().isoformat()}
+    read_response = client.post(f"/readings/{temp_sensor.id}", json=payload)
+    assert read_response.status_code == 201
+
+    response = client.get("/sensors/statistics")
+    assert response.status_code == 400
+
+
+def test_invalid_date_statistics(temp_sensor: SensorInfo) -> None:
+    payload = {"value": 20.5, "unit": "C", "timestamp": datetime.now().isoformat()}
+    read_response = client.post(f"/readings/{temp_sensor.id}", json=payload)
+    assert read_response.status_code == 201
+
+    response = client.get(
+        f"/sensors/statistics?sensor_id={temp_sensor.id}&from_date=2026-12-31T00:00:00&to_date=2026-01-01T00:00:00"
+    )
+    assert response.status_code == 400
+
+
+def test_no_have_readings_statistics(temp_sensor: SensorInfo) -> None:
+    response = client.get(f"/sensors/statistics?sensor_id={temp_sensor.id}")
+    assert response.status_code == 404
 
 
 # DELETE: delete_sensor

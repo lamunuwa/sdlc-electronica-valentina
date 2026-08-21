@@ -118,6 +118,11 @@ class SensorAlreadyInactiveError(Exception):
         super().__init__("El sensor ya se encuentra inactivo")
 
 
+class SensorNoHaveReadingsError(Exception):
+    def __init__(self) -> None:
+        super().__init__("No se han registrado lecturas para este sensor")
+
+
 # -----------------------------------------------------
 
 
@@ -180,6 +185,16 @@ class DuplicateReadingError(Exception):
 class InvalidDateRangeError(Exception):
     def __init__(self) -> None:
         super().__init__("La fecha de inicio no puede ser mayor que la fecha final")
+
+
+class DateValidator:
+    """Valida los rangos de fechas compartidos entre servicios"""
+
+    @staticmethod
+    def validate_dates(from_date: datetime | None, to_date: datetime | None) -> None:
+        """Verifica que la fecha inicial no sea posterior a la fecha final"""
+        if from_date is not None and to_date is not None and from_date > to_date:
+            raise InvalidDateRangeError
 
 
 class ReadingValidator:
